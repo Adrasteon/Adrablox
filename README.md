@@ -40,6 +40,7 @@ Active implementation workspace for the MCP Server + Roblox Studio plugin projec
   - `tools/run_mcp_protocol_task.ps1`: start server, run protocol contract test, stop server (Windows)
   - `tools/run_mcp_protocol_task.sh`: start server, run protocol contract test, stop server (Linux/macOS)
   - `tools/package_release_artifacts.ps1`: builds release server binary, creates versioned plugin source archive, and builds installable versioned plugin `.rbxm` when Rojo is available (or when `-RequireRojo` is used)
+  - `tools/validate_release_manifest.ps1`: validates release manifest schema plus artifact naming/presence (with optional installable-artifact requirement)
   - `tools/run_day0_packaged_validation_task.ps1`: validates packaged artifacts by launching server from release zip, running smoke flow, and checking plugin archive contents
   - `tools/run_mcp_server.ps1`: run server for manual Studio testing
   - VS Code tasks: `Day-0: 1) Smoke Test (start+run+stop)`, `Day-0: 2) Run Server (manual Studio session)`, `Day-0: 3) Validate Packaged Artifacts (start+run+stop)`, `MCP: Policy Contract Test (start+run+stop)`, `MCP: Rojo Compat Test (start+run+stop)`, `MCP: Rojo Changefeed Edge Test (start+run+stop)`, `MCP: Conflict Race Contract Test (start+run+stop)`, `MCP: Reconnect Replay Contract Test (start+run+stop)`, `MCP: Invalid Session Contract Test (start+run+stop)`, `MCP: Integration Roundtrip Contract Test (start+run+stop)`, `MCP: Integration Reconnect Loop Contract Test (start+run+stop)`, `MCP: Integration Soak Contract Test (manual, start+run+stop)`, `MCP: Rojo Parity Diff (start+run+compare+stop)`, `MCP: Rojo Parity Suite (fixtures, fail-on-diff)`, `MCP: Rojo Parity Release Gate (suite+strict-summary)`, `MCP: Protocol Contract Test (start+run+stop)`, `Release: Package Server + Plugin Artifacts`, `Release: Package Versioned Plugin Artifacts`
@@ -48,7 +49,7 @@ Active implementation workspace for the MCP Server + Roblox Studio plugin projec
     - Optional strict mode: set `workflow_dispatch` input `strict_rojo_parity=true` to fail the manual parity run when parity reports are missing or contain diffs.
     - Optional targeted strict mode: set `workflow_dispatch` input `strict_rojo_parity_categories` to a comma-separated category list (for example `baseline,structure`) to run only those fixture categories and fail when selected categories have diffs.
     - When this optional parity gate runs, CI builds `tools/parity_diff_summary.json` from `tools/parity_diff_report*.json`, prints `Parity summary: fixtures=<n> totalDiffs=<n> categoryDiffs=<category:diffs|...>` in job logs, and uploads both in the `rojo-parity-reports` workflow artifact.
-  - Manual release packaging workflow: `.github/workflows/release-packaging.yml` (`workflow_dispatch` only; packages server and plugin artifacts for Windows/Linux/macOS, installs Rojo, enforces installable plugin build, and runs packaged Day-0 validation)
+  - Manual release packaging workflow: `.github/workflows/release-packaging.yml` (`workflow_dispatch` only; packages server and plugin artifacts for Windows/Linux/macOS, installs pinned Rojo `7.7.0-rc.1`, enforces installable plugin build, validates manifest/artifact naming, and runs packaged Day-0 validation)
 
 ## Documentation index
 
@@ -196,6 +197,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/package_release_artifa
 
 This writes distribution artifacts into `dist/release` (`mcp-server-<platform>.zip`, versioned `mcp-studio-plugin-source-<version>.zip`, and `release_manifest.json`). If Rojo is installed, it also writes installable `mcp-studio-plugin-<version>.rbxm`.
 End-user/local validation paths do not require Rojo; Rojo is enforced in the manual release workflow.
+
+Release manifest/artifact validation (manual):
+
+```powershell
+Set-Location D:\roblox
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/validate_release_manifest.ps1
+```
+
+Optional: pass `-RequireInstallable` to fail unless installable plugin `.rbxm` is present.
 
 Day-0 packaged-artifact validation (manual, distribution evidence):
 
