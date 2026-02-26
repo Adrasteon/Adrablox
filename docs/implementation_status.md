@@ -25,6 +25,7 @@ Last updated: 2026-02-26
 - CI is configured to run contract checks across Windows and protocol checks across Linux/macOS.
 - Integration reliability baseline is in CI (`integration roundtrip` + `integration reconnect-loop`) with a manual higher-iteration soak runner.
 - Integration reliability baseline in CI now includes mixed resilience loops (`integration roundtrip` + `integration reconnect-loop` + `integration conflict-recovery` + `integration mixed-resilience`) with a manual higher-iteration soak runner.
+- Integration reliability evidence suite is now available (`tools/run_mcp_integration_reliability_suite_task.ps1`) with JSON report output for release-candidate runs.
 - Manual release packaging automation baseline is now in place for server/plugin distribution artifacts.
 - Day-0 packaged-artifact validation baseline is now in place (packaged server boot + smoke + plugin archive checks).
 - Plugin distribution now includes versioned source plugin archives; manual release workflow enforces Rojo to produce installable `.rbxm` artifacts, while end-user/local flows remain Rojo-optional.
@@ -159,6 +160,7 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - Integration mixed-resilience contract script: `tools/mcp_integration_mixed_resilience_contract_test.ps1`.
   - One-click integration mixed-resilience flow: `tools/run_mcp_integration_mixed_resilience_task.ps1`.
   - Integration soak runner script: `tools/run_mcp_integration_soak_task.ps1` (manual higher-iteration reconnect-loop verification).
+  - Integration reliability suite runner: `tools/run_mcp_integration_reliability_suite_task.ps1` (aggregated reconnect/conflict/mixed evidence with report output to `tools/integration_reliability_report.json`).
   - Release packaging manifest output: `dist/release/release_manifest.json` with platform, artifact names, and commit metadata.
   - Rojo parity diff script: `tools/rojo_parity_diff_check.ps1` (normalized MCP vs live Rojo comparison report).
   - One-click Rojo parity diff flow: `tools/run_rojo_parity_diff_task.ps1` (parameterized by `-ProjectFile`, `-ReportPath`, and optional `-MutationFilePath` for reversible changefeed exercise).
@@ -197,6 +199,7 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - Optional CI parity gate: manual `workflow_dispatch` with `run_rojo_parity_diff=true` runs Rojo parity fixture suite on Windows (skips if `rojo` CLI is not present).
   - Optional strict manual parity mode: set `workflow_dispatch` input `strict_rojo_parity=true` to fail when parity reports are missing or when total diffs are non-zero.
   - Optional targeted strict manual parity mode: set `workflow_dispatch` input `strict_rojo_parity_categories` to comma-separated category names to execute only selected fixture categories and fail when those categories have non-zero diffs.
+  - Optional manual integration reliability gate: set `workflow_dispatch` input `run_integration_reliability_suite=true` (with optional `integration_reliability_iterations`) to run aggregated reliability evidence and upload `integration-reliability-report` artifact.
   - Manual parity runs generate `tools/parity_diff_summary.json` from `tools/parity_diff_report*.json` (including fixture metadata and category breakdown), print `Parity summary: fixtures=<n> totalDiffs=<n> categoryDiffs=<category:diffs|...>` in CI logs, and upload both as workflow artifact `rojo-parity-reports` for inspection/download.
   - Manual release packaging workflow: `.github/workflows/release-packaging.yml` (`workflow_dispatch` only; no scheduled/nightly run) now runs packaged Day-0 validation prior to artifact upload.
   - Manual release packaging workflow additionally generates and verifies release checksums prior to artifact upload.

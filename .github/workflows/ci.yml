@@ -20,6 +20,16 @@ on:
         required: false
         default: ""
         type: string
+      run_integration_reliability_suite:
+        description: "Run optional integration reliability evidence suite (Windows)"
+        required: false
+        default: false
+        type: boolean
+      integration_reliability_iterations:
+        description: "Reconnect-loop iterations for optional reliability suite (conflict/mixed use smaller derived counts)"
+        required: false
+        default: "5"
+        type: string
 
 jobs:
   validate-windows:
@@ -88,6 +98,23 @@ jobs:
       - name: Run MCP protocol contract task
         shell: pwsh
         run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_protocol_task.ps1
+
+      - name: Run integration reliability suite (optional)
+        if: github.event_name == 'workflow_dispatch' && inputs.run_integration_reliability_suite == true
+        shell: pwsh
+        run: |
+          $reconnectIterations = [int]::Parse('${{ inputs.integration_reliability_iterations }}')
+          $conflictIterations = [Math]::Max(1, [int]([Math]::Floor($reconnectIterations / 2)))
+          $mixedIterations = [Math]::Max(1, [int]([Math]::Floor($reconnectIterations / 2)))
+          powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_integration_reliability_suite_task.ps1 -ReconnectIterations $reconnectIterations -ConflictIterations $conflictIterations -MixedIterations $mixedIterations
+
+      - name: Upload integration reliability report (optional)
+        if: github.event_name == 'workflow_dispatch' && inputs.run_integration_reliability_suite == true
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-reliability-report
+          path: tools/integration_reliability_report.json
+          if-no-files-found: error
 
       - name: Run Rojo parity suite task (optional)
         if: github.event_name == 'workflow_dispatch' && inputs.run_rojo_parity_diff == true

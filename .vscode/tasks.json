@@ -175,6 +175,19 @@
 			"isBackground": false
 		},
 		{
+			"label": "MCP: Integration Reliability Suite (manual evidence)",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"tools/run_mcp_integration_reliability_suite_task.ps1"
+			],
+			"isBackground": false
+		},
+		{
 			"label": "MCP: Rojo Parity Diff (start+run+compare+stop)",
 			"type": "shell",
 			"command": "powershell",
