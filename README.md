@@ -4,7 +4,7 @@ Active implementation workspace for the MCP Server + Roblox Studio plugin projec
 
 Latest dev prerelease: https://github.com/Adrasteon/Adrablox/releases/tag/dev-2026-02-26-689cf31
 
-First use (download and deploy): Open the link above, click **Assets**, and download the two files for your computer (for most people on Windows, this is `mcp-server-windows.zip` and `mcp-studio-plugin-0.1.0-689cf31.rbxm`). Unzip the server file to a normal folder like `Documents\Adrablox`, then run the `mcp-server` program inside it and leave that window open while you use Studio. In Roblox Studio, import the `.rbxm` plugin file, start the plugin, and connect—it should work without extra setup. If you get stuck, open `day0_onboarding.md` in the release files and follow it step by step.
+First use (download and deploy): Open the link above, click **Assets**, and download two files: the server zip for your computer (for most Windows users, `mcp-server-windows.zip`) and the plugin file (`mcp-studio-plugin-0.1.0-689cf31.rbxm`). The server zip is the background service that receives MCP requests; the `.rbxm` file is the Roblox Studio plugin UI that sends those requests while you edit. Unzip the server zip to a normal folder like `Documents\Adrablox`, run the `mcp-server` program inside it, and leave that window open while working. In Roblox Studio, import the `.rbxm` file, open the plugin, and connect to `http://127.0.0.1:44877/mcp`. In VS Code, open this project folder and (if using Copilot MCP tools) add/connect an MCP server at the same address `http://127.0.0.1:44877/mcp` so VS Code and Studio are both talking to the same local server. If you get stuck, open `day0_onboarding.md` in the release files and follow it step by step.
 
 ## What is included
 
