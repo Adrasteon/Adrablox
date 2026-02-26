@@ -126,19 +126,6 @@ jobs:
           path: tools/integration_reliability_report.json
           if-no-files-found: error
 
-      - name: Generate spec readiness report (optional)
-        if: github.event_name == 'workflow_dispatch' && inputs.run_spec_readiness_report == true
-        shell: pwsh
-        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_spec_readiness_report.ps1
-
-      - name: Upload spec readiness report (optional)
-        if: github.event_name == 'workflow_dispatch' && inputs.run_spec_readiness_report == true
-        uses: actions/upload-artifact@v4
-        with:
-          name: spec-readiness-report
-          path: tools/spec_readiness_report.json
-          if-no-files-found: error
-
       - name: Run Rojo parity suite task (optional)
         if: github.event_name == 'workflow_dispatch' && inputs.run_rojo_parity_diff == true
         shell: pwsh
@@ -201,6 +188,19 @@ jobs:
             tools/parity_diff_report*.json
             tools/parity_diff_summary.json
           if-no-files-found: warn
+
+      - name: Generate spec readiness report (optional)
+        if: github.event_name == 'workflow_dispatch' && inputs.run_spec_readiness_report == true
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_spec_readiness_report.ps1
+
+      - name: Upload spec readiness report (optional)
+        if: github.event_name == 'workflow_dispatch' && inputs.run_spec_readiness_report == true
+        uses: actions/upload-artifact@v4
+        with:
+          name: spec-readiness-report
+          path: tools/spec_readiness_report.json
+          if-no-files-found: error
 
       - name: Run Rojo parity edge semantics task (optional)
         if: github.event_name == 'workflow_dispatch' && inputs.run_rojo_edge_semantics == true
