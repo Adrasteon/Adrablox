@@ -4,7 +4,19 @@ Active implementation workspace for the MCP Server + Roblox Studio plugin projec
 
 Latest dev prerelease: https://github.com/Adrasteon/Adrablox/releases/tag/dev-2026-02-26-689cf31
 
-First use (download and deploy): Open the link above, click **Assets**, and download two files: the server zip for your computer (for most Windows users, `mcp-server-windows.zip`) and the plugin file (`mcp-studio-plugin-0.1.0-689cf31.rbxm`). The server zip is the background service that receives MCP requests; the `.rbxm` file is the Roblox Studio plugin UI that sends those requests while you edit. Unzip the server zip to a normal folder like `Documents\Adrablox`, run the `mcp-server` program inside it, and leave that window open while working. In Roblox Studio, import the `.rbxm` file, open the plugin, and connect to `http://127.0.0.1:44877/mcp`. In VS Code, open this project folder and (if using Copilot MCP tools) add/connect an MCP server at the same address `http://127.0.0.1:44877/mcp` so VS Code and Studio are both talking to the same local server. If you get stuck, open `day0_onboarding.md` in the release files and follow it step by step.
+First use (download and deploy):
+
+1. Open the release link above, click **Assets**, and download:
+  - the server zip for your computer (most Windows users: `mcp-server-windows.zip`)
+  - the plugin file (`mcp-studio-plugin-0.1.0-689cf31.rbxm`)
+2. What these files do:
+  - server zip = the local background service that handles MCP requests
+  - `.rbxm` file = the Roblox Studio plugin interface that sends requests to that service
+3. Unzip the server zip to a normal folder like `Documents\Adrablox`, run `mcp-server`, and leave that window open.
+4. In Roblox Studio, import the `.rbxm` plugin, open it, and connect to `http://127.0.0.1:44877/mcp`.
+5. In VS Code, open this project folder and (if using Copilot MCP tools) add/connect an MCP server at `http://127.0.0.1:44877/mcp` so VS Code and Studio use the same local server.
+
+If you get stuck, open `day0_onboarding.md` in the release files and follow it step by step.
 
 ## What is included
 
