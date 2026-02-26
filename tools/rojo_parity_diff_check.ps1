@@ -3,6 +3,9 @@ param(
     [string]$McpBase = "http://127.0.0.1:44877",
     [string]$RojoBase = "http://127.0.0.1:34872",
     [string]$ReportPath = "tools/parity_diff_report.json",
+    [string]$MutationFilePath = "",
+    [string]$MutationMarker = "-- parity-mutation-marker",
+    [int]$MutationSettleMs = 1200,
     [switch]$FailOnDiff
 )
 
@@ -229,6 +232,29 @@ function Compare-Hash {
     return $diffs
 }
 
+function Compare-SubscribeSummary {
+    param(
+        $Left,
+        $Right,
+        [string]$Prefix
+    )
+
+    $diffs = New-Object System.Collections.Generic.List[string]
+
+    if ($Left.available -and $Right.available) {
+        if ($Left.addedCount -ne $Right.addedCount) {
+            $diffs.Add("$Prefix.addedCount mismatch (mcp=$($Left.addedCount) rojo=$($Right.addedCount))") | Out-Null
+        }
+        if ($Left.updatedCount -ne $Right.updatedCount) {
+            $diffs.Add("$Prefix.updatedCount mismatch (mcp=$($Left.updatedCount) rojo=$($Right.updatedCount))") | Out-Null
+        }
+        if ($Left.removedCount -ne $Right.removedCount) {
+            $diffs.Add("$Prefix.removedCount mismatch (mcp=$($Left.removedCount) rojo=$($Right.removedCount))") | Out-Null
+        }
+    }
+    return $diffs
+}
+
 $mcpOpen = Try-OpenApi -Base $McpBase -ProjectPath $ProjectPath -PreferPost
 $rojoOpen = Try-OpenApi -Base $RojoBase -ProjectPath $ProjectPath
 
@@ -252,6 +278,16 @@ $rojoReadSummary = Summarize-ReadPayload -Read $rojoRead
 $mcpSubSummary = Summarize-SubscribePayload -Sub $mcpSub
 $rojoSubSummary = Summarize-SubscribePayload -Sub $rojoSub
 
+$mutationSummary = [ordered]@{
+    enabled = -not [string]::IsNullOrWhiteSpace($MutationFilePath)
+    attempted = $false
+    applied = $false
+    restored = $false
+    filePath = $MutationFilePath
+    mcp = $null
+    rojo = $null
+}
+
 $diffs = New-Object System.Collections.Generic.List[string]
 
 if ($mcpReadSummary.instanceCount -ne $rojoReadSummary.instanceCount) {
@@ -270,15 +306,45 @@ foreach ($entry in (Compare-Hash -Left $mcpReadSummary.classHistogram -Right $ro
     $diffs.Add($entry) | Out-Null
 }
 
-if ($mcpSubSummary.available -and $rojoSubSummary.available) {
-    if ($mcpSubSummary.addedCount -ne $rojoSubSummary.addedCount) {
-        $diffs.Add("subscribe.addedCount mismatch (mcp=$($mcpSubSummary.addedCount) rojo=$($rojoSubSummary.addedCount))") | Out-Null
+foreach ($entry in (Compare-SubscribeSummary -Left $mcpSubSummary -Right $rojoSubSummary -Prefix "subscribe")) {
+    $diffs.Add($entry) | Out-Null
+}
+
+if ($mutationSummary.enabled) {
+    $workspace = Split-Path -Parent $PSScriptRoot
+    $mutationFullPath = Join-Path $workspace $MutationFilePath
+    Assert-True -Condition (Test-Path $mutationFullPath) -Message "Mutation file not found: $mutationFullPath"
+
+    $mutationSummary.attempted = $true
+    $backupPath = "$mutationFullPath.parity_tmp_backup"
+    Copy-Item -Path $mutationFullPath -Destination $backupPath -Force
+    $timestampTag = (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmssfff")
+    $appendLine = "$MutationMarker $timestampTag"
+
+    try {
+        Add-Content -Path $mutationFullPath -Value ("`r`n" + $appendLine)
+        $mutationSummary.applied = $true
+
+        Start-Sleep -Milliseconds $MutationSettleMs
+
+        $mcpMutationSub = Invoke-SubscribeCompat -Base $McpBase -SessionId $mcpSession -Cursor $mcpReadSummary.cursor
+        $rojoMutationSub = Invoke-SubscribeCompat -Base $RojoBase -SessionId $rojoSession -Cursor $rojoReadSummary.cursor
+
+        $mcpMutationSummary = Summarize-SubscribePayload -Sub $mcpMutationSub
+        $rojoMutationSummary = Summarize-SubscribePayload -Sub $rojoMutationSub
+
+        $mutationSummary.mcp = $mcpMutationSummary
+        $mutationSummary.rojo = $rojoMutationSummary
+
+        foreach ($entry in (Compare-SubscribeSummary -Left $mcpMutationSummary -Right $rojoMutationSummary -Prefix "mutation.subscribe")) {
+            $diffs.Add($entry) | Out-Null
+        }
     }
-    if ($mcpSubSummary.updatedCount -ne $rojoSubSummary.updatedCount) {
-        $diffs.Add("subscribe.updatedCount mismatch (mcp=$($mcpSubSummary.updatedCount) rojo=$($rojoSubSummary.updatedCount))") | Out-Null
-    }
-    if ($mcpSubSummary.removedCount -ne $rojoSubSummary.removedCount) {
-        $diffs.Add("subscribe.removedCount mismatch (mcp=$($mcpSubSummary.removedCount) rojo=$($rojoSubSummary.removedCount))") | Out-Null
+    finally {
+        if (Test-Path $backupPath) {
+            Move-Item -Path $backupPath -Destination $mutationFullPath -Force
+        }
+        $mutationSummary.restored = $true
     }
 }
 
@@ -302,11 +368,11 @@ $report = [ordered]@{
             mcp = $mcpSubSummary
             rojo = $rojoSubSummary
         }
+        mutationSummary = $mutationSummary
     }
     diffCount = $diffs.Count
     diffs = @($diffs)
 }
-
 $workspace = Split-Path -Parent $PSScriptRoot
 $fullReportPath = Join-Path $workspace $ReportPath
 $reportDir = Split-Path -Parent $fullReportPath

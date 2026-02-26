@@ -143,8 +143,8 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - Invalid-session contract script: `tools/mcp_invalid_session_contract_test.ps1`.
   - One-click invalid-session flow: `tools/run_mcp_invalid_session_task.ps1`.
   - Rojo parity diff script: `tools/rojo_parity_diff_check.ps1` (normalized MCP vs live Rojo comparison report).
-  - One-click Rojo parity diff flow: `tools/run_rojo_parity_diff_task.ps1` (parameterized by `-ProjectFile` and `-ReportPath`).
-  - One-click Rojo parity suite flow: `tools/run_rojo_parity_suite_task.ps1` (runs all fixtures with fail-on-diff).
+  - One-click Rojo parity diff flow: `tools/run_rojo_parity_diff_task.ps1` (parameterized by `-ProjectFile`, `-ReportPath`, and optional `-MutationFilePath` for reversible changefeed exercise).
+  - One-click Rojo parity suite flow: `tools/run_rojo_parity_suite_task.ps1` (runs all fixtures with fail-on-diff, including mutation parity checks).
   - Latest baseline fixture parity run (`default.project.json`) reports `diffCount=0` in `tools/parity_diff_report.json`.
   - Latest complex fixture parity run (`fixtures/complex.project.json`) reports `diffCount=0` in `tools/parity_diff_report_complex.json`.
   - Cross-platform protocol contract script: `tools/mcp_protocol_contract_test.py`.

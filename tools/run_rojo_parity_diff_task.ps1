@@ -1,6 +1,9 @@
 param(
     [string]$ProjectFile = "default.project.json",
     [string]$ReportPath = "tools/parity_diff_report.json",
+    [string]$MutationFilePath = "",
+    [string]$MutationMarker = "-- parity-mutation-marker",
+    [int]$MutationSettleMs = 1200,
     [switch]$FailOnDiff
 )
 
@@ -120,6 +123,9 @@ try {
     $parityArgs = @{
         ProjectPath = $ProjectFile
         ReportPath = $ReportPath
+        MutationFilePath = $MutationFilePath
+        MutationMarker = $MutationMarker
+        MutationSettleMs = $MutationSettleMs
     }
     if ($FailOnDiff) {
         $parityArgs.FailOnDiff = $true

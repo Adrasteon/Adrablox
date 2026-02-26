@@ -149,6 +149,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_parity_diff_t
 ```
 
 The parity report is written to `tools/parity_diff_report.json`.
+Optional: pass `-MutationFilePath <workspace-relative-file>` to exercise a reversible file edit and compare post-mutation subscribe deltas when both servers expose subscribe.
 
 Rojo parity suite (run all fixtures, fail on any diff):
 
@@ -156,6 +157,8 @@ Rojo parity suite (run all fixtures, fail on any diff):
 Set-Location D:\roblox
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_parity_suite_task.ps1
 ```
+
+The suite now runs static parity plus a reversible mutation check per fixture.
 
 Policy contract test (start+run+stop in one command):
 
