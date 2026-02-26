@@ -243,11 +243,23 @@ jobs:
 
           powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_release_candidate_evidence_pack_task.ps1 @packArgs
 
-      - name: Upload release-candidate evidence artifact (optional)
-        if: github.event_name == 'workflow_dispatch' && inputs.run_release_candidate_evidence_pack == true
+      - name: Upload release-candidate evidence artifact (distribution on)
+        if: github.event_name == 'workflow_dispatch' && inputs.run_release_candidate_evidence_pack == true && inputs.release_candidate_include_distribution_evidence == true
         uses: actions/upload-artifact@v4
         with:
-          name: release-candidate-evidence
+          name: release-candidate-evidence-it${{ inputs.integration_reliability_iterations }}-dist-on
+          path: |
+            tools/integration_reliability_report.json
+            tools/parity_diff_report*.json
+            tools/parity_diff_summary.json
+            tools/spec_readiness_report.json
+          if-no-files-found: warn
+
+      - name: Upload release-candidate evidence artifact (distribution off)
+        if: github.event_name == 'workflow_dispatch' && inputs.run_release_candidate_evidence_pack == true && inputs.release_candidate_include_distribution_evidence != true
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-candidate-evidence-it${{ inputs.integration_reliability_iterations }}-dist-off
           path: |
             tools/integration_reliability_report.json
             tools/parity_diff_report*.json
