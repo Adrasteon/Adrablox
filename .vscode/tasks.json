@@ -238,6 +238,19 @@
 				"tools/run_day0_packaged_validation_task.ps1"
 			],
 			"isBackground": false
+		},
+		{
+			"label": "Day-0: 4) Validate Published Artifact Bundle",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"tools/run_day0_published_artifact_validation_task.ps1"
+			],
+			"isBackground": false
 		}
 	]
 }

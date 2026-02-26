@@ -40,6 +40,10 @@ jobs:
         shell: pwsh
         run: ./tools/run_day0_packaged_validation_task.ps1 -SkipPackaging
 
+      - name: Validate published artifact Day-0 path
+        shell: pwsh
+        run: ./tools/run_day0_published_artifact_validation_task.ps1 -RequireInstallable
+
       - name: Generate release checksums
         shell: pwsh
         run: ./tools/generate_release_checksums.ps1

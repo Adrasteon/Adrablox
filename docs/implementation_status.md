@@ -29,6 +29,7 @@ Last updated: 2026-02-26
 - Plugin distribution now includes versioned source plugin archives; manual release workflow enforces Rojo to produce installable `.rbxm` artifacts, while end-user/local flows remain Rojo-optional.
 - Manual release workflow now pins Rojo version and includes explicit release-manifest artifact-naming validation.
 - Manual release workflow now generates and verifies SHA-256 checksums for release artifacts.
+- Manual release workflow now runs published-artifact Day-0 validation against `dist/release` bundle contents.
 
 ## Not Ready
 
@@ -180,6 +181,7 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - Plugin installable packaging project: `plugin/mcp-studio.plugin.project.json` (Rojo build target for versioned `.rbxm` output when available).
   - Plugin packaging entrypoint script: `plugin/mcp-studio/packaging/PluginMain.server.lua`.
   - Day-0 packaged validation script: `tools/run_day0_packaged_validation_task.ps1` (runs packaged server binary + smoke validation + plugin archive file checks).
+  - Day-0 published-bundle validation script: `tools/run_day0_published_artifact_validation_task.ps1` (runs packaged server binary from release bundle with temp project and direct MCP lifecycle/tool checks).
   - Release manifest validator script: `tools/validate_release_manifest.ps1` (checks manifest schema and artifact naming/presence; supports required installable-artifact enforcement).
   - Release checksum script: `tools/generate_release_checksums.ps1` (generates and verifies SHA-256 checksums for manifest-declared release artifacts).
   - Rojo compatibility check script: `tools/rojo_compat_check.ps1`.
@@ -193,6 +195,7 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - Manual parity runs generate `tools/parity_diff_summary.json` from `tools/parity_diff_report*.json` (including fixture metadata and category breakdown), print `Parity summary: fixtures=<n> totalDiffs=<n> categoryDiffs=<category:diffs|...>` in CI logs, and upload both as workflow artifact `rojo-parity-reports` for inspection/download.
   - Manual release packaging workflow: `.github/workflows/release-packaging.yml` (`workflow_dispatch` only; no scheduled/nightly run) now runs packaged Day-0 validation prior to artifact upload.
   - Manual release packaging workflow additionally generates and verifies release checksums prior to artifact upload.
+  - Manual release packaging workflow now also runs published-artifact Day-0 validation (with installable plugin required).
 
 ## In Progress / Remaining
 
