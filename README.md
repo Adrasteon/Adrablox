@@ -158,7 +158,7 @@ Set-Location D:\roblox
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_parity_suite_task.ps1
 ```
 
-The suite now runs static parity plus a reversible mutation check per fixture.
+The suite now runs static parity plus a reversible mutation check per fixture (currently default, complex, service-heavy, and nested-modules fixtures).
 
 Policy contract test (start+run+stop in one command):
 

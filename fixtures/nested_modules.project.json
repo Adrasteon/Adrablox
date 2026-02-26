@@ -1,0 +1,42 @@
+{
+  "name": "McpParityNestedModulesFixture",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "Game": {
+        "$className": "Folder",
+        "Bootstrap": {
+          "$path": "nested_modules_src/Game/Bootstrap.server.lua"
+        },
+        "Features": {
+          "$className": "Folder",
+          "Combat": {
+            "$className": "Folder",
+            "Resolver": {
+              "$path": "nested_modules_src/Game/Features/Combat/Resolver.module.lua"
+            }
+          },
+          "Economy": {
+            "$className": "Folder",
+            "Prices": {
+              "$path": "nested_modules_src/Game/Features/Economy/Prices.module.lua"
+            }
+          }
+        }
+      }
+    },
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Packages": {
+        "$className": "Folder",
+        "Util": {
+          "$className": "Folder",
+          "MathUtil": {
+            "$path": "nested_modules_src/Packages/Util/MathUtil.module.lua"
+          }
+        }
+      }
+    }
+  }
+}

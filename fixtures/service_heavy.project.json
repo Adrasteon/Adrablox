@@ -1,0 +1,39 @@
+{
+  "name": "McpParityServiceHeavyFixture",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "Init": {
+        "$path": "service_heavy_src/Server/Init.server.lua"
+      },
+      "Systems": {
+        "$className": "Folder",
+        "Runtime": {
+          "$path": "service_heavy_src/Server/Runtime.module.lua"
+        }
+      }
+    },
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Shared": {
+        "$className": "Folder",
+        "Config": {
+          "$path": "service_heavy_src/Shared/Config.module.lua"
+        },
+        "Types": {
+          "$path": "service_heavy_src/Shared/Types.module.lua"
+        }
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "ClientBoot": {
+          "$path": "service_heavy_src/Client/ClientBoot.client.lua"
+        }
+      }
+    }
+  }
+}
