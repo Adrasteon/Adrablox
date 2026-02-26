@@ -24,6 +24,7 @@ Last updated: 2026-02-26
 - Validation baseline exists and has recent green runs across Rust tests, smoke flow, policy contract flow, and protocol contract flow.
 - CI is configured to run contract checks across Windows and protocol checks across Linux/macOS.
 - Integration reliability baseline is in CI (`integration roundtrip` + `integration reconnect-loop`) with a manual higher-iteration soak runner.
+- Integration reliability baseline in CI now includes conflict-recovery loops (`integration roundtrip` + `integration reconnect-loop` + `integration conflict-recovery`) with a manual higher-iteration soak runner.
 - Manual release packaging automation baseline is now in place for server/plugin distribution artifacts.
 - Day-0 packaged-artifact validation baseline is now in place (packaged server boot + smoke + plugin archive checks).
 - Plugin distribution now includes versioned source plugin archives; manual release workflow enforces Rojo to produce installable `.rbxm` artifacts, while end-user/local flows remain Rojo-optional.
@@ -153,6 +154,8 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - One-click integration roundtrip flow: `tools/run_mcp_integration_roundtrip_task.ps1`.
   - Integration reconnect-loop contract script: `tools/mcp_integration_reconnect_loop_contract_test.ps1`.
   - One-click integration reconnect-loop flow: `tools/run_mcp_integration_reconnect_loop_task.ps1`.
+  - Integration conflict-recovery contract script: `tools/mcp_integration_conflict_recovery_contract_test.ps1`.
+  - One-click integration conflict-recovery flow: `tools/run_mcp_integration_conflict_recovery_task.ps1`.
   - Integration soak runner script: `tools/run_mcp_integration_soak_task.ps1` (manual higher-iteration reconnect-loop verification).
   - Release packaging manifest output: `dist/release/release_manifest.json` with platform, artifact names, and commit metadata.
   - Rojo parity diff script: `tools/rojo_parity_diff_check.ps1` (normalized MCP vs live Rojo comparison report).
@@ -187,7 +190,7 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - Rojo compatibility check script: `tools/rojo_compat_check.ps1`.
   - VS Code tasks for server run, smoke, Day-0 packaged validation, policy contract, Rojo compatibility, Rojo changefeed edge-case, conflict race contract, reconnect/replay contract, invalid-session contract, integration roundtrip contract, integration reconnect-loop contract, integration soak contract, Rojo parity diff, Rojo parity suite, Rojo parity release gate, protocol contract flows, and release artifact packaging.
   - GitHub Actions CI (`.github/workflows/ci.yml`) runs:
-    - Windows: tests + smoke + policy contract + Rojo compatibility + Rojo changefeed edge-case + conflict race + reconnect/replay + invalid-session + integration roundtrip + integration reconnect-loop + protocol contract checks,
+    - Windows: tests + smoke + policy contract + Rojo compatibility + Rojo changefeed edge-case + conflict race + reconnect/replay + invalid-session + integration roundtrip + integration reconnect-loop + integration conflict-recovery + protocol contract checks,
     - Linux/macOS: tests + protocol contract checks.
   - Optional CI parity gate: manual `workflow_dispatch` with `run_rojo_parity_diff=true` runs Rojo parity fixture suite on Windows (skips if `rojo` CLI is not present).
   - Optional strict manual parity mode: set `workflow_dispatch` input `strict_rojo_parity=true` to fail when parity reports are missing or when total diffs are non-zero.

@@ -136,6 +136,19 @@
 			"isBackground": false
 		},
 		{
+			"label": "MCP: Integration Conflict Recovery Contract Test (start+run+stop)",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"tools/run_mcp_integration_conflict_recovery_task.ps1"
+			],
+			"isBackground": false
+		},
+		{
 			"label": "MCP: Integration Soak Contract Test (manual, start+run+stop)",
 			"type": "shell",
 			"command": "powershell",
