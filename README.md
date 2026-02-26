@@ -68,6 +68,17 @@ Active implementation workspace for the MCP Server + Roblox Studio plugin projec
     - Readiness summary line + job summary table are printed automatically when either optional readiness or evidence-pack gate runs.
   - Manual release packaging workflow: `.github/workflows/release-packaging.yml` (`workflow_dispatch` only; packages server and plugin artifacts for Windows/Linux/macOS, installs pinned Rojo `7.7.0-rc.1`, enforces installable plugin build, validates manifest/artifact naming, runs packaged + published Day-0 validations, and generates/verifies release checksums)
 
+### CI artifact naming matrix
+
+| Gate/input path | Artifact name pattern |
+| --- | --- |
+| `run_integration_reliability_suite=true` | `integration-reliability-report-it<iterations>` |
+| `run_spec_readiness_report=true` only | `spec-readiness-report-standalone` |
+| `run_spec_readiness_report=true` with `run_release_candidate_evidence_pack=true` | `spec-readiness-report-with-pack` |
+| `run_release_candidate_evidence_pack=true` + `release_candidate_include_distribution_evidence=false` | `release-candidate-evidence-it<iterations>-dist-off` |
+| `run_release_candidate_evidence_pack=true` + `release_candidate_include_distribution_evidence=true` | `release-candidate-evidence-it<iterations>-dist-on` |
+| `run_rojo_parity_diff=true` | `rojo-parity-reports` |
+
 ## Documentation index
 
 - [docs/day0_onboarding.md](docs/day0_onboarding.md) — minimum setup/run actions for brand-new users
