@@ -50,6 +50,11 @@ on:
         required: false
         default: false
         type: boolean
+      release_candidate_fail_if_not_pass:
+        description: "When evidence pack runs, fail job unless spec readiness is PASS"
+        required: false
+        default: true
+        type: boolean
 
 jobs:
   validate-windows:
@@ -239,6 +244,10 @@ jobs:
 
           if ('${{ inputs.release_candidate_include_distribution_evidence }}' -eq 'true') {
             $packArgs += '-IncludeDistributionEvidence'
+          }
+
+          if ('${{ inputs.release_candidate_fail_if_not_pass }}' -eq 'true') {
+            $packArgs += '-FailIfNotPass'
           }
 
           powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_release_candidate_evidence_pack_task.ps1 @packArgs
