@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       run_rojo_parity_diff:
-        description: "Run optional MCP vs live Rojo parity diff task"
+        description: "Run optional MCP vs live Rojo parity fixture suite"
         required: false
         default: false
         type: boolean
@@ -63,15 +63,15 @@ jobs:
         shell: pwsh
         run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_protocol_task.ps1
 
-      - name: Run Rojo parity diff task (optional)
+      - name: Run Rojo parity suite task (optional)
         if: github.event_name == 'workflow_dispatch' && inputs.run_rojo_parity_diff == true
         shell: pwsh
         run: |
           if (-not (Get-Command rojo -ErrorAction SilentlyContinue)) {
-            Write-Host "Rojo CLI not found on runner; skipping optional parity diff."
+            Write-Host "Rojo CLI not found on runner; skipping optional parity suite."
             exit 0
           }
-          powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_parity_diff_task.ps1
+          powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_parity_suite_task.ps1
 
   validate-unix:
     name: Validate (${{ matrix.os }})

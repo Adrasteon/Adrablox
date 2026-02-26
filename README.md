@@ -28,13 +28,14 @@ Active implementation workspace for the MCP Server + Roblox Studio plugin projec
   - `tools/run_mcp_invalid_session_task.ps1`: start server, run invalid-session contract test, stop server
   - `tools/rojo_parity_diff_check.ps1`: compares normalized MCP vs live Rojo serve snapshots and writes a diff report
   - `tools/run_rojo_parity_diff_task.ps1`: start MCP + Rojo serve, run parity diff, stop both servers
+  - `tools/run_rojo_parity_suite_task.ps1`: runs parity diff against all fixture projects with fail-on-diff behavior
   - `tools/mcp_protocol_contract_test.py`: cross-platform protocol contract checks (capabilities + session metadata)
   - `tools/run_mcp_protocol_task.ps1`: start server, run protocol contract test, stop server (Windows)
   - `tools/run_mcp_protocol_task.sh`: start server, run protocol contract test, stop server (Linux/macOS)
   - `tools/run_mcp_server.ps1`: run server for manual Studio testing
-  - VS Code tasks: `Day-0: 1) Smoke Test (start+run+stop)`, `Day-0: 2) Run Server (manual Studio session)`, `MCP: Policy Contract Test (start+run+stop)`, `MCP: Rojo Compat Test (start+run+stop)`, `MCP: Rojo Changefeed Edge Test (start+run+stop)`, `MCP: Conflict Race Contract Test (start+run+stop)`, `MCP: Reconnect Replay Contract Test (start+run+stop)`, `MCP: Invalid Session Contract Test (start+run+stop)`, `MCP: Rojo Parity Diff (start+run+compare+stop)`, `MCP: Protocol Contract Test (start+run+stop)`
+  - VS Code tasks: `Day-0: 1) Smoke Test (start+run+stop)`, `Day-0: 2) Run Server (manual Studio session)`, `MCP: Policy Contract Test (start+run+stop)`, `MCP: Rojo Compat Test (start+run+stop)`, `MCP: Rojo Changefeed Edge Test (start+run+stop)`, `MCP: Conflict Race Contract Test (start+run+stop)`, `MCP: Reconnect Replay Contract Test (start+run+stop)`, `MCP: Invalid Session Contract Test (start+run+stop)`, `MCP: Rojo Parity Diff (start+run+compare+stop)`, `MCP: Rojo Parity Suite (fixtures, fail-on-diff)`, `MCP: Protocol Contract Test (start+run+stop)`
   - CI workflow: `.github/workflows/ci.yml` (Windows expanded contract checks + Linux/macOS protocol contract checks)
-    - Optional parity gate: `workflow_dispatch` input `run_rojo_parity_diff=true` runs `tools/run_rojo_parity_diff_task.ps1` on Windows (auto-skips if `rojo` CLI is unavailable on runner)
+    - Optional parity gate: `workflow_dispatch` input `run_rojo_parity_diff=true` runs `tools/run_rojo_parity_suite_task.ps1` on Windows (auto-skips if `rojo` CLI is unavailable on runner)
 
 ## Documentation index
 
@@ -148,6 +149,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_parity_diff_t
 ```
 
 The parity report is written to `tools/parity_diff_report.json`.
+
+Rojo parity suite (run all fixtures, fail on any diff):
+
+```powershell
+Set-Location D:\roblox
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_parity_suite_task.ps1
+```
 
 Policy contract test (start+run+stop in one command):
 

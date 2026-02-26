@@ -123,6 +123,19 @@
 			"isBackground": false
 		},
 		{
+			"label": "MCP: Rojo Parity Suite (fixtures, fail-on-diff)",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"tools/run_rojo_parity_suite_task.ps1"
+			],
+			"isBackground": false
+		},
+		{
 			"label": "MCP: Protocol Contract Test (start+run+stop)",
 			"type": "shell",
 			"command": "powershell",
