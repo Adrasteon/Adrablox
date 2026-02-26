@@ -54,5 +54,21 @@
     "projectFile": "fixtures/ui_container.project.json",
     "reportPath": "tools/parity_diff_report_ui_container.json",
     "mutationFilePath": "fixtures/ui_container_src/Shared/Theme.module.lua"
+  },
+  {
+    "name": "serverstorage-flow",
+    "category": "serverstorage",
+    "enabled": true,
+    "projectFile": "fixtures/serverstorage_flow.project.json",
+    "reportPath": "tools/parity_diff_report_serverstorage_flow.json",
+    "mutationFilePath": "fixtures/serverstorage_flow_src/Shared/SpawnConfig.module.lua"
+  },
+  {
+    "name": "presentation-services",
+    "category": "presentation-services",
+    "enabled": true,
+    "projectFile": "fixtures/presentation_services.project.json",
+    "reportPath": "tools/parity_diff_report_presentation_services.json",
+    "mutationFilePath": "fixtures/presentation_services_src/Sound/AudioConfig.module.lua"
   }
 ]

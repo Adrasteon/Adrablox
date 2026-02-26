@@ -1,0 +1,30 @@
+{
+  "name": "McpParityServerStorageFlowFixture",
+  "tree": {
+    "$className": "DataModel",
+    "ServerStorage": {
+      "$className": "ServerStorage",
+      "Templates": {
+        "$className": "Folder",
+        "EnemyTemplate": {
+          "$path": "serverstorage_flow_src/ServerStorage/Templates/EnemyTemplate.module.lua"
+        }
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "Bootstrap": {
+        "$path": "serverstorage_flow_src/Server/Bootstrap.server.lua"
+      }
+    },
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Shared": {
+        "$className": "Folder",
+        "SpawnConfig": {
+          "$path": "serverstorage_flow_src/Shared/SpawnConfig.module.lua"
+        }
+      }
+    }
+  }
+}

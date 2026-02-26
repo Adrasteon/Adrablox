@@ -1,0 +1,30 @@
+{
+  "name": "McpParityPresentationServicesFixture",
+  "tree": {
+    "$className": "DataModel",
+    "Lighting": {
+      "$className": "Lighting",
+      "Profiles": {
+        "$className": "Folder",
+        "DayProfile": {
+          "$path": "presentation_services_src/Lighting/DayProfile.module.lua"
+        }
+      }
+    },
+    "SoundService": {
+      "$className": "SoundService",
+      "AudioConfig": {
+        "$path": "presentation_services_src/Sound/AudioConfig.module.lua"
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "ClientInit": {
+          "$path": "presentation_services_src/StarterPlayerScripts/ClientInit.client.lua"
+        }
+      }
+    }
+  }
+}
