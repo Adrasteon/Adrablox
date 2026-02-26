@@ -35,6 +35,11 @@ on:
         required: false
         default: "5"
         type: string
+      run_spec_readiness_report:
+        description: "Generate optional spec readiness report from available evidence artifacts"
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   validate-windows:
@@ -119,6 +124,19 @@ jobs:
         with:
           name: integration-reliability-report
           path: tools/integration_reliability_report.json
+          if-no-files-found: error
+
+      - name: Generate spec readiness report (optional)
+        if: github.event_name == 'workflow_dispatch' && inputs.run_spec_readiness_report == true
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_spec_readiness_report.ps1
+
+      - name: Upload spec readiness report (optional)
+        if: github.event_name == 'workflow_dispatch' && inputs.run_spec_readiness_report == true
+        uses: actions/upload-artifact@v4
+        with:
+          name: spec-readiness-report
+          path: tools/spec_readiness_report.json
           if-no-files-found: error
 
       - name: Run Rojo parity suite task (optional)

@@ -188,6 +188,19 @@
 			"isBackground": false
 		},
 		{
+			"label": "MCP: Spec Readiness Report",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"tools/run_spec_readiness_report.ps1"
+			],
+			"isBackground": false
+		},
+		{
 			"label": "MCP: Rojo Parity Diff (start+run+compare+stop)",
 			"type": "shell",
 			"command": "powershell",
