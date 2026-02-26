@@ -10,6 +10,10 @@ This is the absolute minimum path for a new user with:
 
 Get from zero to a working local MCP session with the fewest actions possible.
 
+## First-Use Download and Deploy (Plain English)
+
+If you are starting from a release download, open the latest dev release page and click **Assets**. Download the server zip for your computer (most people on Windows should pick `mcp-server-windows.zip`) and the plugin file (`mcp-studio-plugin-<version>.rbxm`). Unzip the server zip to a normal folder like `Documents\Adrablox`, then run the `mcp-server` program inside and leave that window open. In Roblox Studio, import the `.rbxm` plugin file, open the plugin, and connect to `http://127.0.0.1:44877/mcp`.
+
 ## Required One-Time Setup
 
 1. Install Rust (`rustup`), which provides `cargo`.
