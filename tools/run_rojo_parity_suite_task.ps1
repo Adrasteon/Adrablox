@@ -17,22 +17,26 @@ if ($fixtures.Count -eq 0) {
 Push-Location $workspace
 try {
     foreach ($fixture in $fixtures) {
+        $fixtureName = [string]$fixture.name
+        $fixtureCategory = [string]$fixture.category
         $projectFile = [string]$fixture.projectFile
         $reportPath = [string]$fixture.reportPath
         $mutationFilePath = [string]$fixture.mutationFilePath
 
-        if ([string]::IsNullOrWhiteSpace($projectFile) -or [string]::IsNullOrWhiteSpace($reportPath) -or [string]::IsNullOrWhiteSpace($mutationFilePath)) {
-            throw "Invalid parity fixture entry in $fixturesPath. Each fixture must define projectFile, reportPath, and mutationFilePath."
+        if ([string]::IsNullOrWhiteSpace($fixtureName) -or [string]::IsNullOrWhiteSpace($fixtureCategory) -or [string]::IsNullOrWhiteSpace($projectFile) -or [string]::IsNullOrWhiteSpace($reportPath) -or [string]::IsNullOrWhiteSpace($mutationFilePath)) {
+            throw "Invalid parity fixture entry in $fixturesPath. Each fixture must define name, category, projectFile, reportPath, and mutationFilePath."
         }
 
-        Write-Host "Running parity diff fixture: $projectFile"
+        Write-Host "Running parity diff fixture: $fixtureName ($fixtureCategory) -> $projectFile"
         & (Join-Path $workspace 'tools\run_rojo_parity_diff_task.ps1') `
             -ProjectFile $projectFile `
             -ReportPath $reportPath `
             -MutationFilePath $mutationFilePath `
+            -FixtureName $fixtureName `
+            -FixtureCategory $fixtureCategory `
             -FailOnDiff
 
-        Write-Host "Fixture passed: $projectFile"
+        Write-Host "Fixture passed: $fixtureName"
     }
 
     Write-Host "Rojo parity suite completed successfully."

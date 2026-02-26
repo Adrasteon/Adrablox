@@ -6,6 +6,8 @@ param(
     [string]$MutationFilePath = "",
     [string]$MutationMarker = "-- parity-mutation-marker",
     [int]$MutationSettleMs = 1200,
+    [string]$FixtureName = "",
+    [string]$FixtureCategory = "",
     [switch]$FailOnDiff
 )
 
@@ -350,6 +352,10 @@ if ($mutationSummary.enabled) {
 
 $report = [ordered]@{
     timestampUtc = (Get-Date).ToUniversalTime().ToString("o")
+    fixture = [ordered]@{
+        name = $FixtureName
+        category = $FixtureCategory
+    }
     projectPath = $ProjectPath
     mcpBase = $McpBase
     rojoBase = $RojoBase

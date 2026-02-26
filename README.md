@@ -29,7 +29,7 @@ Active implementation workspace for the MCP Server + Roblox Studio plugin projec
   - `tools/rojo_parity_diff_check.ps1`: compares normalized MCP vs live Rojo serve snapshots and writes a diff report
   - `tools/run_rojo_parity_diff_task.ps1`: start MCP + Rojo serve, run parity diff, stop both servers
   - `tools/run_rojo_parity_suite_task.ps1`: runs parity diff against all fixture projects with fail-on-diff behavior
-  - `tools/parity_fixtures.json`: manifest defining parity suite fixture coverage (`projectFile`, `reportPath`, `mutationFilePath`)
+  - `tools/parity_fixtures.json`: manifest defining parity suite fixture coverage (`name`, `category`, `projectFile`, `reportPath`, `mutationFilePath`)
   - `tools/run_rojo_parity_release_gate_task.ps1`: runs parity suite then strict summary checks (`-FailIfNoReports -FailIfDiffs`) for local release gating
   - `tools/mcp_protocol_contract_test.py`: cross-platform protocol contract checks (capabilities + session metadata)
   - `tools/run_mcp_protocol_task.ps1`: start server, run protocol contract test, stop server (Windows)
@@ -39,7 +39,8 @@ Active implementation workspace for the MCP Server + Roblox Studio plugin projec
   - CI workflow: `.github/workflows/ci.yml` (Windows expanded contract checks + Linux/macOS protocol contract checks)
     - Optional parity gate: `workflow_dispatch` input `run_rojo_parity_diff=true` runs `tools/run_rojo_parity_suite_task.ps1` on Windows (auto-skips if `rojo` CLI is unavailable on runner)
     - Optional strict mode: set `workflow_dispatch` input `strict_rojo_parity=true` to fail the manual parity run when parity reports are missing or contain diffs.
-    - When this optional parity gate runs, CI builds `tools/parity_diff_summary.json` from `tools/parity_diff_report*.json`, prints `Parity summary: fixtures=<n> totalDiffs=<n>` in job logs, and uploads both in the `rojo-parity-reports` workflow artifact.
+    - Optional targeted strict mode: set `workflow_dispatch` input `strict_rojo_parity_categories` to a comma-separated category list (for example `baseline,structure`) to fail only when those categories have diffs.
+    - When this optional parity gate runs, CI builds `tools/parity_diff_summary.json` from `tools/parity_diff_report*.json`, prints `Parity summary: fixtures=<n> totalDiffs=<n> categoryDiffs=<category:diffs|...>` in job logs, and uploads both in the `rojo-parity-reports` workflow artifact.
 
 ## Documentation index
 

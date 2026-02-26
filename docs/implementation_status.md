@@ -145,7 +145,7 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - Rojo parity diff script: `tools/rojo_parity_diff_check.ps1` (normalized MCP vs live Rojo comparison report).
   - One-click Rojo parity diff flow: `tools/run_rojo_parity_diff_task.ps1` (parameterized by `-ProjectFile`, `-ReportPath`, and optional `-MutationFilePath` for reversible changefeed exercise).
   - One-click Rojo parity suite flow: `tools/run_rojo_parity_suite_task.ps1` (runs all fixtures with fail-on-diff, including mutation parity checks).
-  - Parity fixture manifest: `tools/parity_fixtures.json` (suite fixture definitions are now data-driven for easier expansion).
+  - Parity fixture manifest: `tools/parity_fixtures.json` (suite fixture definitions are now data-driven with fixture metadata: `name`, `category`).
   - One-click local parity release gate flow: `tools/run_rojo_parity_release_gate_task.ps1` (runs fixture suite and strict summary checks).
   - Fixture coverage now includes: `default.project.json`, `fixtures/complex.project.json`, `fixtures/service_heavy.project.json`, and `fixtures/nested_modules.project.json`.
   - Latest baseline fixture parity run (`default.project.json`) reports `diffCount=0` in `tools/parity_diff_report.json`.
@@ -163,7 +163,8 @@ The project has moved from planning/scaffolding into a working MVP implementatio
     - Linux/macOS: tests + protocol contract checks.
   - Optional CI parity gate: manual `workflow_dispatch` with `run_rojo_parity_diff=true` runs Rojo parity fixture suite on Windows (skips if `rojo` CLI is not present).
   - Optional strict manual parity mode: set `workflow_dispatch` input `strict_rojo_parity=true` to fail when parity reports are missing or when total diffs are non-zero.
-  - Manual parity runs generate `tools/parity_diff_summary.json` from `tools/parity_diff_report*.json`, print `Parity summary: fixtures=<n> totalDiffs=<n>` in CI logs, and upload both as workflow artifact `rojo-parity-reports` for inspection/download.
+  - Optional targeted strict manual parity mode: set `workflow_dispatch` input `strict_rojo_parity_categories` to comma-separated category names to fail only when selected categories have non-zero diffs.
+  - Manual parity runs generate `tools/parity_diff_summary.json` from `tools/parity_diff_report*.json` (including fixture metadata and category breakdown), print `Parity summary: fixtures=<n> totalDiffs=<n> categoryDiffs=<category:diffs|...>` in CI logs, and upload both as workflow artifact `rojo-parity-reports` for inspection/download.
 
 ## In Progress / Remaining
 

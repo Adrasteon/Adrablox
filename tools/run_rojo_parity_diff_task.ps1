@@ -4,6 +4,8 @@ param(
     [string]$MutationFilePath = "",
     [string]$MutationMarker = "-- parity-mutation-marker",
     [int]$MutationSettleMs = 1200,
+    [string]$FixtureName = "",
+    [string]$FixtureCategory = "",
     [switch]$FailOnDiff
 )
 
@@ -126,6 +128,8 @@ try {
         MutationFilePath = $MutationFilePath
         MutationMarker = $MutationMarker
         MutationSettleMs = $MutationSettleMs
+        FixtureName = $FixtureName
+        FixtureCategory = $FixtureCategory
     }
     if ($FailOnDiff) {
         $parityArgs.FailOnDiff = $true

@@ -2,7 +2,8 @@ param(
     [string]$ReportsGlob = "tools/parity_diff_report*.json",
     [string]$SummaryPath = "tools/parity_diff_summary.json",
     [switch]$FailIfDiffs,
-    [switch]$FailIfNoReports
+    [switch]$FailIfNoReports,
+    [string]$FailCategories = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -20,6 +21,7 @@ $reports = @(Get-ChildItem -Path $reportSearchPath -File -ErrorAction SilentlyCo
 
 $reportEntries = @()
 $totalDiffCount = 0
+$categoryStats = @{}
 
 foreach ($reportFile in $reports) {
     $raw = Get-Content -Raw -Path $reportFile.FullName
@@ -30,16 +32,60 @@ foreach ($reportFile in $reports) {
         $diffCount = [int]$json.diffCount
     }
 
+    $fixtureName = ""
+    $fixtureCategory = ""
+    if ($json.PSObject.Properties["fixture"] -and $json.fixture) {
+        if ($json.fixture.PSObject.Properties["name"]) {
+            $fixtureName = [string]$json.fixture.name
+        }
+        if ($json.fixture.PSObject.Properties["category"]) {
+            $fixtureCategory = [string]$json.fixture.category
+        }
+    }
+
+    if ([string]::IsNullOrWhiteSpace($fixtureName)) {
+        $fixtureName = [string]$json.projectPath
+    }
+    if ([string]::IsNullOrWhiteSpace($fixtureCategory)) {
+        $fixtureCategory = "uncategorized"
+    }
+
     $entry = [pscustomobject]@{
         reportFile = ("tools/{0}" -f $reportFile.Name)
+        fixtureName = $fixtureName
+        fixtureCategory = $fixtureCategory
         projectPath = [string]$json.projectPath
         timestampUtc = [string]$json.timestampUtc
         diffCount = $diffCount
         hasDiffs = ($diffCount -gt 0)
     }
 
+    if (-not $categoryStats.ContainsKey($fixtureCategory)) {
+        $categoryStats[$fixtureCategory] = [pscustomobject]@{
+            fixtureCount = 0
+            totalDiffCount = 0
+            failingFixtureCount = 0
+        }
+    }
+
+    $categoryStats[$fixtureCategory].fixtureCount += 1
+    $categoryStats[$fixtureCategory].totalDiffCount += $diffCount
+    if ($diffCount -gt 0) {
+        $categoryStats[$fixtureCategory].failingFixtureCount += 1
+    }
+
     $reportEntries += $entry
     $totalDiffCount += $diffCount
+}
+
+$categoryBreakdown = @()
+foreach ($category in ($categoryStats.Keys | Sort-Object)) {
+    $categoryBreakdown += [pscustomobject]@{
+        category = $category
+        fixtureCount = [int]$categoryStats[$category].fixtureCount
+        totalDiffCount = [int]$categoryStats[$category].totalDiffCount
+        failingFixtureCount = [int]$categoryStats[$category].failingFixtureCount
+    }
 }
 
 $summary = [pscustomobject]@{
@@ -48,6 +94,7 @@ $summary = [pscustomobject]@{
     reportCount = $reportEntries.Count
     totalDiffCount = $totalDiffCount
     allPass = (($reportEntries.Count -gt 0) -and ($totalDiffCount -eq 0))
+    categoryBreakdown = $categoryBreakdown
     reports = $reportEntries
 }
 
@@ -73,4 +120,21 @@ if ($FailIfNoReports -and $summary.reportCount -eq 0) {
 
 if ($FailIfDiffs -and $summary.totalDiffCount -gt 0) {
     throw "Parity summary strict mode failed: totalDiffCount=$($summary.totalDiffCount)."
+}
+
+if (-not [string]::IsNullOrWhiteSpace($FailCategories)) {
+    $requestedCategories = @($FailCategories.Split(',') | ForEach-Object { $_.Trim() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Sort-Object -Unique)
+    $availableCategories = @($summary.categoryBreakdown | ForEach-Object { [string]$_.category })
+
+    foreach ($category in $requestedCategories) {
+        if ($availableCategories -notcontains $category) {
+            throw "Parity summary category strict mode failed: category '$category' not found in summary."
+        }
+    }
+
+    $failingSelected = @($summary.categoryBreakdown | Where-Object { $requestedCategories -contains [string]$_.category -and [int]$_.totalDiffCount -gt 0 })
+    if ($failingSelected.Count -gt 0) {
+        $parts = @($failingSelected | ForEach-Object { "{0}:{1}" -f ([string]$_.category), ([int]$_.totalDiffCount) })
+        throw "Parity summary category strict mode failed: selected categories have diffs ($($parts -join ','))."
+    }
 }

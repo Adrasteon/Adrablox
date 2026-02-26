@@ -15,6 +15,11 @@ on:
         required: false
         default: false
         type: boolean
+      strict_rojo_parity_categories:
+        description: "Comma-separated categories for targeted strict diff gating (e.g. baseline,structure)"
+        required: false
+        default: ""
+        type: string
 
 jobs:
   validate-windows:
@@ -87,6 +92,11 @@ jobs:
             $summaryArgs += '-FailIfDiffs'
             $summaryArgs += '-FailIfNoReports'
           }
+          $strictCategories = '${{ inputs.strict_rojo_parity_categories }}'.Trim()
+          if (-not [string]::IsNullOrWhiteSpace($strictCategories)) {
+            $summaryArgs += '-FailCategories'
+            $summaryArgs += $strictCategories
+          }
           powershell -NoProfile -ExecutionPolicy Bypass -File tools/summarize_parity_reports.ps1 @summaryArgs
 
       - name: Print parity summary line (optional)
@@ -101,7 +111,14 @@ jobs:
           $summary = Get-Content -Raw -Path $summaryPath | ConvertFrom-Json
           $fixtureCount = [int]$summary.reportCount
           $totalDiffs = [int]$summary.totalDiffCount
-          Write-Host ("Parity summary: fixtures={0} totalDiffs={1}" -f $fixtureCount, $totalDiffs)
+          $categoryParts = @()
+          foreach ($category in @($summary.categoryBreakdown)) {
+            $categoryName = [string]$category.category
+            $categoryDiffs = [int]$category.totalDiffCount
+            $categoryParts += ("{0}:{1}" -f $categoryName, $categoryDiffs)
+          }
+          $categorySummary = if ($categoryParts.Count -gt 0) { $categoryParts -join '|' } else { 'none' }
+          Write-Host ("Parity summary: fixtures={0} totalDiffs={1} categoryDiffs={2}" -f $fixtureCount, $totalDiffs, $categorySummary)
 
       - name: Upload parity reports artifact (optional)
         if: github.event_name == 'workflow_dispatch' && inputs.run_rojo_parity_diff == true
