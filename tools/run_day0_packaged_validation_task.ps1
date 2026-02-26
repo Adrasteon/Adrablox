@@ -62,7 +62,7 @@ try {
 
     if (-not $IsWindows) {
         Write-Host "Marking packaged server binary executable on Unix..."
-        & chmod +x -- $serverBinary.FullName
+        & chmod +x $serverBinary.FullName
     }
 
     Write-Host "Starting packaged MCP server binary..."
