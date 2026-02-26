@@ -45,6 +45,11 @@ on:
         required: false
         default: false
         type: boolean
+      release_candidate_include_distribution_evidence:
+        description: "When evidence pack runs, also generate full distribution evidence before readiness"
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   validate-windows:
@@ -230,6 +235,10 @@ jobs:
 
           if (-not [string]::IsNullOrWhiteSpace($categories)) {
             $packArgs += @('-Categories', $categories)
+          }
+
+          if ('${{ inputs.release_candidate_include_distribution_evidence }}' -eq 'true') {
+            $packArgs += '-IncludeDistributionEvidence'
           }
 
           powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_release_candidate_evidence_pack_task.ps1 @packArgs
