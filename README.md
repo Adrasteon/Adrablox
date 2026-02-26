@@ -1,6 +1,6 @@
 # Adrablox - Roblox Studio Plugin + MCP Server (VS Code)
 
-Active implementation workspace for the MCP Server + Roblox Studio plugin project.
+Active implementation workspace for the Adrablox Roblox Studio plugin + MCP server project.
 
 Latest dev prerelease: https://github.com/Adrasteon/Adrablox/releases/tag/dev-2026-02-26-689cf31
 

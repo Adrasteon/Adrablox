@@ -112,7 +112,7 @@ Request:
       "tools": {}
     },
     "clientInfo": {
-      "name": "EdiyorStudioPlugin",
+      "name": "AdrabloxStudioPlugin",
       "version": "0.1.0"
     }
   }

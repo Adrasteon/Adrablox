@@ -1,4 +1,4 @@
-# MCP Server + Roblox Studio Plugin: Unified Project Plan
+# Adrablox - MCP Server + Roblox Studio Plugin: Unified Project Plan
 
 Last updated: 2026-02-25 (reviewed against Context7 MCP, Rojo, and Roblox Creator docs; implementation progress synced)
 
