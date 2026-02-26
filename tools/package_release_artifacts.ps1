@@ -1,7 +1,8 @@
 param(
     [string]$OutputDir = "dist/release",
     [switch]$SkipServerBuild,
-    [string]$PluginVersion = ""
+    [string]$PluginVersion = "",
+    [switch]$RequireRojo
 )
 
 $ErrorActionPreference = "Stop"
@@ -60,7 +61,12 @@ try {
 
     $pluginInstallableArtifact = $null
     $pluginInstallableAvailable = $false
-    if (Get-Command rojo -ErrorAction SilentlyContinue) {
+    $rojoCommand = Get-Command rojo -ErrorAction SilentlyContinue
+    if ($RequireRojo -and -not $rojoCommand) {
+        throw "Rojo CLI is required for this packaging run but was not found in PATH."
+    }
+
+    if ($rojoCommand) {
         if (-not (Test-Path $pluginProject)) {
             throw "Plugin project file not found at $pluginProject"
         }

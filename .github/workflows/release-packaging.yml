@@ -21,9 +21,13 @@ jobs:
       - name: Cache Rust build artifacts
         uses: Swatinem/rust-cache@v2
 
+      - name: Install Rojo CLI
+        shell: pwsh
+        run: cargo install rojo --locked
+
       - name: Build and package release artifacts
         shell: pwsh
-        run: ./tools/package_release_artifacts.ps1
+        run: ./tools/package_release_artifacts.ps1 -RequireRojo
 
       - name: Validate packaged Day-0 artifacts
         shell: pwsh

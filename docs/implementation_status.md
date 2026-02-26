@@ -14,7 +14,7 @@ Last updated: 2026-02-26
 
 - Status: MVP+ baseline is implemented and operational.
 - Scope delivered: MCP server + Studio plugin + file-backed live authoring + Rojo-compatible endpoints + policy contracts + CI.
-- Repository state: committed on `main` at `658c371` (latest checkpoint: manual release packaging workflow/task baseline).
+- Repository state: committed on `main` at `92cc94b` (latest checkpoint: versioned plugin packaging + installable path baseline).
 
 ## Ready
 
@@ -26,7 +26,7 @@ Last updated: 2026-02-26
 - Integration reliability baseline is in CI (`integration roundtrip` + `integration reconnect-loop`) with a manual higher-iteration soak runner.
 - Manual release packaging automation baseline is now in place for server/plugin distribution artifacts.
 - Day-0 packaged-artifact validation baseline is now in place (packaged server boot + smoke + plugin archive checks).
-- Plugin distribution now includes versioned source plugin archives, with optional installable `.rbxm` generation when Rojo CLI is available.
+- Plugin distribution now includes versioned source plugin archives; manual release workflow enforces Rojo to produce installable `.rbxm` artifacts, while end-user/local flows remain Rojo-optional.
 
 ## Not Ready
 
@@ -72,7 +72,7 @@ Current: FAIL
 Goal: Ship a repeatable install/run path for new users without dev-only manual steps.
 
 Deliverables:
-- Plugin packaging + versioned distribution workflow (source-archive baseline complete; installable artifact generation is currently Rojo-dependent).
+- Plugin packaging + versioned distribution workflow (source-archive baseline complete; release workflow now enforces installable artifact generation via Rojo).
 - Server artifact packaging and release workflow (baseline implemented; release process still to finalize).
 - Finalized Day-0 onboarding validation against fresh-machine setup (baseline packaged-validation automation implemented).
 
@@ -196,6 +196,7 @@ The project has moved from planning/scaffolding into a working MVP implementatio
 - Continue reconnect/replay hardening and broader conflict-policy options for non-baseline scenarios.
 - Expand automated plugin+server integration/e2e coverage beyond the current CI baseline.
 - Finalize plugin distribution packaging/versioning by making installable plugin artifact generation non-optional in release environments and complete fresh-machine Day-0 validation using published artifacts/docs only.
+- Complete fresh-machine Day-0 validation using published artifacts/docs only.
 
 ## Quick Verification Commands
 
