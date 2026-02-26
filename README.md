@@ -4,6 +4,8 @@ Active implementation workspace for the MCP Server + Roblox Studio plugin projec
 
 Latest dev prerelease: https://github.com/Adrasteon/Adrablox/releases/tag/dev-2026-02-26-689cf31
 
+First use (download and deploy): Open the link above, click **Assets**, and download the two files for your computer (for most people on Windows, this is `mcp-server-windows.zip` and `mcp-studio-plugin-0.1.0-689cf31.rbxm`). Unzip the server file to a normal folder like `Documents\Adrablox`, then run the `mcp-server` program inside it and leave that window open while you use Studio. In Roblox Studio, import the `.rbxm` plugin file, start the plugin, and connect—it should work without extra setup. If you get stuck, open `day0_onboarding.md` in the release files and follow it step by step.
+
 ## What is included
 
 - Rust workspace
