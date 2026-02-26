@@ -6,15 +6,15 @@ Last updated: 2026-02-26
 
 - Delivery status: Core platform is built and functioning (server, Studio plugin, and file-backed live authoring).
 - Validation status: Automated checks and CI are in place with recent green test/smoke/contract runs.
-- Current readiness: Suitable for continued pilot/internal use, not yet final production parity.
-- Remaining risk: Full Rojo serve behavioral parity and edge-case hardening are still in progress.
-- Next milestone: Complete parity + integration hardening, then finish Day-0 validation against packaged artifacts.
+- Current readiness: Strict local release-candidate evidence run now reaches `specComplete=PASS`; broader release-candidate repetition/CI evidence remains the final confidence step.
+- Remaining risk: Confidence level still depends on agreed reliability iteration thresholds and repeated evidence runs, not just single-run pass state.
+- Next milestone: Execute and retain manual CI release-candidate evidence artifacts with distribution mode enabled as formal checkpoint evidence.
 
 ## Current State
 
 - Status: MVP+ baseline is implemented and operational.
 - Scope delivered: MCP server + Studio plugin + file-backed live authoring + Rojo-compatible endpoints + policy contracts + CI.
-- Repository state: committed on `main` at `615f5df` (latest checkpoint: Rojo enforced only in release workflow).
+- Repository state: committed on `main` at `ce1ca65` (latest checkpoint: CI input for evidence-pack distribution mode).
 
 ## Ready
 
@@ -47,7 +47,7 @@ Last updated: 2026-02-26
 
 ### Milestone 1 — Serve-Semantic Parity Lock
 
-Current: IN PROGRESS
+Current: PASS (latest strict local evidence run)
 
 Goal: Close remaining behavioral differences with Rojo serve internals for snapshot/read/subscribe/apply flows.
 
@@ -61,7 +61,7 @@ Pass/Fail gate:
 
 ### Milestone 2 — Integration and Reliability Hardening
 
-Current: IN PROGRESS
+Current: PASS (latest strict local evidence run)
 
 Goal: Prove stable plugin+server behavior under realistic reconnect/conflict/long-running usage.
 
@@ -75,7 +75,7 @@ Pass/Fail gate:
 
 ### Milestone 3 — Distribution and Day-0 Usability
 
-Current: FAIL
+Current: PASS (latest strict local evidence run)
 
 Goal: Ship a repeatable install/run path for new users without dev-only manual steps.
 

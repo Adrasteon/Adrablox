@@ -23,6 +23,27 @@ if ($MutationSettleMs -lt 0) { throw "MutationSettleMs must be >= 0" }
 
 $workspace = Split-Path -Parent $PSScriptRoot
 
+function Ensure-RojoAvailable {
+    $existing = Get-Command rojo -ErrorAction SilentlyContinue
+    if ($null -ne $existing) {
+        return
+    }
+
+    $wingetRoot = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages'
+    if (Test-Path $wingetRoot) {
+        $rojoExe = Get-ChildItem -Path $wingetRoot -Recurse -Filter 'rojo.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($null -ne $rojoExe) {
+            $rojoDir = Split-Path -Parent $rojoExe.FullName
+            $env:Path = "$rojoDir;$env:Path"
+        }
+    }
+
+    $resolved = Get-Command rojo -ErrorAction SilentlyContinue
+    if ($null -eq $resolved) {
+        throw "Rojo CLI is required for this step. Install Rojo or run with -SkipParitySuite (and omit -IncludeDistributionEvidence if packaging validation is not needed)."
+    }
+}
+
 function Invoke-ToolScript {
     param(
         [Parameter(Mandatory = $true)][string]$Name,
@@ -77,9 +98,7 @@ try {
     }
 
     if (-not $SkipParitySuite) {
-        if (-not (Get-Command rojo -ErrorAction SilentlyContinue)) {
-            throw "Rojo CLI is required for parity suite step. Install Rojo or run with -SkipParitySuite to reuse existing parity reports."
-        }
+        Ensure-RojoAvailable
 
         $paritySuiteArgs = @('-MutationSettleMs', "$MutationSettleMs")
         if (-not [string]::IsNullOrWhiteSpace($Categories)) {
@@ -108,6 +127,7 @@ try {
     }
 
     if ($IncludeDistributionEvidence) {
+        Ensure-RojoAvailable
         Invoke-ToolScript -Name 'distribution-package' -ScriptPath 'tools/package_release_artifacts.ps1' -Arguments @('-RequireRojo')
         Invoke-ToolScript -Name 'distribution-manifest' -ScriptPath 'tools/validate_release_manifest.ps1' -Arguments @('-RequireInstallable')
         Invoke-ToolScript -Name 'distribution-checksums-generate' -ScriptPath 'tools/generate_release_checksums.ps1'
