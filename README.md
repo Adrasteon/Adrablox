@@ -53,6 +53,7 @@ Active implementation workspace for the MCP Server + Roblox Studio plugin projec
   - `tools/run_spec_readiness_report.ps1`: computes Milestone 1/2/3 PASS/FAIL/UNKNOWN evidence from parity/reliability/release artifacts and writes `tools/spec_readiness_report.json`
   - `tools/print_spec_readiness_summary.ps1`: prints one-line milestone/overall readiness status and writes GitHub Actions job summary markdown when available
   - `tools/run_release_candidate_evidence_pack_task.ps1`: runs reliability evidence + parity suite/strict summary + spec readiness in one release-candidate command
+  - `tools/run_mission_critical_local_gate_task.ps1`: one-command strict local gate wrapper (`-IncludeDistributionEvidence` + `-FailIfNotPass`) for mission-critical release checks
   - `tools/run_mcp_server.ps1`: run server for manual Studio testing
   - VS Code tasks: `Day-0: 1) Smoke Test (start+run+stop)`, `Day-0: 2) Run Server (manual Studio session)`, `Day-0: 3) Validate Packaged Artifacts (start+run+stop)`, `Day-0: 4) Validate Published Artifact Bundle`, `MCP: Policy Contract Test (start+run+stop)`, `MCP: Rojo Compat Test (start+run+stop)`, `MCP: Rojo Changefeed Edge Test (start+run+stop)`, `MCP: Conflict Race Contract Test (start+run+stop)`, `MCP: Reconnect Replay Contract Test (start+run+stop)`, `MCP: Invalid Session Contract Test (start+run+stop)`, `MCP: Integration Roundtrip Contract Test (start+run+stop)`, `MCP: Integration Reconnect Loop Contract Test (start+run+stop)`, `MCP: Integration Conflict Recovery Contract Test (start+run+stop)`, `MCP: Integration Mixed Resilience Contract Test (start+run+stop)`, `MCP: Integration Soak Contract Test (manual, start+run+stop)`, `MCP: Integration Reliability Suite (manual evidence)`, `MCP: Spec Readiness Report`, `MCP: Release Candidate Evidence Pack`, `MCP: Rojo Parity Diff (start+run+compare+stop)`, `MCP: Rojo Parity Suite (fixtures, fail-on-diff)`, `MCP: Rojo Parity Edge Semantics (focused)`, `MCP: Rojo Parity Release Gate (suite+strict-summary)`, `MCP: Protocol Contract Test (start+run+stop)`, `Release: Package Server + Plugin Artifacts`, `Release: Package Versioned Plugin Artifacts`
   - CI workflow: `.github/workflows/ci.yml` (Windows expanded contract checks + Linux/macOS protocol contract checks)
@@ -291,6 +292,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/dispatch_mission_criti
 ```
 
 This dispatches manual `CI` workflow with strict PASS gating enabled (`release_candidate_fail_if_not_pass=true`) and can watch run completion.
+
+Mission-critical local strict gate (no CI dispatch):
+
+```powershell
+Set-Location D:\roblox
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mission_critical_local_gate_task.ps1
+```
+
+This runs reliability + parity + distribution evidence + readiness in strict PASS-only mode via `tools/run_release_candidate_evidence_pack_task.ps1`.
 
 Policy contract test (start+run+stop in one command):
 

@@ -36,6 +36,7 @@ Last updated: 2026-02-26
 - Readiness summary helper is now available (`tools/print_spec_readiness_summary.ps1`) and is wired to emit concise status output (plus CI job summary markdown when run in GitHub Actions).
 - One-command release-candidate evidence orchestration is now available (`tools/run_release_candidate_evidence_pack_task.ps1`) to run reliability + parity + readiness in sequence.
 - Release-candidate evidence orchestration now supports optional full distribution evidence generation (`-IncludeDistributionEvidence`) before readiness evaluation.
+- Mission-critical local strict gate wrapper is now available (`tools/run_mission_critical_local_gate_task.ps1`) for one-command PASS-only local release gating.
 
 ## Not Ready
 
@@ -173,6 +174,7 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - One-click local parity release gate flow: `tools/run_rojo_parity_release_gate_task.ps1` (runs fixture suite and strict summary checks; supports optional `-Categories`, `-Fixtures`, and `-DryRun` filtering/preview options).
   - Consolidated spec readiness report: `tools/run_spec_readiness_report.ps1` (computes Milestone 1/2/3 + overall spec-complete PASS/FAIL/UNKNOWN from parity/reliability/release evidence artifacts).
   - Release-candidate evidence pack runner: `tools/run_release_candidate_evidence_pack_task.ps1` (orchestrates reliability suite + parity suite/strict summary + optional distribution evidence generation + readiness reporting with optional targeted scope).
+  - Mission-critical local strict gate runner: `tools/run_mission_critical_local_gate_task.ps1` (runs strict local PASS gate with distribution evidence enabled by default).
   - Mission-critical CI dispatch helper: `tools/dispatch_mission_critical_ci_gate.ps1` (dispatches manual strict evidence-pack workflow via `gh` with optional run watch mode).
   - Fixture coverage now includes: `default.project.json`, `fixtures/complex.project.json`, `fixtures/service_heavy.project.json`, `fixtures/nested_modules.project.json`, `fixtures/mixed_services.project.json`, `fixtures/lifecycle_ops.project.json`, `fixtures/ui_container.project.json`, `fixtures/serverstorage_flow.project.json`, `fixtures/presentation_services.project.json`, `fixtures/starterpack_inventory.project.json`, `fixtures/teams_spawns.project.json`, `fixtures/startercharacter_flow.project.json`, and `fixtures/metadata_churn.project.json`.
   - Latest baseline fixture parity run (`default.project.json`) reports `diffCount=0` in `tools/parity_diff_report.json`.
