@@ -10,6 +10,11 @@ on:
         required: false
         default: false
         type: boolean
+      strict_rojo_parity:
+        description: "Fail manual parity run if reports are missing or contain diffs"
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   validate-windows:
@@ -76,7 +81,13 @@ jobs:
       - name: Build parity summary artifact (optional)
         if: github.event_name == 'workflow_dispatch' && inputs.run_rojo_parity_diff == true
         shell: pwsh
-        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/summarize_parity_reports.ps1
+        run: |
+          $summaryArgs = @()
+          if ('${{ inputs.strict_rojo_parity }}' -eq 'true') {
+            $summaryArgs += '-FailIfDiffs'
+            $summaryArgs += '-FailIfNoReports'
+          }
+          powershell -NoProfile -ExecutionPolicy Bypass -File tools/summarize_parity_reports.ps1 @summaryArgs
 
       - name: Print parity summary line (optional)
         if: github.event_name == 'workflow_dispatch' && inputs.run_rojo_parity_diff == true

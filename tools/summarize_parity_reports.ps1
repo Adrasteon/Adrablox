@@ -1,6 +1,8 @@
 param(
     [string]$ReportsGlob = "tools/parity_diff_report*.json",
-    [string]$SummaryPath = "tools/parity_diff_summary.json"
+    [string]$SummaryPath = "tools/parity_diff_summary.json",
+    [switch]$FailIfDiffs,
+    [switch]$FailIfNoReports
 )
 
 $ErrorActionPreference = "Stop"
@@ -63,4 +65,12 @@ elseif ($summary.totalDiffCount -eq 0) {
 }
 else {
     Write-Output "Parity summary: one or more reports contain diffs."
+}
+
+if ($FailIfNoReports -and $summary.reportCount -eq 0) {
+    throw "Parity summary strict mode failed: no parity reports were found."
+}
+
+if ($FailIfDiffs -and $summary.totalDiffCount -gt 0) {
+    throw "Parity summary strict mode failed: totalDiffCount=$($summary.totalDiffCount)."
 }
