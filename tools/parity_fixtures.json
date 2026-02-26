@@ -86,5 +86,13 @@
     "projectFile": "fixtures/teams_spawns.project.json",
     "reportPath": "tools/parity_diff_report_teams_spawns.json",
     "mutationFilePath": "fixtures/teams_spawns_src/Workspace/Selector.module.lua"
+  },
+  {
+    "name": "startercharacter-flow",
+    "category": "startercharacter",
+    "enabled": true,
+    "projectFile": "fixtures/startercharacter_flow.project.json",
+    "reportPath": "tools/parity_diff_report_startercharacter_flow.json",
+    "mutationFilePath": "fixtures/startercharacter_flow_src/Shared/MovementConfig.module.lua"
   }
 ]

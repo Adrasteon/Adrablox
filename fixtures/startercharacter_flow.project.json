@@ -1,0 +1,24 @@
+{
+  "name": "McpParityStarterCharacterFixture",
+  "tree": {
+    "$className": "DataModel",
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterCharacterScripts": {
+        "$className": "StarterCharacterScripts",
+        "CharacterInit": {
+          "$path": "startercharacter_flow_src/StarterCharacterScripts/CharacterInit.client.lua"
+        }
+      }
+    },
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "CharacterShared": {
+        "$className": "Folder",
+        "MovementConfig": {
+          "$path": "startercharacter_flow_src/Shared/MovementConfig.module.lua"
+        }
+      }
+    }
+  }
+}

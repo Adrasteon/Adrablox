@@ -147,7 +147,7 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - One-click Rojo parity suite flow: `tools/run_rojo_parity_suite_task.ps1` (runs all fixtures with fail-on-diff, including mutation parity checks; supports optional `-Categories`, `-Fixtures`, and `-DryRun` filtering/preview options).
   - Parity fixture manifest: `tools/parity_fixtures.json` (suite fixture definitions are now data-driven with fixture metadata: `name`, `category`, `enabled`).
   - One-click local parity release gate flow: `tools/run_rojo_parity_release_gate_task.ps1` (runs fixture suite and strict summary checks; supports optional `-Categories`, `-Fixtures`, and `-DryRun` filtering/preview options).
-  - Fixture coverage now includes: `default.project.json`, `fixtures/complex.project.json`, `fixtures/service_heavy.project.json`, `fixtures/nested_modules.project.json`, `fixtures/mixed_services.project.json`, `fixtures/lifecycle_ops.project.json`, `fixtures/ui_container.project.json`, `fixtures/serverstorage_flow.project.json`, `fixtures/presentation_services.project.json`, `fixtures/starterpack_inventory.project.json`, and `fixtures/teams_spawns.project.json`.
+  - Fixture coverage now includes: `default.project.json`, `fixtures/complex.project.json`, `fixtures/service_heavy.project.json`, `fixtures/nested_modules.project.json`, `fixtures/mixed_services.project.json`, `fixtures/lifecycle_ops.project.json`, `fixtures/ui_container.project.json`, `fixtures/serverstorage_flow.project.json`, `fixtures/presentation_services.project.json`, `fixtures/starterpack_inventory.project.json`, `fixtures/teams_spawns.project.json`, and `fixtures/startercharacter_flow.project.json`.
   - Latest baseline fixture parity run (`default.project.json`) reports `diffCount=0` in `tools/parity_diff_report.json`.
   - Latest complex fixture parity run (`fixtures/complex.project.json`) reports `diffCount=0` in `tools/parity_diff_report_complex.json`.
   - Latest service-heavy fixture parity run (`fixtures/service_heavy.project.json`) reports `diffCount=0` in `tools/parity_diff_report_service_heavy.json`.
@@ -159,6 +159,7 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - Latest presentation-services fixture parity run (`fixtures/presentation_services.project.json`) reports `diffCount=0` in `tools/parity_diff_report_presentation_services.json`.
   - Latest starterpack fixture parity run (`fixtures/starterpack_inventory.project.json`) reports `diffCount=0` in `tools/parity_diff_report_starterpack_inventory.json`.
   - Latest teams-spawns fixture parity run (`fixtures/teams_spawns.project.json`) reports `diffCount=0` in `tools/parity_diff_report_teams_spawns.json`.
+  - Latest startercharacter fixture parity run (`fixtures/startercharacter_flow.project.json`) reports `diffCount=0` in `tools/parity_diff_report_startercharacter_flow.json`.
   - Cross-platform protocol contract script: `tools/mcp_protocol_contract_test.py`.
   - Windows protocol task runner: `tools/run_mcp_protocol_task.ps1`.
   - Linux/macOS protocol task runner: `tools/run_mcp_protocol_task.sh`.
