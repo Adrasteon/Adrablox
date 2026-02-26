@@ -8,7 +8,18 @@ if (-not (Test-Path $cargoExe)) {
     throw "cargo not found at $cargoExe"
 }
 
-function Get-PythonExecutable {
+function Get-PythonCommand {
+    $pythonLocation = $env:pythonLocation
+    if (-not [string]::IsNullOrWhiteSpace($pythonLocation)) {
+        $pythonFromEnv = Join-Path $pythonLocation 'python.exe'
+        if (Test-Path $pythonFromEnv) {
+            return [pscustomobject]@{
+                FilePath = $pythonFromEnv
+                PrefixArgs = @()
+            }
+        }
+    }
+
     $candidates = @(
         "$env:LocalAppData\Programs\Python\Python312\python.exe",
         "$env:LocalAppData\Programs\Python\Python313\python.exe",
@@ -18,14 +29,33 @@ function Get-PythonExecutable {
 
     foreach ($candidate in $candidates) {
         if (Test-Path $candidate) {
-            return $candidate
+            return [pscustomobject]@{
+                FilePath = $candidate
+                PrefixArgs = @()
+            }
         }
     }
 
-    throw "Python executable not found. Install Python 3.12+ or update candidate paths in tools/run_mcp_protocol_task.ps1"
+    $pythonCommand = Get-Command python -ErrorAction SilentlyContinue
+    if ($pythonCommand) {
+        return [pscustomobject]@{
+            FilePath = $pythonCommand.Source
+            PrefixArgs = @()
+        }
+    }
+
+    $pyLauncher = Get-Command py -ErrorAction SilentlyContinue
+    if ($pyLauncher) {
+        return [pscustomobject]@{
+            FilePath = $pyLauncher.Source
+            PrefixArgs = @('-3')
+        }
+    }
+
+    throw "Python executable not found. Install Python 3.12+ (or py launcher) or update candidate paths in tools/run_mcp_protocol_task.ps1"
 }
 
-$pythonExe = Get-PythonExecutable
+$pythonCommand = Get-PythonCommand
 
 Push-Location $workspace
 try {
@@ -51,7 +81,8 @@ try {
     }
 
     Write-Host "Server is healthy. Running protocol contract test..."
-    & $pythonExe (Join-Path $workspace 'tools\mcp_protocol_contract_test.py')
+    $scriptPath = Join-Path $workspace 'tools\mcp_protocol_contract_test.py'
+    & $pythonCommand.FilePath @($pythonCommand.PrefixArgs + @($scriptPath))
 
     Write-Host "Protocol contract task completed successfully."
 }
