@@ -10,6 +10,11 @@ Last updated: 2026-02-26
 - Remaining risk: Main remaining risk is operational repetition cadence (ongoing confidence sampling), not missing gate coverage.
 - Next milestone: Produce and publish a tagged dev release cut from this validated baseline.
 
+## Latest Release Note
+
+- Tagged dev prerelease published: https://github.com/Adrasteon/Adrablox/releases/tag/dev-2026-02-26-689cf31
+- Packaging provenance: successful cross-platform `Release Packaging` workflow run `22453736956` (ubuntu/windows/macos all green).
+
 ## Current State
 
 - Status: MVP+ baseline is implemented and operational.
