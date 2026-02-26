@@ -214,6 +214,21 @@
 			"isBackground": false
 		},
 		{
+			"label": "CI: Dispatch Mission-Critical Evidence Gate",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"tools/dispatch_mission_critical_ci_gate.ps1",
+				"-IncludeDistributionEvidence",
+				"-Watch"
+			],
+			"isBackground": false
+		},
+		{
 			"label": "MCP: Rojo Parity Diff (start+run+compare+stop)",
 			"type": "shell",
 			"command": "powershell",

@@ -283,6 +283,15 @@ Optional: pass `-IncludeDistributionEvidence` to generate full Milestone 3 evide
 Optional: pass `-SkipParitySuite` to reuse existing parity reports (no Rojo execution), `-Categories`/`-Fixtures` to target parity scope, and `-FailIfNotPass` to fail unless all milestone gates are PASS.
 If `rojo` is not on PATH, the runner also attempts to auto-discover a winget-installed Rojo binary under `%LOCALAPPDATA%\Microsoft\WinGet\Packages`.
 
+Mission-critical CI dispatch helper (requires `gh` auth and repo remote):
+
+```powershell
+Set-Location D:\roblox
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/dispatch_mission_critical_ci_gate.ps1 -IncludeDistributionEvidence -Watch
+```
+
+This dispatches manual `CI` workflow with strict PASS gating enabled (`release_candidate_fail_if_not_pass=true`) and can watch run completion.
+
 Policy contract test (start+run+stop in one command):
 
 ```powershell
