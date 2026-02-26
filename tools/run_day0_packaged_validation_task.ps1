@@ -113,9 +113,14 @@ try {
     Write-Host "Day-0 packaged artifact validation completed successfully."
 }
 finally {
-    if ($server -and -not $server.HasExited) {
-        Write-Host "Stopping packaged MCP server..."
-        Stop-Process -Id $server.Id -Force
+    if ($server) {
+        try {
+            $process = Get-Process -Id $server.Id -ErrorAction Stop
+            Write-Host "Stopping packaged MCP server..."
+            Stop-Process -Id $process.Id -Force
+        }
+        catch {
+        }
     }
     Pop-Location
 }

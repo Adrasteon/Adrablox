@@ -129,6 +129,11 @@ try {
         throw "Packaged server binary '$binaryName' not found after extraction."
     }
 
+    if (-not $IsWindows) {
+        Write-Host "Marking packaged server binary executable on Unix..."
+        & chmod +x -- $serverBinary.FullName
+    }
+
     Write-Host "Starting packaged MCP server binary..."
     $server = Start-Process -FilePath $serverBinary.FullName -WorkingDirectory $workspace -PassThru
 
@@ -195,9 +200,14 @@ try {
     Write-Host "Day-0 published artifact validation completed successfully."
 }
 finally {
-    if ($server -and -not $server.HasExited) {
-        Write-Host "Stopping packaged MCP server..."
-        Stop-Process -Id $server.Id -Force
+    if ($server) {
+        try {
+            $process = Get-Process -Id $server.Id -ErrorAction Stop
+            Write-Host "Stopping packaged MCP server..."
+            Stop-Process -Id $process.Id -Force
+        }
+        catch {
+        }
     }
     Pop-Location
 }
