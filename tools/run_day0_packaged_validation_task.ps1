@@ -60,6 +60,11 @@ try {
         throw "Packaged server binary '$binaryName' not found after archive extraction."
     }
 
+    if (-not $IsWindows) {
+        Write-Host "Marking packaged server binary executable on Unix..."
+        & chmod +x -- $serverBinary.FullName
+    }
+
     Write-Host "Starting packaged MCP server binary..."
     $server = Start-Process -FilePath $serverBinary.FullName -WorkingDirectory $workspace -PassThru
 
