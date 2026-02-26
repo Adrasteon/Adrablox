@@ -219,9 +219,17 @@ jobs:
 
       - name: Install Rojo for release-candidate evidence pack (optional)
         if: github.event_name == 'workflow_dispatch' && inputs.run_release_candidate_evidence_pack == true
-        uses: rojo-rbx/setup-rojo@v2
-        with:
-          version: 7.7.0-rc.1
+        shell: pwsh
+        run: |
+          winget install --id Rojo.Rojo --exact --accept-package-agreements --accept-source-agreements
+          if (-not (Get-Command rojo -ErrorAction SilentlyContinue)) {
+            $rojoCandidate = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages\Rojo.Rojo_Microsoft.Winget.Source_8wekyb3d8bbwe\rojo.exe'
+            if (Test-Path $rojoCandidate) {
+              $rojoDir = Split-Path -Parent $rojoCandidate
+              Add-Content -Path $env:GITHUB_PATH -Value $rojoDir
+            }
+          }
+          rojo --version
 
       - name: Run release-candidate evidence pack (optional)
         if: github.event_name == 'workflow_dispatch' && inputs.run_release_candidate_evidence_pack == true
