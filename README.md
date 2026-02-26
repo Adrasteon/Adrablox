@@ -39,13 +39,15 @@ Active implementation workspace for the MCP Server + Roblox Studio plugin projec
   - `tools/mcp_protocol_contract_test.py`: cross-platform protocol contract checks (capabilities + session metadata)
   - `tools/run_mcp_protocol_task.ps1`: start server, run protocol contract test, stop server (Windows)
   - `tools/run_mcp_protocol_task.sh`: start server, run protocol contract test, stop server (Linux/macOS)
+  - `tools/package_release_artifacts.ps1`: builds release server binary and packages server + plugin artifacts into `dist/release`
   - `tools/run_mcp_server.ps1`: run server for manual Studio testing
-  - VS Code tasks: `Day-0: 1) Smoke Test (start+run+stop)`, `Day-0: 2) Run Server (manual Studio session)`, `MCP: Policy Contract Test (start+run+stop)`, `MCP: Rojo Compat Test (start+run+stop)`, `MCP: Rojo Changefeed Edge Test (start+run+stop)`, `MCP: Conflict Race Contract Test (start+run+stop)`, `MCP: Reconnect Replay Contract Test (start+run+stop)`, `MCP: Invalid Session Contract Test (start+run+stop)`, `MCP: Integration Roundtrip Contract Test (start+run+stop)`, `MCP: Integration Reconnect Loop Contract Test (start+run+stop)`, `MCP: Integration Soak Contract Test (manual, start+run+stop)`, `MCP: Rojo Parity Diff (start+run+compare+stop)`, `MCP: Rojo Parity Suite (fixtures, fail-on-diff)`, `MCP: Rojo Parity Release Gate (suite+strict-summary)`, `MCP: Protocol Contract Test (start+run+stop)`
+  - VS Code tasks: `Day-0: 1) Smoke Test (start+run+stop)`, `Day-0: 2) Run Server (manual Studio session)`, `MCP: Policy Contract Test (start+run+stop)`, `MCP: Rojo Compat Test (start+run+stop)`, `MCP: Rojo Changefeed Edge Test (start+run+stop)`, `MCP: Conflict Race Contract Test (start+run+stop)`, `MCP: Reconnect Replay Contract Test (start+run+stop)`, `MCP: Invalid Session Contract Test (start+run+stop)`, `MCP: Integration Roundtrip Contract Test (start+run+stop)`, `MCP: Integration Reconnect Loop Contract Test (start+run+stop)`, `MCP: Integration Soak Contract Test (manual, start+run+stop)`, `MCP: Rojo Parity Diff (start+run+compare+stop)`, `MCP: Rojo Parity Suite (fixtures, fail-on-diff)`, `MCP: Rojo Parity Release Gate (suite+strict-summary)`, `MCP: Protocol Contract Test (start+run+stop)`, `Release: Package Server + Plugin Artifacts`
   - CI workflow: `.github/workflows/ci.yml` (Windows expanded contract checks + Linux/macOS protocol contract checks)
     - Optional parity gate: `workflow_dispatch` input `run_rojo_parity_diff=true` runs `tools/run_rojo_parity_suite_task.ps1` on Windows (auto-skips if `rojo` CLI is unavailable on runner)
     - Optional strict mode: set `workflow_dispatch` input `strict_rojo_parity=true` to fail the manual parity run when parity reports are missing or contain diffs.
     - Optional targeted strict mode: set `workflow_dispatch` input `strict_rojo_parity_categories` to a comma-separated category list (for example `baseline,structure`) to run only those fixture categories and fail when selected categories have diffs.
     - When this optional parity gate runs, CI builds `tools/parity_diff_summary.json` from `tools/parity_diff_report*.json`, prints `Parity summary: fixtures=<n> totalDiffs=<n> categoryDiffs=<category:diffs|...>` in job logs, and uploads both in the `rojo-parity-reports` workflow artifact.
+  - Manual release packaging workflow: `.github/workflows/release-packaging.yml` (`workflow_dispatch` only; packages server and plugin artifacts for Windows/Linux/macOS)
 
 ## Documentation index
 
@@ -183,6 +185,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_parity_releas
 Optional: pass `-Categories <comma-separated-categories>` to apply category filtering to both suite execution and strict summary checks.
 Optional: pass `-Fixtures <comma-separated-fixture-names>` to target specific manifest fixture names in release-gate execution.
 Optional: pass `-DryRun` to preview selected fixtures without executing parity checks or strict summary validation.
+
+Release packaging (manual, distribution prep):
+
+```powershell
+Set-Location D:\roblox
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/package_release_artifacts.ps1
+```
+
+This writes distribution artifacts into `dist/release` (`mcp-server-<platform>.zip`, `mcp-studio-plugin-source.zip`, and `release_manifest.json`).
 
 Policy contract test (start+run+stop in one command):
 

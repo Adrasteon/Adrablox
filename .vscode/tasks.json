@@ -199,6 +199,19 @@
 				"tools/run_mcp_protocol_task.ps1"
 			],
 			"isBackground": false
+		},
+		{
+			"label": "Release: Package Server + Plugin Artifacts",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"tools/package_release_artifacts.ps1"
+			],
+			"isBackground": false
 		}
 	]
 }

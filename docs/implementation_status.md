@@ -8,7 +8,7 @@ Last updated: 2026-02-26
 - Validation status: Automated checks and CI are in place with recent green test/smoke/contract runs.
 - Current readiness: Suitable for continued pilot/internal use, not yet final production parity.
 - Remaining risk: Full Rojo serve behavioral parity and edge-case hardening are still in progress.
-- Next milestone: Complete parity + integration hardening, then finalize packaging/release workflow.
+- Next milestone: Complete parity + integration hardening, then finish Day-0 validation against packaged artifacts.
 
 ## Current State
 
@@ -23,6 +23,7 @@ Last updated: 2026-02-26
 - Rojo compatibility API routes are available (`/api/rojo`, `/api/read`, `/api/subscribe`).
 - Validation baseline exists and has recent green runs across Rust tests, smoke flow, policy contract flow, and protocol contract flow.
 - CI is configured to run contract checks across Windows and protocol checks across Linux/macOS.
+- Manual release packaging automation baseline is now in place for server/plugin distribution artifacts.
 
 ## Not Ready
 
@@ -169,8 +170,9 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - Windows protocol task runner: `tools/run_mcp_protocol_task.ps1`.
   - Linux/macOS protocol task runner: `tools/run_mcp_protocol_task.sh`.
   - Server-only run script: `tools/run_mcp_server.ps1`.
+  - Release packaging script: `tools/package_release_artifacts.ps1` (builds release server binary and packages `dist/release` artifacts).
   - Rojo compatibility check script: `tools/rojo_compat_check.ps1`.
-  - VS Code tasks for server run, smoke, policy contract, Rojo compatibility, Rojo changefeed edge-case, conflict race contract, reconnect/replay contract, invalid-session contract, integration roundtrip contract, integration reconnect-loop contract, integration soak contract, Rojo parity diff, Rojo parity suite, Rojo parity release gate, and protocol contract flows.
+  - VS Code tasks for server run, smoke, policy contract, Rojo compatibility, Rojo changefeed edge-case, conflict race contract, reconnect/replay contract, invalid-session contract, integration roundtrip contract, integration reconnect-loop contract, integration soak contract, Rojo parity diff, Rojo parity suite, Rojo parity release gate, protocol contract flows, and release artifact packaging.
   - GitHub Actions CI (`.github/workflows/ci.yml`) runs:
     - Windows: tests + smoke + policy contract + Rojo compatibility + Rojo changefeed edge-case + conflict race + reconnect/replay + invalid-session + integration roundtrip + integration reconnect-loop + protocol contract checks,
     - Linux/macOS: tests + protocol contract checks.
@@ -178,6 +180,7 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - Optional strict manual parity mode: set `workflow_dispatch` input `strict_rojo_parity=true` to fail when parity reports are missing or when total diffs are non-zero.
   - Optional targeted strict manual parity mode: set `workflow_dispatch` input `strict_rojo_parity_categories` to comma-separated category names to execute only selected fixture categories and fail when those categories have non-zero diffs.
   - Manual parity runs generate `tools/parity_diff_summary.json` from `tools/parity_diff_report*.json` (including fixture metadata and category breakdown), print `Parity summary: fixtures=<n> totalDiffs=<n> categoryDiffs=<category:diffs|...>` in CI logs, and upload both as workflow artifact `rojo-parity-reports` for inspection/download.
+  - Manual release packaging workflow: `.github/workflows/release-packaging.yml` (`workflow_dispatch` only; no scheduled/nightly run).
 
 ## In Progress / Remaining
 
