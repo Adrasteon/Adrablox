@@ -2,6 +2,7 @@
   {
     "name": "baseline-default",
     "category": "baseline",
+    "enabled": true,
     "projectFile": "default.project.json",
     "reportPath": "tools/parity_diff_report.json",
     "mutationFilePath": "src/App.module.lua"
@@ -9,6 +10,7 @@
   {
     "name": "complex-services-shared",
     "category": "structure",
+    "enabled": true,
     "projectFile": "fixtures/complex.project.json",
     "reportPath": "tools/parity_diff_report_complex.json",
     "mutationFilePath": "fixtures/complex_src/Systems/Config.module.lua"
@@ -16,6 +18,7 @@
   {
     "name": "service-heavy-multi-service",
     "category": "service-heavy",
+    "enabled": true,
     "projectFile": "fixtures/service_heavy.project.json",
     "reportPath": "tools/parity_diff_report_service_heavy.json",
     "mutationFilePath": "fixtures/service_heavy_src/Shared/Config.module.lua"
@@ -23,6 +26,7 @@
   {
     "name": "nested-modules-deep-tree",
     "category": "nested-modules",
+    "enabled": true,
     "projectFile": "fixtures/nested_modules.project.json",
     "reportPath": "tools/parity_diff_report_nested_modules.json",
     "mutationFilePath": "fixtures/nested_modules_src/Game/Features/Economy/Prices.module.lua"
