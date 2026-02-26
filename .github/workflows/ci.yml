@@ -40,6 +40,11 @@ on:
         required: false
         default: false
         type: boolean
+      run_release_candidate_evidence_pack:
+        description: "Run optional one-command release-candidate evidence pack (reliability + parity + readiness)"
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   validate-windows:
@@ -201,6 +206,45 @@ jobs:
           name: spec-readiness-report
           path: tools/spec_readiness_report.json
           if-no-files-found: error
+
+      - name: Install Rojo for release-candidate evidence pack (optional)
+        if: github.event_name == 'workflow_dispatch' && inputs.run_release_candidate_evidence_pack == true
+        uses: rojo-rbx/setup-rojo@v2
+        with:
+          version: 7.7.0-rc.1
+
+      - name: Run release-candidate evidence pack (optional)
+        if: github.event_name == 'workflow_dispatch' && inputs.run_release_candidate_evidence_pack == true
+        shell: pwsh
+        run: |
+          $reconnectIterations = [int]::Parse('${{ inputs.integration_reliability_iterations }}')
+          $conflictIterations = [Math]::Max(1, [int]([Math]::Floor($reconnectIterations / 2)))
+          $mixedIterations = [Math]::Max(1, [int]([Math]::Floor($reconnectIterations / 2)))
+          $categories = '${{ inputs.strict_rojo_parity_categories }}'.Trim()
+
+          $packArgs = @(
+            '-ReconnectIterations', $reconnectIterations,
+            '-ConflictIterations', $conflictIterations,
+            '-MixedIterations', $mixedIterations
+          )
+
+          if (-not [string]::IsNullOrWhiteSpace($categories)) {
+            $packArgs += @('-Categories', $categories)
+          }
+
+          powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_release_candidate_evidence_pack_task.ps1 @packArgs
+
+      - name: Upload release-candidate evidence artifact (optional)
+        if: github.event_name == 'workflow_dispatch' && inputs.run_release_candidate_evidence_pack == true
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-candidate-evidence
+          path: |
+            tools/integration_reliability_report.json
+            tools/parity_diff_report*.json
+            tools/parity_diff_summary.json
+            tools/spec_readiness_report.json
+          if-no-files-found: warn
 
       - name: Run Rojo parity edge semantics task (optional)
         if: github.event_name == 'workflow_dispatch' && inputs.run_rojo_edge_semantics == true
