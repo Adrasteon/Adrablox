@@ -1,4 +1,4 @@
-# Ediyor Roblox MCP Workspace
+# Adrablox - Roblox Studio Plugin + MCP Server (VS Code)
 
 Active implementation workspace for the MCP Server + Roblox Studio plugin project.
 
