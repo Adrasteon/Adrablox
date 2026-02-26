@@ -135,7 +135,7 @@ $cargoExe = Join-Path $env:USERPROFILE '.cargo\bin\cargo.exe'
 In another terminal:
 
 ```powershell
-Set-Location D:\roblox
+Set-Location <path-to-your-adrablox-repo>
 .\tools\mcp_smoke_test.ps1
 ```
 
@@ -148,63 +148,63 @@ Optional custom endpoint:
 One-click task runner (starts server, executes smoke test, stops server):
 
 ```powershell
-Set-Location D:\roblox
+Set-Location <path-to-your-adrablox-repo>
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_smoke_task.ps1
 ```
 
 Live file-authoring verification script (expects server running):
 
 ```powershell
-Set-Location D:\roblox
+Set-Location <path-to-your-adrablox-repo>
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/live_file_check.ps1
 ```
 
 Rojo compatibility endpoint check (expects server running):
 
 ```powershell
-Set-Location D:\roblox
+Set-Location <path-to-your-adrablox-repo>
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/rojo_compat_check.ps1
 ```
 
 Rojo compatibility test (start+run+stop in one command):
 
 ```powershell
-Set-Location D:\roblox
+Set-Location <path-to-your-adrablox-repo>
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_compat_task.ps1
 ```
 
 Rojo changefeed edge-case test (start+run+stop in one command):
 
 ```powershell
-Set-Location D:\roblox
+Set-Location <path-to-your-adrablox-repo>
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_changefeed_task.ps1
 ```
 
 Conflict race contract test (start+run+stop in one command):
 
 ```powershell
-Set-Location D:\roblox
+Set-Location <path-to-your-adrablox-repo>
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_conflict_race_task.ps1
 ```
 
 Reconnect/replay contract test (start+run+stop in one command):
 
 ```powershell
-Set-Location D:\roblox
+Set-Location <path-to-your-adrablox-repo>
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_reconnect_replay_task.ps1
 ```
 
 Invalid-session contract test (start+run+stop in one command):
 
 ```powershell
-Set-Location D:\roblox
+Set-Location <path-to-your-adrablox-repo>
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_invalid_session_task.ps1
 ```
 
 Rojo parity diff (start MCP + live Rojo serve, compare, write report):
 
 ```powershell
-Set-Location D:\roblox
+Set-Location <path-to-your-adrablox-repo>
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_parity_diff_task.ps1
 ```
 
@@ -214,7 +214,7 @@ Optional: pass `-MutationFilePath <workspace-relative-file>` to exercise a rever
 Rojo parity suite (run all fixtures, fail on any diff):
 
 ```powershell
-Set-Location D:\roblox
+Set-Location <path-to-your-adrablox-repo>
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_parity_suite_task.ps1
 ```
 
@@ -226,7 +226,7 @@ Optional: pass `-DryRun` to print selected fixtures and categories without start
 Rojo parity release gate (suite + strict summary checks):
 
 ```powershell
-Set-Location D:\roblox
+Set-Location <path-to-your-adrablox-repo>
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_parity_release_gate_task.ps1
 ```
 
@@ -237,7 +237,7 @@ Optional: pass `-DryRun` to preview selected fixtures without executing parity c
 Release packaging (manual, distribution prep):
 
 ```powershell
-Set-Location D:\roblox
+Set-Location <path-to-your-adrablox-repo>
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/package_release_artifacts.ps1
 ```
 
@@ -247,7 +247,7 @@ End-user/local validation paths do not require Rojo; Rojo is enforced in the man
 Release manifest/artifact validation (manual):
 
 ```powershell
-Set-Location D:\roblox
+Set-Location <path-to-your-adrablox-repo>
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/validate_release_manifest.ps1
 ```
 
@@ -256,7 +256,7 @@ Optional: pass `-RequireInstallable` to fail unless installable plugin `.rbxm` i
 Release checksum generation/verification (manual):
 
 ```powershell
-Set-Location D:\roblox
+Set-Location <path-to-your-adrablox-repo>
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/generate_release_checksums.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/generate_release_checksums.ps1 -Verify
 ```
@@ -264,7 +264,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/generate_release_check
 Day-0 packaged-artifact validation (manual, distribution evidence):
 
 ```powershell
-Set-Location D:\roblox
+Set-Location <path-to-your-adrablox-repo>
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_day0_packaged_validation_task.ps1
 ```
 
@@ -273,7 +273,7 @@ This validates packaged artifacts by launching the server from `dist/release/mcp
 Day-0 published-artifact bundle validation (manual, strict release-readiness check):
 
 ```powershell
-Set-Location D:\roblox
+Set-Location <path-to-your-adrablox-repo>
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_day0_published_artifact_validation_task.ps1
 ```
 
@@ -282,7 +282,7 @@ Optional: pass `-RequireInstallable` to fail unless installable plugin `.rbxm` i
 Integration reliability evidence suite (manual):
 
 ```powershell
-Set-Location D:\roblox
+Set-Location <path-to-your-adrablox-repo>
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_integration_reliability_suite_task.ps1 -ReconnectIterations 5 -ConflictIterations 3 -MixedIterations 3
 ```
 
@@ -291,7 +291,7 @@ This writes reliability evidence to `tools/integration_reliability_report.json`.
 Release-candidate evidence pack (manual, one command):
 
 ```powershell
-Set-Location D:\roblox
+Set-Location <path-to-your-adrablox-repo>
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_release_candidate_evidence_pack_task.ps1
 ```
 
@@ -303,7 +303,7 @@ If `rojo` is not on PATH, the runner also attempts to auto-discover a winget-ins
 Mission-critical CI dispatch helper (requires `gh` auth and repo remote):
 
 ```powershell
-Set-Location D:\roblox
+Set-Location <path-to-your-adrablox-repo>
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/dispatch_mission_critical_ci_gate.ps1 -IncludeDistributionEvidence -Watch
 ```
 
@@ -313,7 +313,7 @@ If `gh` is not already on PATH, the helper attempts to resolve common winget/lin
 Mission-critical local strict gate (no CI dispatch):
 
 ```powershell
-Set-Location D:\roblox
+Set-Location <path-to-your-adrablox-repo>
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mission_critical_local_gate_task.ps1
 ```
 
@@ -322,14 +322,14 @@ This runs reliability + parity + distribution evidence + readiness in strict PAS
 Policy contract test (start+run+stop in one command):
 
 ```powershell
-Set-Location D:\roblox
+Set-Location <path-to-your-adrablox-repo>
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_policy_task.ps1
 ```
 
 Protocol contract test (start+run+stop in one command, Windows):
 
 ```powershell
-Set-Location D:\roblox
+Set-Location <path-to-your-adrablox-repo>
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_protocol_task.ps1
 ```
 

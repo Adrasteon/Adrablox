@@ -237,7 +237,7 @@ The project has moved from planning/scaffolding into a working MVP implementatio
 ## Quick Verification Commands
 
 ```powershell
-Set-Location D:\roblox
+Set-Location <path-to-your-adrablox-repo>
 $cargoExe = Join-Path $env:USERPROFILE '.cargo\bin\cargo.exe'
 & $cargoExe test
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_smoke_task.ps1
