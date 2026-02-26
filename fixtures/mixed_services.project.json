@@ -1,0 +1,30 @@
+{
+  "name": "McpParityMixedServicesFixture",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "$className": "Workspace",
+      "WorldScripts": {
+        "$className": "Folder",
+        "Spawner": {
+          "$path": "mixed_services_src/Workspace/Spawner.server.lua"
+        }
+      }
+    },
+    "ReplicatedFirst": {
+      "$className": "ReplicatedFirst",
+      "Boot": {
+        "$path": "mixed_services_src/ReplicatedFirst/Boot.client.lua"
+      }
+    },
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Shared": {
+        "$className": "Folder",
+        "Constants": {
+          "$path": "mixed_services_src/Shared/Constants.module.lua"
+        }
+      }
+    }
+  }
+}

@@ -1,5 +1,7 @@
 param(
-    [string]$Categories = ""
+    [string]$Categories = "",
+    [string]$Fixtures = "",
+    [switch]$DryRun
 )
 
 $ErrorActionPreference = "Stop"
@@ -13,9 +15,22 @@ try {
         $suiteArgs += '-Categories'
         $suiteArgs += $Categories
     }
+    if (-not [string]::IsNullOrWhiteSpace($Fixtures)) {
+        $suiteArgs += '-Fixtures'
+        $suiteArgs += $Fixtures
+    }
+    if ($DryRun) {
+        $suiteArgs += '-DryRun'
+    }
 
     Write-Host "Running Rojo parity fixture suite..."
     powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_parity_suite_task.ps1 @suiteArgs
+
+    if ($DryRun) {
+        Write-Host "Dry-run mode enabled; skipping strict parity summary checks."
+        Write-Host "Rojo parity release gate dry-run completed successfully."
+        return
+    }
 
     $summaryArgs = @('-FailIfNoReports', '-FailIfDiffs')
     if (-not [string]::IsNullOrWhiteSpace($Categories)) {

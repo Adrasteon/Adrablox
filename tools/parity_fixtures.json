@@ -30,5 +30,13 @@
     "projectFile": "fixtures/nested_modules.project.json",
     "reportPath": "tools/parity_diff_report_nested_modules.json",
     "mutationFilePath": "fixtures/nested_modules_src/Game/Features/Economy/Prices.module.lua"
+  },
+  {
+    "name": "mixed-services-core",
+    "category": "mixed-services",
+    "enabled": true,
+    "projectFile": "fixtures/mixed_services.project.json",
+    "reportPath": "tools/parity_diff_report_mixed_services.json",
+    "mutationFilePath": "fixtures/mixed_services_src/Shared/Constants.module.lua"
   }
 ]

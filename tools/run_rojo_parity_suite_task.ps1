@@ -1,5 +1,7 @@
 param(
-    [string]$Categories = ""
+    [string]$Categories = "",
+    [string]$Fixtures = "",
+    [switch]$DryRun
 )
 
 $ErrorActionPreference = "Stop"
@@ -12,13 +14,19 @@ if (-not (Test-Path $fixturesPath)) {
 }
 
 $fixturesRaw = Get-Content -Raw -Path $fixturesPath | ConvertFrom-Json
-$fixtures = @($fixturesRaw)
+$fixtureEntries = @()
+if ($fixturesRaw -is [System.Array]) {
+    $fixtureEntries = $fixturesRaw
+}
+else {
+    $fixtureEntries = @($fixturesRaw)
+}
 
-if ($fixtures.Count -eq 0) {
+if ($fixtureEntries.Count -eq 0) {
     throw "Parity fixture manifest is empty: $fixturesPath"
 }
 
-$enabledFixtures = @($fixtures | Where-Object {
+$enabledFixtures = @($fixtureEntries | Where-Object {
     if ($_.PSObject.Properties["enabled"]) {
         return [bool]$_.enabled
     }
@@ -49,8 +57,29 @@ if (-not [string]::IsNullOrWhiteSpace($Categories)) {
     }
 }
 
+if (-not [string]::IsNullOrWhiteSpace($Fixtures)) {
+    $requestedFixtureNames = @($Fixtures.Split(',') | ForEach-Object { $_.Trim() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Sort-Object -Unique)
+    if ($requestedFixtureNames.Count -eq 0) {
+        throw "No valid fixture names were provided in -Fixtures."
+    }
+
+    $availableFixtureNames = @($enabledFixtures | ForEach-Object { [string]$_.name } | Sort-Object -Unique)
+    foreach ($fixtureName in $requestedFixtureNames) {
+        if ($availableFixtureNames -notcontains $fixtureName) {
+            throw "Requested fixture '$fixtureName' was not found among enabled fixtures in $fixturesPath"
+        }
+    }
+
+    $selectedFixtures = @($selectedFixtures | Where-Object { $requestedFixtureNames -contains [string]$_.name })
+    if ($selectedFixtures.Count -eq 0) {
+        throw "No enabled fixtures matched combined -Categories '$Categories' and -Fixtures '$Fixtures' filters."
+    }
+}
+
 Push-Location $workspace
 try {
+    Write-Host "Selected parity fixtures: $($selectedFixtures.Count)"
+
     foreach ($fixture in $selectedFixtures) {
         $fixtureName = [string]$fixture.name
         $fixtureCategory = [string]$fixture.category
@@ -60,6 +89,11 @@ try {
 
         if ([string]::IsNullOrWhiteSpace($fixtureName) -or [string]::IsNullOrWhiteSpace($fixtureCategory) -or [string]::IsNullOrWhiteSpace($projectFile) -or [string]::IsNullOrWhiteSpace($reportPath) -or [string]::IsNullOrWhiteSpace($mutationFilePath)) {
             throw "Invalid parity fixture entry in $fixturesPath. Each fixture must define name, category, projectFile, reportPath, and mutationFilePath."
+        }
+
+        if ($DryRun) {
+            Write-Host "[DRY-RUN] $fixtureName ($fixtureCategory) -> project=$projectFile report=$reportPath mutation=$mutationFilePath"
+            continue
         }
 
         Write-Host "Running parity diff fixture: $fixtureName ($fixtureCategory) -> $projectFile"
@@ -74,7 +108,12 @@ try {
         Write-Host "Fixture passed: $fixtureName"
     }
 
-    Write-Host "Rojo parity suite completed successfully."
+    if ($DryRun) {
+        Write-Host "Rojo parity suite dry-run completed successfully."
+    }
+    else {
+        Write-Host "Rojo parity suite completed successfully."
+    }
 }
 finally {
     Pop-Location

@@ -144,14 +144,15 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - One-click invalid-session flow: `tools/run_mcp_invalid_session_task.ps1`.
   - Rojo parity diff script: `tools/rojo_parity_diff_check.ps1` (normalized MCP vs live Rojo comparison report).
   - One-click Rojo parity diff flow: `tools/run_rojo_parity_diff_task.ps1` (parameterized by `-ProjectFile`, `-ReportPath`, and optional `-MutationFilePath` for reversible changefeed exercise).
-  - One-click Rojo parity suite flow: `tools/run_rojo_parity_suite_task.ps1` (runs all fixtures with fail-on-diff, including mutation parity checks; supports optional `-Categories` filtering).
+  - One-click Rojo parity suite flow: `tools/run_rojo_parity_suite_task.ps1` (runs all fixtures with fail-on-diff, including mutation parity checks; supports optional `-Categories`, `-Fixtures`, and `-DryRun` filtering/preview options).
   - Parity fixture manifest: `tools/parity_fixtures.json` (suite fixture definitions are now data-driven with fixture metadata: `name`, `category`, `enabled`).
-  - One-click local parity release gate flow: `tools/run_rojo_parity_release_gate_task.ps1` (runs fixture suite and strict summary checks; supports optional `-Categories` filtering).
-  - Fixture coverage now includes: `default.project.json`, `fixtures/complex.project.json`, `fixtures/service_heavy.project.json`, and `fixtures/nested_modules.project.json`.
+  - One-click local parity release gate flow: `tools/run_rojo_parity_release_gate_task.ps1` (runs fixture suite and strict summary checks; supports optional `-Categories`, `-Fixtures`, and `-DryRun` filtering/preview options).
+  - Fixture coverage now includes: `default.project.json`, `fixtures/complex.project.json`, `fixtures/service_heavy.project.json`, `fixtures/nested_modules.project.json`, and `fixtures/mixed_services.project.json`.
   - Latest baseline fixture parity run (`default.project.json`) reports `diffCount=0` in `tools/parity_diff_report.json`.
   - Latest complex fixture parity run (`fixtures/complex.project.json`) reports `diffCount=0` in `tools/parity_diff_report_complex.json`.
   - Latest service-heavy fixture parity run (`fixtures/service_heavy.project.json`) reports `diffCount=0` in `tools/parity_diff_report_service_heavy.json`.
   - Latest nested-modules fixture parity run (`fixtures/nested_modules.project.json`) reports `diffCount=0` in `tools/parity_diff_report_nested_modules.json`.
+  - Latest mixed-services fixture parity run (`fixtures/mixed_services.project.json`) reports `diffCount=0` in `tools/parity_diff_report_mixed_services.json`.
   - Cross-platform protocol contract script: `tools/mcp_protocol_contract_test.py`.
   - Windows protocol task runner: `tools/run_mcp_protocol_task.ps1`.
   - Linux/macOS protocol task runner: `tools/run_mcp_protocol_task.sh`.
