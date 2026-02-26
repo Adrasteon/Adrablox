@@ -160,7 +160,7 @@ The project has moved from planning/scaffolding into a working MVP implementatio
     - Windows: tests + smoke + policy contract + Rojo compatibility + Rojo changefeed edge-case + conflict race + reconnect/replay + invalid-session + protocol contract checks,
     - Linux/macOS: tests + protocol contract checks.
   - Optional CI parity gate: manual `workflow_dispatch` with `run_rojo_parity_diff=true` runs Rojo parity fixture suite on Windows (skips if `rojo` CLI is not present).
-  - Manual parity runs generate `tools/parity_diff_summary.json` from `tools/parity_diff_report*.json` and upload both as workflow artifact `rojo-parity-reports` for inspection/download.
+  - Manual parity runs generate `tools/parity_diff_summary.json` from `tools/parity_diff_report*.json`, print `Parity summary: fixtures=<n> totalDiffs=<n>` in CI logs, and upload both as workflow artifact `rojo-parity-reports` for inspection/download.
 
 ## In Progress / Remaining
 

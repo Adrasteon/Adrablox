@@ -78,6 +78,20 @@ jobs:
         shell: pwsh
         run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/summarize_parity_reports.ps1
 
+      - name: Print parity summary line (optional)
+        if: github.event_name == 'workflow_dispatch' && inputs.run_rojo_parity_diff == true
+        shell: pwsh
+        run: |
+          $summaryPath = Join-Path $PWD 'tools/parity_diff_summary.json'
+          if (-not (Test-Path $summaryPath)) {
+            Write-Host "Parity summary unavailable (missing tools/parity_diff_summary.json)."
+            exit 0
+          }
+          $summary = Get-Content -Raw -Path $summaryPath | ConvertFrom-Json
+          $fixtureCount = [int]$summary.reportCount
+          $totalDiffs = [int]$summary.totalDiffCount
+          Write-Host ("Parity summary: fixtures={0} totalDiffs={1}" -f $fixtureCount, $totalDiffs)
+
       - name: Upload parity reports artifact (optional)
         if: github.event_name == 'workflow_dispatch' && inputs.run_rojo_parity_diff == true
         uses: actions/upload-artifact@v4
