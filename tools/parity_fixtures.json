@@ -94,5 +94,13 @@
     "projectFile": "fixtures/startercharacter_flow.project.json",
     "reportPath": "tools/parity_diff_report_startercharacter_flow.json",
     "mutationFilePath": "fixtures/startercharacter_flow_src/Shared/MovementConfig.module.lua"
+  },
+  {
+    "name": "metadata-churn-overlap",
+    "category": "metadata-churn",
+    "enabled": true,
+    "projectFile": "fixtures/metadata_churn.project.json",
+    "reportPath": "tools/parity_diff_report_metadata_churn.json",
+    "mutationFilePath": "fixtures/metadata_churn_src/ReplicatedStorage/Shared/Metadata.module.lua"
   }
 ]

@@ -1,5 +1,5 @@
 param(
-    [string]$Categories = "baseline,lifecycle-ops,mixed-services",
+    [string]$Categories = "baseline,lifecycle-ops,mixed-services,metadata-churn",
     [int]$MutationSettleMs = 2000,
     [switch]$DryRun
 )

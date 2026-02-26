@@ -1,0 +1,60 @@
+{
+  "name": "McpParityMetadataChurnFixture",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "$className": "Workspace",
+      "Zones": {
+        "$className": "Folder",
+        "Alpha": {
+          "$className": "Folder",
+          "Metadata": {
+            "$path": "metadata_churn_src/Workspace/Zones/Alpha/Metadata.module.lua"
+          }
+        },
+        "Beta": {
+          "$className": "Folder",
+          "Metadata": {
+            "$path": "metadata_churn_src/Workspace/Zones/Beta/Metadata.module.lua"
+          }
+        }
+      }
+    },
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Shared": {
+        "$className": "Folder",
+        "Metadata": {
+          "$path": "metadata_churn_src/ReplicatedStorage/Shared/Metadata.module.lua"
+        }
+      }
+    },
+    "ServerStorage": {
+      "$className": "ServerStorage",
+      "Shared": {
+        "$className": "Folder",
+        "Metadata": {
+          "$path": "metadata_churn_src/ServerStorage/Shared/Metadata.module.lua"
+        }
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "Runtime": {
+        "$className": "Folder",
+        "Metadata": {
+          "$path": "metadata_churn_src/Server/Runtime/Metadata.server.lua"
+        }
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "Metadata": {
+          "$path": "metadata_churn_src/StarterPlayer/Metadata.client.lua"
+        }
+      }
+    }
+  }
+}
