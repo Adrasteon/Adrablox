@@ -222,14 +222,20 @@ jobs:
         shell: pwsh
         run: |
           winget install --id Rojo.Rojo --exact --accept-package-agreements --accept-source-agreements
-          if (-not (Get-Command rojo -ErrorAction SilentlyContinue)) {
-            $rojoCandidate = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages\Rojo.Rojo_Microsoft.Winget.Source_8wekyb3d8bbwe\rojo.exe'
-            if (Test-Path $rojoCandidate) {
-              $rojoDir = Split-Path -Parent $rojoCandidate
+          $rojoCommand = Get-Command rojo -ErrorAction SilentlyContinue
+          if (-not $rojoCommand) {
+            $rojoExe = Get-ChildItem (Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages') -Recurse -Filter rojo.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($rojoExe) {
+              $rojoDir = Split-Path -Parent $rojoExe.FullName
               Add-Content -Path $env:GITHUB_PATH -Value $rojoDir
+              $env:Path = "$rojoDir;$env:Path"
+              $rojoCommand = Get-Command rojo -ErrorAction SilentlyContinue
             }
           }
-          rojo --version
+          if (-not $rojoCommand) {
+            throw "Rojo installation succeeded but rojo.exe could not be resolved on PATH."
+          }
+          & $rojoCommand.Source --version
 
       - name: Run release-candidate evidence pack (optional)
         if: github.event_name == 'workflow_dispatch' && inputs.run_release_candidate_evidence_pack == true
