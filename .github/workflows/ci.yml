@@ -81,7 +81,13 @@ jobs:
             Write-Host "Rojo CLI not found on runner; skipping optional parity suite."
             exit 0
           }
-          powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_parity_suite_task.ps1
+          $suiteArgs = @()
+          $strictCategories = '${{ inputs.strict_rojo_parity_categories }}'.Trim()
+          if (-not [string]::IsNullOrWhiteSpace($strictCategories)) {
+            $suiteArgs += '-Categories'
+            $suiteArgs += $strictCategories
+          }
+          powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_parity_suite_task.ps1 @suiteArgs
 
       - name: Build parity summary artifact (optional)
         if: github.event_name == 'workflow_dispatch' && inputs.run_rojo_parity_diff == true

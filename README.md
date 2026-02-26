@@ -39,7 +39,7 @@ Active implementation workspace for the MCP Server + Roblox Studio plugin projec
   - CI workflow: `.github/workflows/ci.yml` (Windows expanded contract checks + Linux/macOS protocol contract checks)
     - Optional parity gate: `workflow_dispatch` input `run_rojo_parity_diff=true` runs `tools/run_rojo_parity_suite_task.ps1` on Windows (auto-skips if `rojo` CLI is unavailable on runner)
     - Optional strict mode: set `workflow_dispatch` input `strict_rojo_parity=true` to fail the manual parity run when parity reports are missing or contain diffs.
-    - Optional targeted strict mode: set `workflow_dispatch` input `strict_rojo_parity_categories` to a comma-separated category list (for example `baseline,structure`) to fail only when those categories have diffs.
+    - Optional targeted strict mode: set `workflow_dispatch` input `strict_rojo_parity_categories` to a comma-separated category list (for example `baseline,structure`) to run only those fixture categories and fail when selected categories have diffs.
     - When this optional parity gate runs, CI builds `tools/parity_diff_summary.json` from `tools/parity_diff_report*.json`, prints `Parity summary: fixtures=<n> totalDiffs=<n> categoryDiffs=<category:diffs|...>` in job logs, and uploads both in the `rojo-parity-reports` workflow artifact.
 
 ## Documentation index

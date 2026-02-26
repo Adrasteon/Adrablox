@@ -163,7 +163,7 @@ The project has moved from planning/scaffolding into a working MVP implementatio
     - Linux/macOS: tests + protocol contract checks.
   - Optional CI parity gate: manual `workflow_dispatch` with `run_rojo_parity_diff=true` runs Rojo parity fixture suite on Windows (skips if `rojo` CLI is not present).
   - Optional strict manual parity mode: set `workflow_dispatch` input `strict_rojo_parity=true` to fail when parity reports are missing or when total diffs are non-zero.
-  - Optional targeted strict manual parity mode: set `workflow_dispatch` input `strict_rojo_parity_categories` to comma-separated category names to fail only when selected categories have non-zero diffs.
+  - Optional targeted strict manual parity mode: set `workflow_dispatch` input `strict_rojo_parity_categories` to comma-separated category names to execute only selected fixture categories and fail when those categories have non-zero diffs.
   - Manual parity runs generate `tools/parity_diff_summary.json` from `tools/parity_diff_report*.json` (including fixture metadata and category breakdown), print `Parity summary: fixtures=<n> totalDiffs=<n> categoryDiffs=<category:diffs|...>` in CI logs, and upload both as workflow artifact `rojo-parity-reports` for inspection/download.
 
 ## In Progress / Remaining
