@@ -20,6 +20,11 @@ on:
         required: false
         default: ""
         type: string
+      run_rojo_edge_semantics:
+        description: "Run optional focused Rojo parity edge-semantics checks"
+        required: false
+        default: false
+        type: boolean
       run_integration_reliability_suite:
         description: "Run optional integration reliability evidence suite (Windows)"
         required: false
@@ -178,6 +183,16 @@ jobs:
             tools/parity_diff_report*.json
             tools/parity_diff_summary.json
           if-no-files-found: warn
+
+      - name: Run Rojo parity edge semantics task (optional)
+        if: github.event_name == 'workflow_dispatch' && inputs.run_rojo_edge_semantics == true
+        shell: pwsh
+        run: |
+          if (-not (Get-Command rojo -ErrorAction SilentlyContinue)) {
+            Write-Host "Rojo CLI not found on runner; skipping optional parity edge semantics checks."
+            exit 0
+          }
+          powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_parity_edge_semantics_task.ps1
 
   validate-unix:
     name: Validate (${{ matrix.os }})

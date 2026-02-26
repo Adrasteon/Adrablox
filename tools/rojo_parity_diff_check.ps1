@@ -257,6 +257,23 @@ function Compare-SubscribeSummary {
     return $diffs
 }
 
+function Try-ParseInt64 {
+    param(
+        [string]$Value
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Value)) {
+        return $null
+    }
+
+    $parsed = 0
+    if ([Int64]::TryParse($Value, [ref]$parsed)) {
+        return $parsed
+    }
+
+    return $null
+}
+
 $mcpOpen = Try-OpenApi -Base $McpBase -ProjectPath $ProjectPath -PreferPost
 $rojoOpen = Try-OpenApi -Base $RojoBase -ProjectPath $ProjectPath
 
@@ -312,6 +329,28 @@ foreach ($entry in (Compare-SubscribeSummary -Left $mcpSubSummary -Right $rojoSu
     $diffs.Add($entry) | Out-Null
 }
 
+if ($mcpSubSummary.available) {
+    $mcpReadCursor = Try-ParseInt64 -Value ("" + $mcpReadSummary.cursor)
+    $mcpSubCursor = Try-ParseInt64 -Value ("" + $mcpSubSummary.cursor)
+    if ($null -eq $mcpSubCursor) {
+        $diffs.Add("mcp.subscribe.cursor is not a valid integer (value=$($mcpSubSummary.cursor))") | Out-Null
+    }
+    elseif ($null -ne $mcpReadCursor -and $mcpSubCursor -lt $mcpReadCursor) {
+        $diffs.Add("mcp.subscribe.cursor regressed (read=$mcpReadCursor subscribe=$mcpSubCursor)") | Out-Null
+    }
+}
+
+if ($rojoSubSummary.available) {
+    $rojoReadCursor = Try-ParseInt64 -Value ("" + $rojoReadSummary.cursor)
+    $rojoSubCursor = Try-ParseInt64 -Value ("" + $rojoSubSummary.cursor)
+    if ($null -eq $rojoSubCursor) {
+        $diffs.Add("rojo.subscribe.cursor is not a valid integer (value=$($rojoSubSummary.cursor))") | Out-Null
+    }
+    elseif ($null -ne $rojoReadCursor -and $rojoSubCursor -lt $rojoReadCursor) {
+        $diffs.Add("rojo.subscribe.cursor regressed (read=$rojoReadCursor subscribe=$rojoSubCursor)") | Out-Null
+    }
+}
+
 if ($mutationSummary.enabled) {
     $workspace = Split-Path -Parent $PSScriptRoot
     $mutationFullPath = Join-Path $workspace $MutationFilePath
@@ -340,6 +379,28 @@ if ($mutationSummary.enabled) {
 
         foreach ($entry in (Compare-SubscribeSummary -Left $mcpMutationSummary -Right $rojoMutationSummary -Prefix "mutation.subscribe")) {
             $diffs.Add($entry) | Out-Null
+        }
+
+        if ($mcpMutationSummary.available) {
+            $mcpBaseCursor = Try-ParseInt64 -Value ("" + $mcpReadSummary.cursor)
+            $mcpMutationCursor = Try-ParseInt64 -Value ("" + $mcpMutationSummary.cursor)
+            if ($null -eq $mcpMutationCursor) {
+                $diffs.Add("mcp.mutation.subscribe.cursor is not a valid integer (value=$($mcpMutationSummary.cursor))") | Out-Null
+            }
+            elseif ($null -ne $mcpBaseCursor -and $mcpMutationCursor -lt $mcpBaseCursor) {
+                $diffs.Add("mcp.mutation.subscribe.cursor regressed (base=$mcpBaseCursor mutation=$mcpMutationCursor)") | Out-Null
+            }
+        }
+
+        if ($rojoMutationSummary.available) {
+            $rojoBaseCursor = Try-ParseInt64 -Value ("" + $rojoReadSummary.cursor)
+            $rojoMutationCursor = Try-ParseInt64 -Value ("" + $rojoMutationSummary.cursor)
+            if ($null -eq $rojoMutationCursor) {
+                $diffs.Add("rojo.mutation.subscribe.cursor is not a valid integer (value=$($rojoMutationSummary.cursor))") | Out-Null
+            }
+            elseif ($null -ne $rojoBaseCursor -and $rojoMutationCursor -lt $rojoBaseCursor) {
+                $diffs.Add("rojo.mutation.subscribe.cursor regressed (base=$rojoBaseCursor mutation=$rojoMutationCursor)") | Out-Null
+            }
         }
     }
     finally {

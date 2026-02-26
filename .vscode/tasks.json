@@ -214,6 +214,19 @@
 			"isBackground": false
 		},
 		{
+			"label": "MCP: Rojo Parity Edge Semantics (focused)",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"tools/run_rojo_parity_edge_semantics_task.ps1"
+			],
+			"isBackground": false
+		},
+		{
 			"label": "MCP: Rojo Parity Release Gate (suite+strict-summary)",
 			"type": "shell",
 			"command": "powershell",

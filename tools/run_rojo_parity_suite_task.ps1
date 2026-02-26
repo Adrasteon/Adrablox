@@ -1,6 +1,7 @@
 param(
     [string]$Categories = "",
     [string]$Fixtures = "",
+    [int]$MutationSettleMs = 1200,
     [switch]$DryRun
 )
 
@@ -101,6 +102,7 @@ try {
             -ProjectFile $projectFile `
             -ReportPath $reportPath `
             -MutationFilePath $mutationFilePath `
+            -MutationSettleMs $MutationSettleMs `
             -FixtureName $fixtureName `
             -FixtureCategory $fixtureCategory `
             -FailOnDiff
