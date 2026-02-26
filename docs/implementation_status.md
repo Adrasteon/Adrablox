@@ -14,7 +14,7 @@ Last updated: 2026-02-26
 
 - Status: MVP+ baseline is implemented and operational.
 - Scope delivered: MCP server + Studio plugin + file-backed live authoring + Rojo-compatible endpoints + policy contracts + CI.
-- Repository state: committed on `main` at `ce1ca65` (latest checkpoint: CI input for evidence-pack distribution mode).
+- Repository state: committed on `main` at `f94ba43` (latest checkpoint: one-command mission-critical local strict gate).
 
 ## Ready
 
@@ -37,6 +37,7 @@ Last updated: 2026-02-26
 - One-command release-candidate evidence orchestration is now available (`tools/run_release_candidate_evidence_pack_task.ps1`) to run reliability + parity + readiness in sequence.
 - Release-candidate evidence orchestration now supports optional full distribution evidence generation (`-IncludeDistributionEvidence`) before readiness evaluation.
 - Mission-critical local strict gate wrapper is now available (`tools/run_mission_critical_local_gate_task.ps1`) for one-command PASS-only local release gating.
+- Latest mission-critical local strict gate run passed end-to-end with `specComplete=PASS` and produced installable/plugin/server distribution evidence (artifact version suffix `0.1.0-f94ba43`).
 
 ## Not Ready
 
