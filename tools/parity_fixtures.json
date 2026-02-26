@@ -70,5 +70,21 @@
     "projectFile": "fixtures/presentation_services.project.json",
     "reportPath": "tools/parity_diff_report_presentation_services.json",
     "mutationFilePath": "fixtures/presentation_services_src/Sound/AudioConfig.module.lua"
+  },
+  {
+    "name": "starterpack-inventory",
+    "category": "starterpack",
+    "enabled": true,
+    "projectFile": "fixtures/starterpack_inventory.project.json",
+    "reportPath": "tools/parity_diff_report_starterpack_inventory.json",
+    "mutationFilePath": "fixtures/starterpack_inventory_src/Shared/ItemDefs.module.lua"
+  },
+  {
+    "name": "teams-spawns",
+    "category": "teams-spawns",
+    "enabled": true,
+    "projectFile": "fixtures/teams_spawns.project.json",
+    "reportPath": "tools/parity_diff_report_teams_spawns.json",
+    "mutationFilePath": "fixtures/teams_spawns_src/Workspace/Selector.module.lua"
   }
 ]

@@ -1,0 +1,27 @@
+{
+  "name": "McpParityStarterPackInventoryFixture",
+  "tree": {
+    "$className": "DataModel",
+    "StarterPack": {
+      "$className": "StarterPack",
+      "Sword": {
+        "$className": "Tool",
+        "ClientEquip": {
+          "$path": "starterpack_inventory_src/StarterPack/Sword/ClientEquip.client.lua"
+        },
+        "ServerRules": {
+          "$path": "starterpack_inventory_src/StarterPack/Sword/ServerRules.module.lua"
+        }
+      }
+    },
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "InventoryShared": {
+        "$className": "Folder",
+        "ItemDefs": {
+          "$path": "starterpack_inventory_src/Shared/ItemDefs.module.lua"
+        }
+      }
+    }
+  }
+}

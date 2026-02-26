@@ -1,0 +1,30 @@
+{
+  "name": "McpParityTeamsSpawnsFixture",
+  "tree": {
+    "$className": "DataModel",
+    "Teams": {
+      "$className": "Teams",
+      "Red": {
+        "$className": "Team"
+      },
+      "Blue": {
+        "$className": "Team"
+      }
+    },
+    "Workspace": {
+      "$className": "Workspace",
+      "SpawnPoints": {
+        "$className": "Folder",
+        "Selector": {
+          "$path": "teams_spawns_src/Workspace/Selector.module.lua"
+        }
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "AssignTeam": {
+        "$path": "teams_spawns_src/Server/AssignTeam.server.lua"
+      }
+    }
+  }
+}
