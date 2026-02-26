@@ -1,0 +1,22 @@
+[
+  {
+    "projectFile": "default.project.json",
+    "reportPath": "tools/parity_diff_report.json",
+    "mutationFilePath": "src/App.module.lua"
+  },
+  {
+    "projectFile": "fixtures/complex.project.json",
+    "reportPath": "tools/parity_diff_report_complex.json",
+    "mutationFilePath": "fixtures/complex_src/Systems/Config.module.lua"
+  },
+  {
+    "projectFile": "fixtures/service_heavy.project.json",
+    "reportPath": "tools/parity_diff_report_service_heavy.json",
+    "mutationFilePath": "fixtures/service_heavy_src/Shared/Config.module.lua"
+  },
+  {
+    "projectFile": "fixtures/nested_modules.project.json",
+    "reportPath": "tools/parity_diff_report_nested_modules.json",
+    "mutationFilePath": "fixtures/nested_modules_src/Game/Features/Economy/Prices.module.lua"
+  }
+]

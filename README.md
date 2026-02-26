@@ -29,6 +29,7 @@ Active implementation workspace for the MCP Server + Roblox Studio plugin projec
   - `tools/rojo_parity_diff_check.ps1`: compares normalized MCP vs live Rojo serve snapshots and writes a diff report
   - `tools/run_rojo_parity_diff_task.ps1`: start MCP + Rojo serve, run parity diff, stop both servers
   - `tools/run_rojo_parity_suite_task.ps1`: runs parity diff against all fixture projects with fail-on-diff behavior
+  - `tools/parity_fixtures.json`: manifest defining parity suite fixture coverage (`projectFile`, `reportPath`, `mutationFilePath`)
   - `tools/run_rojo_parity_release_gate_task.ps1`: runs parity suite then strict summary checks (`-FailIfNoReports -FailIfDiffs`) for local release gating
   - `tools/mcp_protocol_contract_test.py`: cross-platform protocol contract checks (capabilities + session metadata)
   - `tools/run_mcp_protocol_task.ps1`: start server, run protocol contract test, stop server (Windows)
