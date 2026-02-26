@@ -88,7 +88,7 @@ $distributionValue = if ($IncludeDistributionEvidence) { 'true' } else { 'false'
 $failValue = if ($FailIfNotPass) { 'true' } else { 'false' }
 
 $args = @(
-    'workflow', 'run', 'CI',
+    'workflow', 'run', '.github/workflows/ci.yml',
     '--repo', $resolvedRepo,
     '--ref', $Ref,
     '-f', 'run_release_candidate_evidence_pack=true',
@@ -111,7 +111,14 @@ if ($DryRun) {
 
 Ensure-GhAvailable
 
-Invoke-GhStrict -GhArgs $args
+try {
+    Invoke-GhStrict -GhArgs $args
+}
+catch {
+    Write-Host "Primary dispatch by workflow path failed; retrying by workflow name 'CI'."
+    $fallbackArgs = @('workflow', 'run', 'CI') + $args[3..($args.Count - 1)]
+    Invoke-GhStrict -GhArgs $fallbackArgs
+}
 
 Write-Host "Workflow dispatched."
 Write-Host "Recent runs:"
