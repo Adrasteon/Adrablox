@@ -51,8 +51,9 @@ Active implementation workspace for the MCP Server + Roblox Studio plugin projec
   - `tools/run_day0_packaged_validation_task.ps1`: validates packaged artifacts by launching server from release zip, running smoke flow, and checking plugin archive contents
   - `tools/run_day0_published_artifact_validation_task.ps1`: validates Day-0 bundle readiness directly from `dist/release` artifacts using a temp project and direct MCP calls
   - `tools/run_spec_readiness_report.ps1`: computes Milestone 1/2/3 PASS/FAIL/UNKNOWN evidence from parity/reliability/release artifacts and writes `tools/spec_readiness_report.json`
+  - `tools/run_release_candidate_evidence_pack_task.ps1`: runs reliability evidence + parity suite/strict summary + spec readiness in one release-candidate command
   - `tools/run_mcp_server.ps1`: run server for manual Studio testing
-  - VS Code tasks: `Day-0: 1) Smoke Test (start+run+stop)`, `Day-0: 2) Run Server (manual Studio session)`, `Day-0: 3) Validate Packaged Artifacts (start+run+stop)`, `Day-0: 4) Validate Published Artifact Bundle`, `MCP: Policy Contract Test (start+run+stop)`, `MCP: Rojo Compat Test (start+run+stop)`, `MCP: Rojo Changefeed Edge Test (start+run+stop)`, `MCP: Conflict Race Contract Test (start+run+stop)`, `MCP: Reconnect Replay Contract Test (start+run+stop)`, `MCP: Invalid Session Contract Test (start+run+stop)`, `MCP: Integration Roundtrip Contract Test (start+run+stop)`, `MCP: Integration Reconnect Loop Contract Test (start+run+stop)`, `MCP: Integration Conflict Recovery Contract Test (start+run+stop)`, `MCP: Integration Mixed Resilience Contract Test (start+run+stop)`, `MCP: Integration Soak Contract Test (manual, start+run+stop)`, `MCP: Integration Reliability Suite (manual evidence)`, `MCP: Spec Readiness Report`, `MCP: Rojo Parity Diff (start+run+compare+stop)`, `MCP: Rojo Parity Suite (fixtures, fail-on-diff)`, `MCP: Rojo Parity Edge Semantics (focused)`, `MCP: Rojo Parity Release Gate (suite+strict-summary)`, `MCP: Protocol Contract Test (start+run+stop)`, `Release: Package Server + Plugin Artifacts`, `Release: Package Versioned Plugin Artifacts`
+  - VS Code tasks: `Day-0: 1) Smoke Test (start+run+stop)`, `Day-0: 2) Run Server (manual Studio session)`, `Day-0: 3) Validate Packaged Artifacts (start+run+stop)`, `Day-0: 4) Validate Published Artifact Bundle`, `MCP: Policy Contract Test (start+run+stop)`, `MCP: Rojo Compat Test (start+run+stop)`, `MCP: Rojo Changefeed Edge Test (start+run+stop)`, `MCP: Conflict Race Contract Test (start+run+stop)`, `MCP: Reconnect Replay Contract Test (start+run+stop)`, `MCP: Invalid Session Contract Test (start+run+stop)`, `MCP: Integration Roundtrip Contract Test (start+run+stop)`, `MCP: Integration Reconnect Loop Contract Test (start+run+stop)`, `MCP: Integration Conflict Recovery Contract Test (start+run+stop)`, `MCP: Integration Mixed Resilience Contract Test (start+run+stop)`, `MCP: Integration Soak Contract Test (manual, start+run+stop)`, `MCP: Integration Reliability Suite (manual evidence)`, `MCP: Spec Readiness Report`, `MCP: Release Candidate Evidence Pack`, `MCP: Rojo Parity Diff (start+run+compare+stop)`, `MCP: Rojo Parity Suite (fixtures, fail-on-diff)`, `MCP: Rojo Parity Edge Semantics (focused)`, `MCP: Rojo Parity Release Gate (suite+strict-summary)`, `MCP: Protocol Contract Test (start+run+stop)`, `Release: Package Server + Plugin Artifacts`, `Release: Package Versioned Plugin Artifacts`
   - CI workflow: `.github/workflows/ci.yml` (Windows expanded contract checks + Linux/macOS protocol contract checks)
     - Optional parity gate: `workflow_dispatch` input `run_rojo_parity_diff=true` runs `tools/run_rojo_parity_suite_task.ps1` on Windows (auto-skips if `rojo` CLI is unavailable on runner)
     - Optional strict mode: set `workflow_dispatch` input `strict_rojo_parity=true` to fail the manual parity run when parity reports are missing or contain diffs.
@@ -253,6 +254,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_integration_re
 ```
 
 This writes reliability evidence to `tools/integration_reliability_report.json`.
+
+Release-candidate evidence pack (manual, one command):
+
+```powershell
+Set-Location D:\roblox
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_release_candidate_evidence_pack_task.ps1
+```
+
+This runs integration reliability evidence, Rojo parity fixture suite + strict summary checks, and then writes `tools/spec_readiness_report.json`.
+Optional: pass `-SkipParitySuite` to reuse existing parity reports (no Rojo execution), `-Categories`/`-Fixtures` to target parity scope, and `-FailIfNotPass` to fail unless all milestone gates are PASS.
 
 Policy contract test (start+run+stop in one command):
 
