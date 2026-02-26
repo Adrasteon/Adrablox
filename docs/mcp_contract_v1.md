@@ -1,6 +1,6 @@
 # MCP Contract v1 (Working Draft)
 
-Last updated: 2026-02-25
+Last updated: 2026-02-26
 Status: Working draft (baseline implementation in workspace)
 Related docs: `mcp_studio_unified_project_plan.md`, `proposed_structure.md`
 
@@ -298,11 +298,18 @@ Conflict detail shape:
 {
   "instanceId": "ref_abc",
   "property": "Source",
-  "reason": "write_conflict",
+  "reason": "CONFLICT_WRITE_STALE_CURSOR",
   "baseCursor": "45",
   "lastWriteCursor": "46"
 }
 ```
+
+Common conflict detail reasons (current implementation):
+
+- `CONFLICT_WRITE_STALE_CURSOR`
+- `UNSUPPORTED_FILE_BACKED_MUTATION`
+- `SOURCE_WRITE_FAILED`
+- `SOURCE_PATH_MISSING`
 
 Idempotency rules:
 
@@ -363,6 +370,52 @@ Standard domain error codes:
 - `PATCH_CONFLICT`
 - `INTERNAL_ERROR`
 - `NOT_IMPLEMENTED`
+
+## 8.1 Error/Conflict Codes (Canonical)
+
+Use these machine-readable codes for client branching logic.
+
+### Lifecycle/session
+
+- `SESSION_NOT_FOUND`
+  - Meaning: referenced session does not exist (closed, expired, or unknown).
+  - Typical surfaces: `roblox.readTree`, `roblox.subscribeChanges`, `roblox.applyPatch`.
+  - JSON-RPC envelope:
+    - `error.code = -32001`
+    - `error.data.code = "SESSION_NOT_FOUND"`
+
+### Conflict detail reasons
+
+- `CONFLICT_WRITE_STALE_CURSOR`
+  - Meaning: `baseCursor` is older than a prior write for the same field.
+- `UNSUPPORTED_FILE_BACKED_MUTATION`
+  - Meaning: mutation op/property is not allowed for file-backed instances/policies.
+- `SOURCE_WRITE_FAILED`
+  - Meaning: server failed to persist `Source` to mapped file path.
+- `SOURCE_PATH_MISSING`
+  - Meaning: `Source` mutation requested for an instance without a mapped file path.
+
+### Client guidance
+
+- Treat codes as authoritative; use `message` only for display/logging.
+- Keep fallback message matching for backward compatibility with older servers.
+- Preserve unknown codes in logs/telemetry instead of collapsing to generic errors.
+
+### Compatibility note (older servers)
+
+Some older server builds may omit `error.data.code` (or conflict `reason` codes).
+
+Recommended client fallback order:
+
+1. If `error.data.code` is present, branch on that value.
+2. Else, if `error.code` is known, branch on that numeric code.
+3. Else, fallback to conservative message matching (for example, "session does not exist").
+4. If no mapping is possible, treat as generic recoverable error and log full payload.
+
+For conflict handling, apply the same pattern:
+
+1. Prefer explicit `conflictDetails[].reason` codes.
+2. Fallback to message text only when reason code is absent.
 
 ## 9) Security Requirements
 

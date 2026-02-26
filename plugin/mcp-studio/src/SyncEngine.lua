@@ -53,6 +53,49 @@ function SyncEngine:setConflictSink(callback)
     self.conflictSink = callback
 end
 
+function SyncEngine:_isSessionMissingError(err, errCode)
+    if errCode == "SESSION_NOT_FOUND" then
+        return true
+    end
+
+    if not err then
+        return false
+    end
+
+    local text = string.lower(tostring(err))
+    return string.find(text, "session does not exist", 1, true) ~= nil
+end
+
+function SyncEngine:_recoverSession(reason)
+    self:_emitStatus("Recovering session: " .. tostring(reason))
+
+    local openOk, openSession, openErr = self.connectionManager:openSession("src")
+    if not openOk then
+        self:_emitStatus("Session recovery open failed: " .. tostring(openErr))
+        return false
+    end
+
+    self.sessionId = openSession.sessionId
+    self.cursor = tonumber(openSession.initialCursor) or 0
+    self.fileBackedById = {}
+    self.sessionCapabilities = nil
+    self:_applySessionMetadata(openSession)
+
+    local readOk, tree, readErr = self.connectionManager:readTree(self.sessionId, openSession.rootInstanceId)
+    if not readOk then
+        self:_emitStatus("Session recovery read failed: " .. tostring(readErr))
+        return false
+    end
+
+    self.lastTree = tree
+    self:_applySessionMetadata(tree)
+    self.cursor = tonumber(tree.cursor) or self.cursor
+    self:_bindTreeToStudioInstances(tree)
+    self:_bindSelectionWatcher()
+    self:_emitStatus(string.format("Session recovered (session=%s, cursor=%d)", tostring(self.sessionId), self.cursor))
+    return true
+end
+
 function SyncEngine:_emitStatus(message)
     if self.statusSink then
         self.statusSink(message)
@@ -73,8 +116,15 @@ function SyncEngine:_startPolling()
     self.running = true
     task.spawn(function()
         while self.running do
-            local ok, changes, err = self.connectionManager:subscribeChanges(self.sessionId, self.cursor)
+            local ok, changes, err, errCode = self.connectionManager:subscribeChanges(self.sessionId, self.cursor)
             if not ok then
+                if self:_isSessionMissingError(err, errCode) then
+                    local recovered = self:_recoverSession("subscribe")
+                    if recovered then
+                        task.wait(0.2)
+                        continue
+                    end
+                end
                 self:_emitStatus("Subscribe failed: " .. tostring(err))
                 task.wait(1)
                 continue
@@ -262,13 +312,27 @@ end
 
 function SyncEngine:_sendPatch(operations)
     local patchId = PatchSerializer.makePatchId(self.sessionId, self:_nextPatchSequence())
-    local ok, result, err = self.connectionManager:applyPatch(
+    local ok, result, err, errCode = self.connectionManager:applyPatch(
         self.sessionId,
         patchId,
         self.cursor,
         "studio-plugin",
         operations
     )
+
+    if (not ok) and self:_isSessionMissingError(err, errCode) then
+        local recovered = self:_recoverSession("applyPatch")
+        if recovered then
+            ok, result, err, errCode = self.connectionManager:applyPatch(
+                self.sessionId,
+                patchId,
+                self.cursor,
+                "studio-plugin",
+                operations
+            )
+        end
+    end
+
     if not ok then
         self:_emitStatus("ApplyPatch failed: " .. tostring(err))
         return false
@@ -337,7 +401,16 @@ function SyncEngine:_rollbackConflicts(conflictDetails)
 end
 
 function SyncEngine:_refreshInstanceFromServer(instanceId)
-    local ok, tree, err = self.connectionManager:readTree(self.sessionId, instanceId)
+    local ok, tree, err, errCode = self.connectionManager:readTree(self.sessionId, instanceId)
+    if not ok then
+        if self:_isSessionMissingError(err, errCode) then
+            local recovered = self:_recoverSession("re-read")
+            if recovered then
+                ok, tree, err, errCode = self.connectionManager:readTree(self.sessionId, instanceId)
+            end
+        end
+    end
+
     if not ok then
         self:_emitStatus("Re-read failed: " .. tostring(err))
         return false

@@ -117,6 +117,7 @@ $renamePatch = Invoke-McpTool -Name "roblox.applyPatch" -Arguments @{
 }
 Assert-True -Condition ($renamePatch.accepted -eq $false) -Message "setName on file-backed instance must be rejected"
 Assert-True -Condition (@($renamePatch.conflictDetails).Count -gt 0) -Message "setName rejection should include conflict details"
+Assert-True -Condition (@($renamePatch.conflictDetails | Where-Object { $_.reason -eq 'UNSUPPORTED_FILE_BACKED_MUTATION' }).Count -gt 0) -Message "setName rejection should use UNSUPPORTED_FILE_BACKED_MUTATION"
 
 Write-Host "[6/8] applyPatch non-Source property should be rejected"
 $nonSourcePatch = Invoke-McpTool -Name "roblox.applyPatch" -Arguments @{
@@ -134,6 +135,7 @@ $nonSourcePatch = Invoke-McpTool -Name "roblox.applyPatch" -Arguments @{
     )
 }
 Assert-True -Condition ($nonSourcePatch.accepted -eq $false) -Message "non-Source setProperty on file-backed instance must be rejected"
+Assert-True -Condition (@($nonSourcePatch.conflictDetails | Where-Object { $_.reason -eq 'UNSUPPORTED_FILE_BACKED_MUTATION' }).Count -gt 0) -Message "non-Source rejection should use UNSUPPORTED_FILE_BACKED_MUTATION"
 
 Write-Host "[7/8] applyPatch Source should be accepted + restore"
 $updatedSource = $originalSource + "`n-- policy-contract-test"

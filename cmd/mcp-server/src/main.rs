@@ -81,6 +81,12 @@ struct ReadQuery {
     session_id: Option<String>,
 }
 
+const SESSION_NOT_FOUND_CODE: &str = "SESSION_NOT_FOUND";
+const CONFLICT_WRITE_STALE_CURSOR: &str = "CONFLICT_WRITE_STALE_CURSOR";
+const UNSUPPORTED_FILE_BACKED_MUTATION: &str = "UNSUPPORTED_FILE_BACKED_MUTATION";
+const SOURCE_WRITE_FAILED: &str = "SOURCE_WRITE_FAILED";
+const SOURCE_PATH_MISSING: &str = "SOURCE_PATH_MISSING";
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
@@ -137,6 +143,33 @@ fn tool_ok(id: Value, payload: Value) -> (StatusCode, Json<Value>) {
                 }],
                 "structuredContent": payload
             }
+        })),
+    )
+}
+
+fn session_not_found_rpc(id: Value) -> (StatusCode, Json<Value>) {
+    (
+        StatusCode::BAD_REQUEST,
+        Json(json!({
+            "jsonrpc": "2.0",
+            "id": id,
+            "error": {
+                "code": -32001,
+                "message": "session does not exist",
+                "data": {
+                    "code": SESSION_NOT_FOUND_CODE
+                }
+            }
+        })),
+    )
+}
+
+fn session_not_found_http() -> (StatusCode, Json<Value>) {
+    (
+        StatusCode::BAD_REQUEST,
+        Json(json!({
+            "error": "session does not exist",
+            "errorCode": SESSION_NOT_FOUND_CODE
         })),
     )
 }
@@ -487,7 +520,7 @@ async fn handle_rojo_read_by_instance(
     Path(instance_id): Path<String>,
     Query(query): Query<ReadQuery>,
 ) -> impl IntoResponse {
-    let sessions = state.sessions.lock().expect("session lock poisoned");
+    let mut sessions = state.sessions.lock().expect("session lock poisoned");
     let session_id = match resolve_session_id(query.session_id.as_deref(), &sessions) {
         Some(value) => value,
         None => {
@@ -498,15 +531,12 @@ async fn handle_rojo_read_by_instance(
         }
     };
 
-    let session = match sessions.get(&session_id) {
+    let session = match sessions.get_mut(&session_id) {
         Some(value) => value,
-        None => {
-            return (
-                StatusCode::BAD_REQUEST,
-                Json(json!({"error": "session does not exist"})),
-            );
-        }
+        None => return session_not_found_http(),
     };
+
+    refresh_session_from_source(&state, session);
 
     match read_tree_result(session, Some(&instance_id), &session_id) {
         Ok(result) => (StatusCode::OK, Json(result)),
@@ -518,16 +548,13 @@ async fn handle_rojo_read_by_session_and_instance(
     State(state): State<Arc<AppState>>,
     Path((session_id, instance_id)): Path<(String, String)>,
 ) -> impl IntoResponse {
-    let sessions = state.sessions.lock().expect("session lock poisoned");
-    let session = match sessions.get(&session_id) {
+    let mut sessions = state.sessions.lock().expect("session lock poisoned");
+    let session = match sessions.get_mut(&session_id) {
         Some(value) => value,
-        None => {
-            return (
-                StatusCode::BAD_REQUEST,
-                Json(json!({"error": "session does not exist"})),
-            );
-        }
+        None => return session_not_found_http(),
     };
+
+    refresh_session_from_source(&state, session);
 
     match read_tree_result(session, Some(&instance_id), &session_id) {
         Ok(result) => (StatusCode::OK, Json(result)),
@@ -542,12 +569,7 @@ async fn handle_rojo_subscribe(
     let mut sessions = state.sessions.lock().expect("session lock poisoned");
     let session = match sessions.get_mut(&session_id) {
         Some(value) => value,
-        None => {
-            return (
-                StatusCode::BAD_REQUEST,
-                Json(json!({"error": "session does not exist"})),
-            );
-        }
+        None => return session_not_found_http(),
     };
 
     refresh_session_from_source(&state, session);
@@ -562,12 +584,7 @@ async fn handle_rojo_subscribe_with_cursor(
     let mut sessions = state.sessions.lock().expect("session lock poisoned");
     let session = match sessions.get_mut(&session_id) {
         Some(value) => value,
-        None => {
-            return (
-                StatusCode::BAD_REQUEST,
-                Json(json!({"error": "session does not exist"})),
-            );
-        }
+        None => return session_not_found_http(),
     };
 
     refresh_session_from_source(&state, session);
@@ -656,16 +673,13 @@ async fn handle_mcp(
                     let requested = args.get("instanceId").and_then(Value::as_str);
 
                     let result = {
-                        let sessions = state.sessions.lock().expect("session lock poisoned");
-                        let session = match sessions.get(session_id) {
+                        let mut sessions = state.sessions.lock().expect("session lock poisoned");
+                        let session = match sessions.get_mut(session_id) {
                             Some(session) => session,
-                            None => {
-                                return (
-                                    StatusCode::BAD_REQUEST,
-                                    Json(json!(invalid_request(id, "session does not exist"))),
-                                );
-                            }
+                            None => return session_not_found_rpc(id),
                         };
+
+                        refresh_session_from_source(&state, session);
 
                         match read_tree_result(session, requested, session_id) {
                             Ok(value) => value,
@@ -695,12 +709,7 @@ async fn handle_mcp(
                         let mut sessions = state.sessions.lock().expect("session lock poisoned");
                         let session = match sessions.get_mut(session_id) {
                             Some(value) => value,
-                            None => {
-                                return (
-                                    StatusCode::BAD_REQUEST,
-                                    Json(json!(invalid_request(id, "session does not exist"))),
-                                );
-                            }
+                            None => return session_not_found_rpc(id),
                         };
 
                         refresh_session_from_source(&state, session);
@@ -727,12 +736,7 @@ async fn handle_mcp(
                         let mut sessions = state.sessions.lock().expect("session lock poisoned");
                         let session = match sessions.get_mut(session_id) {
                             Some(value) => value,
-                            None => {
-                                return (
-                                    StatusCode::BAD_REQUEST,
-                                    Json(json!(invalid_request(id, "session does not exist"))),
-                                );
-                            }
+                            None => return session_not_found_rpc(id),
                         };
 
                         if let Some(existing_cursor) = session.applied_patches.get(patch_id).copied() {
@@ -791,7 +795,7 @@ async fn handle_mcp(
                                             conflict_details.push(json!({
                                                 "instanceId": instance_id,
                                                 "property": property,
-                                                "reason": "write_conflict",
+                                                "reason": CONFLICT_WRITE_STALE_CURSOR,
                                                 "baseCursor": base_cursor.to_string(),
                                                 "lastWriteCursor": last_write.to_string()
                                             }));
@@ -808,7 +812,7 @@ async fn handle_mcp(
                                                     "operation": "setProperty",
                                                     "instanceId": instance_id,
                                                     "property": property,
-                                                    "reason": "unsupported_for_file_backed_session"
+                                                    "reason": UNSUPPORTED_FILE_BACKED_MUTATION
                                                 }));
                                                 continue;
                                             }
@@ -822,7 +826,7 @@ async fn handle_mcp(
                                                             "operation": "setProperty",
                                                             "instanceId": instance_id,
                                                             "property": property,
-                                                            "reason": "source_write_failed",
+                                                            "reason": SOURCE_WRITE_FAILED,
                                                             "path": path
                                                         }));
                                                         continue;
@@ -836,7 +840,7 @@ async fn handle_mcp(
                                                         "operation": "setProperty",
                                                         "instanceId": instance_id,
                                                         "property": property,
-                                                        "reason": "source_path_missing"
+                                                        "reason": SOURCE_PATH_MISSING
                                                     }));
                                                     continue;
                                                 }
@@ -879,7 +883,7 @@ async fn handle_mcp(
                                             conflict_details.push(json!({
                                                 "instanceId": instance_id,
                                                 "property": "Name",
-                                                "reason": "write_conflict",
+                                                "reason": CONFLICT_WRITE_STALE_CURSOR,
                                                 "baseCursor": base_cursor.to_string(),
                                                 "lastWriteCursor": last_write.to_string()
                                             }));
@@ -896,7 +900,7 @@ async fn handle_mcp(
                                                     "operation": "setName",
                                                     "instanceId": instance_id,
                                                     "property": "Name",
-                                                    "reason": "unsupported_for_file_backed_session"
+                                                    "reason": UNSUPPORTED_FILE_BACKED_MUTATION
                                                 }));
                                                 continue;
                                             }
@@ -918,7 +922,7 @@ async fn handle_mcp(
                                         );
                                         conflict_details.push(json!({
                                             "operation": "addInstance",
-                                            "reason": "unsupported_for_file_backed_session"
+                                            "reason": UNSUPPORTED_FILE_BACKED_MUTATION
                                         }));
                                         continue;
                                     }
@@ -928,7 +932,7 @@ async fn handle_mcp(
                                         );
                                         conflict_details.push(json!({
                                             "operation": "removeInstance",
-                                            "reason": "unsupported_for_file_backed_session"
+                                            "reason": UNSUPPORTED_FILE_BACKED_MUTATION
                                         }));
                                         continue;
                                     }

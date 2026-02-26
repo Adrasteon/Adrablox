@@ -18,15 +18,24 @@ Active implementation workspace for the MCP Server + Roblox Studio plugin projec
   - `tools/mcp_policy_contract_test.ps1`: validates advertised policy + mutation rejection semantics
   - `tools/run_mcp_policy_task.ps1`: start server, run policy contract test, stop server
   - `tools/run_rojo_compat_task.ps1`: start server, run Rojo compatibility check, stop server
+  - `tools/rojo_changefeed_edge_check.ps1`: validates update/add/rename/remove changefeed edge cases
+  - `tools/run_rojo_changefeed_task.ps1`: start server, run Rojo changefeed edge-case check, stop server
+  - `tools/mcp_conflict_race_contract_test.ps1`: validates stale-base cursor conflict semantics for patch application
+  - `tools/run_mcp_conflict_race_task.ps1`: start server, run conflict race contract test, stop server
+  - `tools/mcp_reconnect_replay_contract_test.ps1`: validates missed-cursor replay and future-cursor subscribe semantics
+  - `tools/run_mcp_reconnect_replay_task.ps1`: start server, run reconnect/replay contract test, stop server
+  - `tools/mcp_invalid_session_contract_test.ps1`: validates closed-session behavior and post-close recovery path
+  - `tools/run_mcp_invalid_session_task.ps1`: start server, run invalid-session contract test, stop server
   - `tools/mcp_protocol_contract_test.py`: cross-platform protocol contract checks (capabilities + session metadata)
   - `tools/run_mcp_protocol_task.ps1`: start server, run protocol contract test, stop server (Windows)
   - `tools/run_mcp_protocol_task.sh`: start server, run protocol contract test, stop server (Linux/macOS)
   - `tools/run_mcp_server.ps1`: run server for manual Studio testing
-  - VS Code tasks: `MCP: Run Server`, `MCP: Smoke Test (start+run+stop)`, `MCP: Policy Contract Test (start+run+stop)`, `MCP: Rojo Compat Test (start+run+stop)`, `MCP: Protocol Contract Test (start+run+stop)`
+  - VS Code tasks: `Day-0: 1) Smoke Test (start+run+stop)`, `Day-0: 2) Run Server (manual Studio session)`, `MCP: Policy Contract Test (start+run+stop)`, `MCP: Rojo Compat Test (start+run+stop)`, `MCP: Rojo Changefeed Edge Test (start+run+stop)`, `MCP: Conflict Race Contract Test (start+run+stop)`, `MCP: Reconnect Replay Contract Test (start+run+stop)`, `MCP: Invalid Session Contract Test (start+run+stop)`, `MCP: Protocol Contract Test (start+run+stop)`
   - CI workflow: `.github/workflows/ci.yml` (Windows full contract checks + Linux/macOS protocol contract checks)
 
 ## Documentation index
 
+- [docs/day0_onboarding.md](docs/day0_onboarding.md) — minimum setup/run actions for brand-new users
 - [docs/mcp_studio_unified_project_plan.md](docs/mcp_studio_unified_project_plan.md) — project plan, phases, risks, and success gates
 - [docs/mcp_contract_v1.md](docs/mcp_contract_v1.md) — working MCP contract and tool payloads
 - [docs/proposed_structure.md](docs/proposed_structure.md) — repository/language structure decisions
@@ -100,6 +109,34 @@ Set-Location D:\roblox
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_compat_task.ps1
 ```
 
+Rojo changefeed edge-case test (start+run+stop in one command):
+
+```powershell
+Set-Location D:\roblox
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_changefeed_task.ps1
+```
+
+Conflict race contract test (start+run+stop in one command):
+
+```powershell
+Set-Location D:\roblox
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_conflict_race_task.ps1
+```
+
+Reconnect/replay contract test (start+run+stop in one command):
+
+```powershell
+Set-Location D:\roblox
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_reconnect_replay_task.ps1
+```
+
+Invalid-session contract test (start+run+stop in one command):
+
+```powershell
+Set-Location D:\roblox
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_invalid_session_task.ps1
+```
+
 Policy contract test (start+run+stop in one command):
 
 ```powershell
@@ -131,6 +168,7 @@ Implemented now:
 - MCP lifecycle baseline (`initialize`, `notifications/initialized`)
 - Tool surface: `roblox.openSession`, `roblox.readTree`, `roblox.subscribeChanges`, `roblox.applyPatch`, `roblox.closeSession`
 - Filesystem-backed snapshot + diff flow for `.lua` source files under session source root
+- Read operations refresh from source before returning snapshot data (keeps read responses current)
 - `subscribeChanges` emits updates when VS Code/disk files change
 - `setProperty(Source)` writes Source updates back to mapped files
 - Adapter now attempts Rojo (`librojo`) snapshot loading when a `.project.json` file is provided, with filesystem fallback for `src` workflows
@@ -139,6 +177,9 @@ Implemented now:
 - For file-backed instances, only `setProperty(Source)` is accepted; `setName` and other property writes are rejected as non-durable
 - Server now advertises mutation policy metadata (`supportsStructuralOps`, `fileBackedMutationPolicy`) in open/read/subscribe payloads
 - Studio plugin consumes policy metadata and blocks unsupported local edits before sending patches
+- Server now emits explicit lifecycle error codes (e.g., `SESSION_NOT_FOUND`) in JSON-RPC error data for stable client handling
+- Conflict details now emit explicit reason codes (`CONFLICT_WRITE_STALE_CURSOR`, `UNSUPPORTED_FILE_BACKED_MUTATION`, `SOURCE_WRITE_FAILED`, `SOURCE_PATH_MISSING`) for stable client branching
+- Studio plugin now auto-recovers by opening a fresh session when server reports a missing/expired session (code-first, message fallback)
 - Rojo compatibility endpoints implemented (`/api/rojo`, `/api/read`, `/api/subscribe`)
 - Idempotent patch handling (`patchId`)
 - Base cursor conflict checks and structured conflict details

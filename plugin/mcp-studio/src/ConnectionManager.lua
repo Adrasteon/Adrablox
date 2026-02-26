@@ -34,7 +34,7 @@ function ConnectionManager:_request(method, params)
 
     if not response.Success then
         self.connected = false
-        return nil, string.format("HTTP %d %s", response.StatusCode, response.StatusMessage)
+        return nil, string.format("HTTP %d %s", response.StatusCode, response.StatusMessage), nil
     end
 
     local decodeOk, payload = pcall(function()
@@ -43,20 +43,24 @@ function ConnectionManager:_request(method, params)
 
     if not decodeOk then
         self.connected = false
-        return nil, "Failed to decode JSON-RPC response"
+        return nil, "Failed to decode JSON-RPC response", nil
     end
 
     if payload.error then
         self.connected = false
-        return nil, payload.error.message or "JSON-RPC error"
+        local code = nil
+        if payload.error.data and payload.error.data.code then
+            code = tostring(payload.error.data.code)
+        end
+        return nil, payload.error.message or "JSON-RPC error", code
     end
 
     self.connected = true
-    return payload.result, nil
+    return payload.result, nil, nil
 end
 
 function ConnectionManager:initialize()
-    local result, err = self:_request("initialize", {
+    local result, err, errCode = self:_request("initialize", {
         protocolVersion = self.protocolVersion,
         capabilities = {
             resources = { subscribe = true },
@@ -69,14 +73,14 @@ function ConnectionManager:initialize()
     })
 
     if err then
-        return false, nil, err
+        return false, nil, err, errCode
     end
 
-    return true, result, nil
+    return true, result, nil, nil
 end
 
 function ConnectionManager:sendInitialized()
-    local ok, _, err = pcall(function()
+    local ok, _, err, errCode = pcall(function()
         return self:_request("notifications/initialized", {})
     end)
 
@@ -85,28 +89,28 @@ function ConnectionManager:sendInitialized()
     end
 
     if err then
-        return false, err
+        return false, err, errCode
     end
 
-    return true, nil
+    return true, nil, nil
 end
 
 function ConnectionManager:callTool(name, arguments)
-    local result, err = self:_request("tools/call", {
+    local result, err, errCode = self:_request("tools/call", {
         name = name,
         arguments = arguments,
     })
 
     if err then
-        return false, nil, err
+        return false, nil, err, errCode
     end
 
     local structured = result and result.structuredContent
     if structured == nil then
-        return false, nil, "missing structuredContent in tool response"
+        return false, nil, "missing structuredContent in tool response", nil
     end
 
-    return true, structured, nil
+    return true, structured, nil, nil
 end
 
 function ConnectionManager:openSession(projectPath)
