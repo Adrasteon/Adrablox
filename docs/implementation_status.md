@@ -33,6 +33,7 @@ Last updated: 2026-02-26
 - Manual release workflow now generates and verifies SHA-256 checksums for release artifacts.
 - Manual release workflow now runs published-artifact Day-0 validation against `dist/release` bundle contents.
 - Consolidated spec readiness evidence reporting is now available (`tools/run_spec_readiness_report.ps1`) and writes milestone-status output to `tools/spec_readiness_report.json`.
+- Readiness summary helper is now available (`tools/print_spec_readiness_summary.ps1`) and is wired to emit concise status output (plus CI job summary markdown when run in GitHub Actions).
 - One-command release-candidate evidence orchestration is now available (`tools/run_release_candidate_evidence_pack_task.ps1`) to run reliability + parity + readiness in sequence.
 - Release-candidate evidence orchestration now supports optional full distribution evidence generation (`-IncludeDistributionEvidence`) before readiness evaluation.
 
@@ -208,6 +209,7 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - Optional manual integration reliability gate: set `workflow_dispatch` input `run_integration_reliability_suite=true` (with optional `integration_reliability_iterations`) to run aggregated reliability evidence and upload `integration-reliability-report` artifact.
   - Optional manual release-candidate evidence gate: set `workflow_dispatch` input `run_release_candidate_evidence_pack=true` to run one-command reliability/parity/readiness evidence and upload `release-candidate-evidence` artifact.
   - Optional manual release-candidate distribution mode: set `workflow_dispatch` input `release_candidate_include_distribution_evidence=true` (alongside the evidence gate) to include distribution packaging/validation evidence prior to readiness evaluation.
+  - Optional manual readiness/evidence runs now print a normalized spec-readiness summary line and include a job-summary table in GitHub Actions for faster gate inspection.
   - Manual parity runs generate `tools/parity_diff_summary.json` from `tools/parity_diff_report*.json` (including fixture metadata and category breakdown), print `Parity summary: fixtures=<n> totalDiffs=<n> categoryDiffs=<category:diffs|...>` in CI logs, and upload both as workflow artifact `rojo-parity-reports` for inspection/download.
   - Manual release packaging workflow: `.github/workflows/release-packaging.yml` (`workflow_dispatch` only; no scheduled/nightly run) now runs packaged Day-0 validation prior to artifact upload.
   - Manual release packaging workflow additionally generates and verifies release checksums prior to artifact upload.

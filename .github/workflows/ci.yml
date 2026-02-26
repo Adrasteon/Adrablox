@@ -255,6 +255,11 @@ jobs:
             tools/spec_readiness_report.json
           if-no-files-found: warn
 
+      - name: Print spec readiness summary (optional)
+        if: github.event_name == 'workflow_dispatch' && (inputs.run_spec_readiness_report == true || inputs.run_release_candidate_evidence_pack == true)
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/print_spec_readiness_summary.ps1
+
       - name: Run Rojo parity edge semantics task (optional)
         if: github.event_name == 'workflow_dispatch' && inputs.run_rojo_edge_semantics == true
         shell: pwsh
