@@ -132,7 +132,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && inputs.run_integration_reliability_suite == true
         uses: actions/upload-artifact@v4
         with:
-          name: integration-reliability-report
+          name: integration-reliability-report-it${{ inputs.integration_reliability_iterations }}
           path: tools/integration_reliability_report.json
           if-no-files-found: error
 
@@ -208,7 +208,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && inputs.run_spec_readiness_report == true
         uses: actions/upload-artifact@v4
         with:
-          name: spec-readiness-report
+          name: spec-readiness-report-${{ inputs.run_release_candidate_evidence_pack && 'with-pack' || 'standalone' }}
           path: tools/spec_readiness_report.json
           if-no-files-found: error
 
