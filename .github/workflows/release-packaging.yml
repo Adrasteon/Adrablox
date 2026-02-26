@@ -5,7 +5,7 @@ on:
 
 jobs:
   package-server:
-    name: Package Server (${{ matrix.os }})
+    name: Package Server + Plugin (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

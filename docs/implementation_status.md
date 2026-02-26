@@ -26,6 +26,7 @@ Last updated: 2026-02-26
 - Integration reliability baseline is in CI (`integration roundtrip` + `integration reconnect-loop`) with a manual higher-iteration soak runner.
 - Manual release packaging automation baseline is now in place for server/plugin distribution artifacts.
 - Day-0 packaged-artifact validation baseline is now in place (packaged server boot + smoke + plugin archive checks).
+- Plugin distribution now includes versioned source plugin archives, with optional installable `.rbxm` generation when Rojo CLI is available.
 
 ## Not Ready
 
@@ -71,7 +72,7 @@ Current: FAIL
 Goal: Ship a repeatable install/run path for new users without dev-only manual steps.
 
 Deliverables:
-- Plugin packaging + versioned distribution workflow (installable artifact path, not source-only zip).
+- Plugin packaging + versioned distribution workflow (source-archive baseline complete; installable artifact generation is currently Rojo-dependent).
 - Server artifact packaging and release workflow (baseline implemented; release process still to finalize).
 - Finalized Day-0 onboarding validation against fresh-machine setup (baseline packaged-validation automation implemented).
 
@@ -174,6 +175,8 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - Linux/macOS protocol task runner: `tools/run_mcp_protocol_task.sh`.
   - Server-only run script: `tools/run_mcp_server.ps1`.
   - Release packaging script: `tools/package_release_artifacts.ps1` (builds release server binary and packages `dist/release` artifacts).
+  - Plugin installable packaging project: `plugin/mcp-studio.plugin.project.json` (Rojo build target for versioned `.rbxm` output when available).
+  - Plugin packaging entrypoint script: `plugin/mcp-studio/packaging/PluginMain.server.lua`.
   - Day-0 packaged validation script: `tools/run_day0_packaged_validation_task.ps1` (runs packaged server binary + smoke validation + plugin archive file checks).
   - Rojo compatibility check script: `tools/rojo_compat_check.ps1`.
   - VS Code tasks for server run, smoke, Day-0 packaged validation, policy contract, Rojo compatibility, Rojo changefeed edge-case, conflict race contract, reconnect/replay contract, invalid-session contract, integration roundtrip contract, integration reconnect-loop contract, integration soak contract, Rojo parity diff, Rojo parity suite, Rojo parity release gate, protocol contract flows, and release artifact packaging.
@@ -192,7 +195,7 @@ The project has moved from planning/scaffolding into a working MVP implementatio
 - Add parity and edge-case compatibility tests against live Rojo serve behavior.
 - Continue reconnect/replay hardening and broader conflict-policy options for non-baseline scenarios.
 - Expand automated plugin+server integration/e2e coverage beyond the current CI baseline.
-- Finalize plugin distribution packaging/versioning (installable plugin artifact path) and complete fresh-machine Day-0 validation using published artifacts/docs only.
+- Finalize plugin distribution packaging/versioning by making installable plugin artifact generation non-optional in release environments and complete fresh-machine Day-0 validation using published artifacts/docs only.
 
 ## Quick Verification Commands
 

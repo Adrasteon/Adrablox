@@ -1,0 +1,36 @@
+{
+  "name": "EdiyorMcpStudioPlugin",
+  "tree": {
+    "$className": "Model",
+    "EdiyorMCP": {
+      "$className": "Script",
+      "$path": "plugin/mcp-studio/packaging/PluginMain.server.lua",
+      "src": {
+        "$className": "Folder",
+        "init": {
+          "$className": "ModuleScript",
+          "$path": "plugin/mcp-studio/src/init.lua"
+        },
+        "ConnectionManager": {
+          "$className": "ModuleScript",
+          "$path": "plugin/mcp-studio/src/ConnectionManager.lua"
+        },
+        "SyncEngine": {
+          "$className": "ModuleScript",
+          "$path": "plugin/mcp-studio/src/SyncEngine.lua"
+        },
+        "PatchSerializer": {
+          "$className": "ModuleScript",
+          "$path": "plugin/mcp-studio/src/PatchSerializer.lua"
+        }
+      },
+      "ui": {
+        "$className": "Folder",
+        "Widget": {
+          "$className": "ModuleScript",
+          "$path": "plugin/mcp-studio/ui/Widget.lua"
+        }
+      }
+    }
+  }
+}

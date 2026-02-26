@@ -26,6 +26,10 @@ try {
     $manifest = Get-Content -Raw -Path $manifestPath | ConvertFrom-Json
     $serverArchivePath = Join-Path $outputRoot ([string]$manifest.serverArchive)
     $pluginArchivePath = Join-Path $outputRoot ([string]$manifest.pluginArchive)
+    $pluginInstallablePath = $null
+    if ($manifest.pluginInstallableArtifact) {
+        $pluginInstallablePath = Join-Path $outputRoot ([string]$manifest.pluginInstallableArtifact)
+    }
     $binaryName = [string]$manifest.binaryName
 
     if (-not (Test-Path $serverArchivePath)) {
@@ -33,6 +37,9 @@ try {
     }
     if (-not (Test-Path $pluginArchivePath)) {
         throw "plugin archive not found at $pluginArchivePath"
+    }
+    if ($pluginInstallablePath -and -not (Test-Path $pluginInstallablePath)) {
+        throw "plugin installable artifact not found at $pluginInstallablePath"
     }
 
     if (Test-Path $validationRoot) {
@@ -92,6 +99,10 @@ try {
         if (-not (Test-Path $path)) {
             throw "Packaged plugin archive missing required file: $relativePath"
         }
+    }
+
+    if ($pluginInstallablePath) {
+        Write-Host "Installable plugin artifact present: $([System.IO.Path]::GetFileName($pluginInstallablePath))"
     }
 
     Write-Host "Day-0 packaged artifact validation completed successfully."

@@ -214,6 +214,19 @@
 			"isBackground": false
 		},
 		{
+			"label": "Release: Package Versioned Plugin Artifacts",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"tools/package_release_artifacts.ps1"
+			],
+			"isBackground": false
+		},
+		{
 			"label": "Day-0: 3) Validate Packaged Artifacts (start+run+stop)",
 			"type": "shell",
 			"command": "powershell",
