@@ -36,7 +36,7 @@ Active implementation workspace for the MCP Server + Roblox Studio plugin projec
   - VS Code tasks: `Day-0: 1) Smoke Test (start+run+stop)`, `Day-0: 2) Run Server (manual Studio session)`, `MCP: Policy Contract Test (start+run+stop)`, `MCP: Rojo Compat Test (start+run+stop)`, `MCP: Rojo Changefeed Edge Test (start+run+stop)`, `MCP: Conflict Race Contract Test (start+run+stop)`, `MCP: Reconnect Replay Contract Test (start+run+stop)`, `MCP: Invalid Session Contract Test (start+run+stop)`, `MCP: Rojo Parity Diff (start+run+compare+stop)`, `MCP: Rojo Parity Suite (fixtures, fail-on-diff)`, `MCP: Protocol Contract Test (start+run+stop)`
   - CI workflow: `.github/workflows/ci.yml` (Windows expanded contract checks + Linux/macOS protocol contract checks)
     - Optional parity gate: `workflow_dispatch` input `run_rojo_parity_diff=true` runs `tools/run_rojo_parity_suite_task.ps1` on Windows (auto-skips if `rojo` CLI is unavailable on runner)
-    - When this optional parity gate runs, CI uploads `tools/parity_diff_report*.json` as the `rojo-parity-reports` workflow artifact.
+    - When this optional parity gate runs, CI builds `tools/parity_diff_summary.json` from `tools/parity_diff_report*.json` and uploads both in the `rojo-parity-reports` workflow artifact.
 
 ## Documentation index
 

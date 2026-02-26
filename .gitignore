@@ -6,3 +6,4 @@ Thumbs.db
 *.rbxl
 *.rbxlx
 tools/parity_diff_report*.json
+tools/parity_diff_summary*.json

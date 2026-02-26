@@ -73,12 +73,19 @@ jobs:
           }
           powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_parity_suite_task.ps1
 
+      - name: Build parity summary artifact (optional)
+        if: github.event_name == 'workflow_dispatch' && inputs.run_rojo_parity_diff == true
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/summarize_parity_reports.ps1
+
       - name: Upload parity reports artifact (optional)
         if: github.event_name == 'workflow_dispatch' && inputs.run_rojo_parity_diff == true
         uses: actions/upload-artifact@v4
         with:
           name: rojo-parity-reports
-          path: tools/parity_diff_report*.json
+          path: |
+            tools/parity_diff_report*.json
+            tools/parity_diff_summary.json
           if-no-files-found: warn
 
   validate-unix:
