@@ -33,6 +33,55 @@ function Resolve-Repository {
     throw "Unable to parse GitHub repository from origin URL: $remoteUrl"
 }
 
+function Ensure-GhAvailable {
+    $existing = Get-Command gh -ErrorAction SilentlyContinue
+    if ($null -ne $existing) {
+        return
+    }
+
+    $candidateFiles = @(
+        (Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links\gh.exe'),
+        (Join-Path ${env:ProgramFiles} 'GitHub CLI\gh.exe'),
+        (Join-Path ${env:ProgramFiles(x86)} 'GitHub CLI\gh.exe')
+    )
+
+    foreach ($candidate in $candidateFiles) {
+        if (-not [string]::IsNullOrWhiteSpace($candidate) -and (Test-Path $candidate)) {
+            $candidateDir = Split-Path -Parent $candidate
+            $env:Path = "$candidateDir;$env:Path"
+            break
+        }
+    }
+
+    $existing = Get-Command gh -ErrorAction SilentlyContinue
+    if ($null -ne $existing) {
+        return
+    }
+
+    $wingetRoot = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages'
+    if (Test-Path $wingetRoot) {
+        $ghExe = Get-ChildItem -Path $wingetRoot -Recurse -Filter 'gh.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($null -ne $ghExe) {
+            $ghDir = Split-Path -Parent $ghExe.FullName
+            $env:Path = "$ghDir;$env:Path"
+        }
+    }
+
+    $resolved = Get-Command gh -ErrorAction SilentlyContinue
+    if ($null -eq $resolved) {
+        throw "GitHub CLI (gh) not found. Install gh and authenticate with 'gh auth login'."
+    }
+}
+
+function Invoke-GhStrict {
+    param([string[]]$GhArgs)
+
+    & gh @GhArgs
+    if ($LASTEXITCODE -ne 0) {
+        throw ("gh command failed with exit code {0}: gh {1}" -f $LASTEXITCODE, ($GhArgs -join ' '))
+    }
+}
+
 $resolvedRepo = Resolve-Repository -ExplicitRepository $Repository
 
 $distributionValue = if ($IncludeDistributionEvidence) { 'true' } else { 'false' }
@@ -60,20 +109,21 @@ if ($DryRun) {
     return
 }
 
-if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
-    throw "GitHub CLI (gh) not found. Install gh and authenticate with 'gh auth login'."
-}
+Ensure-GhAvailable
 
-& gh @args
+Invoke-GhStrict -GhArgs $args
 
 Write-Host "Workflow dispatched."
 Write-Host "Recent runs:"
-& gh run list --repo $resolvedRepo --workflow CI --limit 3
+Invoke-GhStrict -GhArgs @('run', 'list', '--repo', $resolvedRepo, '--workflow', 'CI', '--limit', '3')
 
 if ($Watch) {
     $latestRun = (& gh run list --repo $resolvedRepo --workflow CI --limit 1 --json databaseId --jq '.[0].databaseId')
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to resolve latest CI run id for watch mode."
+    }
     if (-not [string]::IsNullOrWhiteSpace($latestRun)) {
         Write-Host ("Watching run: {0}" -f $latestRun)
-        & gh run watch $latestRun --repo $resolvedRepo --exit-status
+        Invoke-GhStrict -GhArgs @('run', 'watch', $latestRun, '--repo', $resolvedRepo, '--exit-status')
     }
 }

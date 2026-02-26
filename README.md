@@ -292,6 +292,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/dispatch_mission_criti
 ```
 
 This dispatches manual `CI` workflow with strict PASS gating enabled (`release_candidate_fail_if_not_pass=true`) and can watch run completion.
+If `gh` is not already on PATH, the helper attempts to resolve common winget/link install paths automatically.
 
 Mission-critical local strict gate (no CI dispatch):
 
