@@ -145,6 +145,7 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - Rojo parity diff script: `tools/rojo_parity_diff_check.ps1` (normalized MCP vs live Rojo comparison report).
   - One-click Rojo parity diff flow: `tools/run_rojo_parity_diff_task.ps1` (parameterized by `-ProjectFile`, `-ReportPath`, and optional `-MutationFilePath` for reversible changefeed exercise).
   - One-click Rojo parity suite flow: `tools/run_rojo_parity_suite_task.ps1` (runs all fixtures with fail-on-diff, including mutation parity checks).
+  - One-click local parity release gate flow: `tools/run_rojo_parity_release_gate_task.ps1` (runs fixture suite and strict summary checks).
   - Fixture coverage now includes: `default.project.json`, `fixtures/complex.project.json`, `fixtures/service_heavy.project.json`, and `fixtures/nested_modules.project.json`.
   - Latest baseline fixture parity run (`default.project.json`) reports `diffCount=0` in `tools/parity_diff_report.json`.
   - Latest complex fixture parity run (`fixtures/complex.project.json`) reports `diffCount=0` in `tools/parity_diff_report_complex.json`.
@@ -155,7 +156,7 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - Linux/macOS protocol task runner: `tools/run_mcp_protocol_task.sh`.
   - Server-only run script: `tools/run_mcp_server.ps1`.
   - Rojo compatibility check script: `tools/rojo_compat_check.ps1`.
-  - VS Code tasks for server run, smoke, policy contract, Rojo compatibility, Rojo changefeed edge-case, conflict race contract, reconnect/replay contract, invalid-session contract, Rojo parity diff, Rojo parity suite, and protocol contract flows.
+  - VS Code tasks for server run, smoke, policy contract, Rojo compatibility, Rojo changefeed edge-case, conflict race contract, reconnect/replay contract, invalid-session contract, Rojo parity diff, Rojo parity suite, Rojo parity release gate, and protocol contract flows.
   - GitHub Actions CI (`.github/workflows/ci.yml`) runs:
     - Windows: tests + smoke + policy contract + Rojo compatibility + Rojo changefeed edge-case + conflict race + reconnect/replay + invalid-session + protocol contract checks,
     - Linux/macOS: tests + protocol contract checks.
