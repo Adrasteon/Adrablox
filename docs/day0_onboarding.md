@@ -27,7 +27,7 @@ If this passes, the server and protocol flow are functional on your machine.
 
 ## Minimum Live Authoring Path (Current State)
 
-Release packaging automation now exists for server + plugin source artifacts, but plugin install packaging is not finalized yet; one temporary manual step is still required.
+Release packaging automation is in place for server + plugin source + installable plugin artifacts, with strict validation flows available.
 
 1. Start server from VS Code task:
    - `Day-0: 2) Run Server (manual Studio session)`
@@ -39,7 +39,7 @@ Release packaging automation now exists for server + plugin source artifacts, bu
 
 ## Simplest Future UX (Target)
 
-After installable plugin packaging and Day-0 validation are finalized, the target flow is:
+Current target flow:
 
 1. Install extension/plugin bundle.
 2. Click **Start MCP Server**.

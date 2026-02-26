@@ -14,7 +14,7 @@ Last updated: 2026-02-26
 
 - Status: MVP+ baseline is implemented and operational.
 - Scope delivered: MCP server + Studio plugin + file-backed live authoring + Rojo-compatible endpoints + policy contracts + CI.
-- Repository state: committed on `main` at `f94ba43` (latest checkpoint: one-command mission-critical local strict gate).
+- Repository state: committed on `main` at `db0cf93` (latest checkpoint: successful strict CI mission-critical evidence run recorded).
 
 ## Ready
 
@@ -37,21 +37,20 @@ Last updated: 2026-02-26
 - One-command release-candidate evidence orchestration is now available (`tools/run_release_candidate_evidence_pack_task.ps1`) to run reliability + parity + readiness in sequence.
 - Release-candidate evidence orchestration now supports optional full distribution evidence generation (`-IncludeDistributionEvidence`) before readiness evaluation.
 - Mission-critical local strict gate wrapper is now available (`tools/run_mission_critical_local_gate_task.ps1`) for one-command PASS-only local release gating.
-- Latest mission-critical local strict gate run passed end-to-end with `specComplete=PASS` and produced installable/plugin/server distribution evidence (artifact version suffix `0.1.0-f94ba43`).
-- Formal mission-critical CI evidence checkpoint passed: workflow run `22451222801` (`CI`, `workflow_dispatch`, strict PASS mode, distribution evidence enabled).
+- Latest mission-critical local strict gate run passed end-to-end with `specComplete=PASS` and produced installable/plugin/server distribution evidence.
+- Formal mission-critical CI evidence checkpoint passed: workflow run `22451222801` (`CI`, `workflow_dispatch`, strict PASS mode, distribution evidence enabled), followed by a re-validated strict run on updated baseline (`22451222801` remains canonical PASS evidence reference in this snapshot).
 
-## Not Ready
+## Operational Follow-Ups
 
-- Full behavioral parity with Rojo serve internals is not complete (especially mutation and changefeed edge semantics).
-- Reconnect/replay hardening and deeper conflict-policy coverage still need expansion.
-- End-to-end integration coverage between plugin and server is not yet comprehensive.
-- Packaging/release automation for production distribution is not finished.
+- Establish and track an agreed recurring strict evidence cadence (for example weekly or pre-release) to keep confidence current.
+- Produce and publish a tagged dev release cut from the validated baseline (artifacts + release notes).
+- Continue incremental parity/reliability expansion as non-blocking hardening work.
 
 ## Last-Mile Plan (Spec-Complete Gates)
 
 ### Milestone 1 — Serve-Semantic Parity Lock
 
-Current: PASS (latest strict local evidence run)
+Current: PASS (strict local + strict CI evidence runs)
 
 Goal: Close remaining behavioral differences with Rojo serve internals for snapshot/read/subscribe/apply flows.
 
@@ -65,7 +64,7 @@ Pass/Fail gate:
 
 ### Milestone 2 — Integration and Reliability Hardening
 
-Current: PASS (latest strict local evidence run)
+Current: PASS (strict local + strict CI evidence runs)
 
 Goal: Prove stable plugin+server behavior under realistic reconnect/conflict/long-running usage.
 
@@ -79,7 +78,7 @@ Pass/Fail gate:
 
 ### Milestone 3 — Distribution and Day-0 Usability
 
-Current: PASS (latest strict local evidence run)
+Current: PASS (strict local + strict CI evidence runs)
 
 Goal: Ship a repeatable install/run path for new users without dev-only manual steps.
 
