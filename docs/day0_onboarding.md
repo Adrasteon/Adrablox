@@ -59,3 +59,14 @@ After installable plugin packaging and Day-0 validation are finalized, the targe
 - Optional installable output (when `rojo` CLI is present): `dist/release/mcp-studio-plugin-<version>.rbxm`
 - Manual packaged-validation command: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_day0_packaged_validation_task.ps1`
 - VS Code packaged-validation task: `Day-0: 3) Validate Packaged Artifacts (start+run+stop)`
+
+## CI Artifact Naming (Manual Dispatch)
+
+| Gate/input path | Artifact name pattern |
+| --- | --- |
+| `run_integration_reliability_suite=true` | `integration-reliability-report-it<iterations>` |
+| `run_spec_readiness_report=true` only | `spec-readiness-report-standalone` |
+| `run_spec_readiness_report=true` with `run_release_candidate_evidence_pack=true` | `spec-readiness-report-with-pack` |
+| `run_release_candidate_evidence_pack=true` + `release_candidate_include_distribution_evidence=false` | `release-candidate-evidence-it<iterations>-dist-off` |
+| `run_release_candidate_evidence_pack=true` + `release_candidate_include_distribution_evidence=true` | `release-candidate-evidence-it<iterations>-dist-on` |
+| `run_rojo_parity_diff=true` | `rojo-parity-reports` |
