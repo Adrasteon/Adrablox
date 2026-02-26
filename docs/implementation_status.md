@@ -6,9 +6,9 @@ Last updated: 2026-02-26
 
 - Delivery status: Core platform is built and functioning (server, Studio plugin, and file-backed live authoring).
 - Validation status: Automated checks and CI are in place with recent green test/smoke/contract runs.
-- Current readiness: Strict local release-candidate evidence run now reaches `specComplete=PASS`; broader release-candidate repetition/CI evidence remains the final confidence step.
-- Remaining risk: Confidence level still depends on agreed reliability iteration thresholds and repeated evidence runs, not just single-run pass state.
-- Next milestone: Execute and retain manual CI release-candidate evidence artifacts with distribution mode enabled as formal checkpoint evidence.
+- Current readiness: Strict local and strict manual CI release-candidate evidence runs now both reach PASS with distribution evidence enabled.
+- Remaining risk: Main remaining risk is operational repetition cadence (ongoing confidence sampling), not missing gate coverage.
+- Next milestone: Produce and publish a tagged dev release cut from this validated baseline.
 
 ## Current State
 
@@ -38,6 +38,7 @@ Last updated: 2026-02-26
 - Release-candidate evidence orchestration now supports optional full distribution evidence generation (`-IncludeDistributionEvidence`) before readiness evaluation.
 - Mission-critical local strict gate wrapper is now available (`tools/run_mission_critical_local_gate_task.ps1`) for one-command PASS-only local release gating.
 - Latest mission-critical local strict gate run passed end-to-end with `specComplete=PASS` and produced installable/plugin/server distribution evidence (artifact version suffix `0.1.0-f94ba43`).
+- Formal mission-critical CI evidence checkpoint passed: workflow run `22451222801` (`CI`, `workflow_dispatch`, strict PASS mode, distribution evidence enabled).
 
 ## Not Ready
 
