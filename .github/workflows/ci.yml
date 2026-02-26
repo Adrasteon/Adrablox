@@ -81,6 +81,10 @@ jobs:
         shell: pwsh
         run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_integration_conflict_recovery_task.ps1
 
+      - name: Run MCP integration mixed-resilience contract task
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_integration_mixed_resilience_task.ps1
+
       - name: Run MCP protocol contract task
         shell: pwsh
         run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_protocol_task.ps1

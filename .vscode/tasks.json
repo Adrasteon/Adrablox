@@ -149,6 +149,19 @@
 			"isBackground": false
 		},
 		{
+			"label": "MCP: Integration Mixed Resilience Contract Test (start+run+stop)",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"tools/run_mcp_integration_mixed_resilience_task.ps1"
+			],
+			"isBackground": false
+		},
+		{
 			"label": "MCP: Integration Soak Contract Test (manual, start+run+stop)",
 			"type": "shell",
 			"command": "powershell",
