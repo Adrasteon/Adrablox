@@ -1,0 +1,6 @@
+return {
+	Entries = {
+		"alpha",
+		"beta",
+	},
+}

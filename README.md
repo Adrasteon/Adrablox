@@ -163,7 +163,7 @@ Set-Location D:\roblox
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_parity_suite_task.ps1
 ```
 
-The suite now runs static parity plus a reversible mutation check per fixture (currently default, complex, service-heavy, nested-modules, and mixed-services fixtures).
+The suite now runs static parity plus a reversible mutation check per fixture (currently default, complex, service-heavy, nested-modules, mixed-services, and lifecycle-ops fixtures).
 Optional: pass `-Categories <comma-separated-categories>` (for example `-Categories baseline,structure`) to run a targeted subset of enabled fixture categories.
 Optional: pass `-Fixtures <comma-separated-fixture-names>` (for example `-Fixtures baseline-default,complex-services-shared`) to run specific enabled fixtures by manifest `name`.
 Optional: pass `-DryRun` to print selected fixtures and categories without starting MCP or Rojo servers.

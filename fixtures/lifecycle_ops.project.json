@@ -1,0 +1,39 @@
+{
+  "name": "McpParityLifecycleOpsFixture",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "Lifecycle": {
+        "$className": "Folder",
+        "Reconcile": {
+          "$path": "lifecycle_ops_src/Server/Reconcile.server.lua"
+        },
+        "Entities": {
+          "$className": "Folder",
+          "Active": {
+            "$className": "Folder",
+            "Registry": {
+              "$path": "lifecycle_ops_src/Server/Entities/Active/Registry.module.lua"
+            }
+          },
+          "Archive": {
+            "$className": "Folder",
+            "Snapshot": {
+              "$path": "lifecycle_ops_src/Server/Entities/Archive/Snapshot.module.lua"
+            }
+          }
+        }
+      }
+    },
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Shared": {
+        "$className": "Folder",
+        "LifecycleFlags": {
+          "$path": "lifecycle_ops_src/Shared/LifecycleFlags.module.lua"
+        }
+      }
+    }
+  }
+}

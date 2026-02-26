@@ -38,5 +38,13 @@
     "projectFile": "fixtures/mixed_services.project.json",
     "reportPath": "tools/parity_diff_report_mixed_services.json",
     "mutationFilePath": "fixtures/mixed_services_src/Shared/Constants.module.lua"
+  },
+  {
+    "name": "lifecycle-ops-tree",
+    "category": "lifecycle-ops",
+    "enabled": true,
+    "projectFile": "fixtures/lifecycle_ops.project.json",
+    "reportPath": "tools/parity_diff_report_lifecycle_ops.json",
+    "mutationFilePath": "fixtures/lifecycle_ops_src/Shared/LifecycleFlags.module.lua"
   }
 ]
