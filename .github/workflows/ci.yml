@@ -69,6 +69,10 @@ jobs:
         shell: pwsh
         run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_invalid_session_task.ps1
 
+      - name: Run MCP integration roundtrip contract task
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_integration_roundtrip_task.ps1
+
       - name: Run MCP protocol contract task
         shell: pwsh
         run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_protocol_task.ps1
