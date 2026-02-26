@@ -2,6 +2,8 @@
 
 Active implementation workspace for the MCP Server + Roblox Studio plugin project.
 
+Latest dev prerelease: https://github.com/Adrasteon/Adrablox/releases/tag/dev-2026-02-26-689cf31
+
 ## What is included
 
 - Rust workspace
