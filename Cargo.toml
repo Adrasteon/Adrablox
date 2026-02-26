@@ -1,0 +1,13 @@
+[workspace]
+members = [
+    "cmd/mcp-server",
+    "crates/mcp-core",
+    "crates/rojo-adapter",
+]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+version = "0.1.0"
+license = "MIT"
+authors = ["Ediyor Team"]

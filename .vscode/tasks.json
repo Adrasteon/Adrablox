@@ -1,0 +1,74 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "MCP: Run Server",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"tools/run_mcp_server.ps1"
+			],
+			"isBackground": true,
+			"presentation": {
+				"reveal": "always",
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "MCP: Smoke Test (start+run+stop)",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"tools/run_mcp_smoke_task.ps1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "MCP: Policy Contract Test (start+run+stop)",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"tools/run_mcp_policy_task.ps1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "MCP: Rojo Compat Test (start+run+stop)",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"tools/run_rojo_compat_task.ps1"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "MCP: Protocol Contract Test (start+run+stop)",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"tools/run_mcp_protocol_task.ps1"
+			],
+			"isBackground": false
+		}
+	]
+}

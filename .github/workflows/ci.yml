@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate-windows:
+    name: Validate (Windows)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run cargo tests
+        shell: pwsh
+        run: |
+          $cargoExe = Join-Path $env:USERPROFILE '.cargo\bin\cargo.exe'
+          & $cargoExe test
+
+      - name: Run MCP smoke task
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_smoke_task.ps1
+
+      - name: Run MCP policy contract task
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_policy_task.ps1
+
+      - name: Run Rojo compatibility task
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_compat_task.ps1
+
+  validate-unix:
+    name: Validate (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run cargo tests
+        run: cargo test
+
+      - name: Make protocol task executable
+        run: chmod +x tools/run_mcp_protocol_task.sh
+
+      - name: Run MCP protocol contract task
+        run: tools/run_mcp_protocol_task.sh
