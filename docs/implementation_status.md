@@ -14,7 +14,7 @@ Last updated: 2026-02-26
 
 - Status: MVP+ baseline is implemented and operational.
 - Scope delivered: MCP server + Studio plugin + file-backed live authoring + Rojo-compatible endpoints + policy contracts + CI.
-- Repository state: committed on `main` (root commit `ceca931`) with local identity configured and global default branch set to `main`.
+- Repository state: committed on `main` at `658c371` (latest checkpoint: manual release packaging workflow/task baseline).
 
 ## Ready
 
@@ -23,6 +23,7 @@ Last updated: 2026-02-26
 - Rojo compatibility API routes are available (`/api/rojo`, `/api/read`, `/api/subscribe`).
 - Validation baseline exists and has recent green runs across Rust tests, smoke flow, policy contract flow, and protocol contract flow.
 - CI is configured to run contract checks across Windows and protocol checks across Linux/macOS.
+- Integration reliability baseline is in CI (`integration roundtrip` + `integration reconnect-loop`) with a manual higher-iteration soak runner.
 - Manual release packaging automation baseline is now in place for server/plugin distribution artifacts.
 
 ## Not Ready
@@ -55,8 +56,8 @@ Current: IN PROGRESS
 Goal: Prove stable plugin+server behavior under realistic reconnect/conflict/long-running usage.
 
 Deliverables:
-- Add plugin+server integration/e2e scenarios in CI.
-- Add soak/reliability checks for reconnect windows, stale cursor replay, invalid-session recovery, and conflict rollback loops.
+- Expand plugin+server integration/e2e scenario coverage in CI beyond the current roundtrip/reconnect-loop baseline.
+- Promote soak/reliability checks from manual execution to release-candidate evidence with agreed thresholds.
 
 Pass/Fail gate:
 - **PASS** if integration suite is green in CI and reliability runs complete without unrecovered sync divergence.
@@ -69,8 +70,8 @@ Current: FAIL
 Goal: Ship a repeatable install/run path for new users without dev-only manual steps.
 
 Deliverables:
-- Plugin packaging + versioned distribution workflow.
-- Server artifact packaging and release workflow.
+- Plugin packaging + versioned distribution workflow (installable artifact path, not source-only zip).
+- Server artifact packaging and release workflow (baseline implemented; release process still to finalize).
 - Finalized Day-0 onboarding validation against fresh-machine setup.
 
 Pass/Fail gate:
@@ -148,6 +149,7 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - Integration reconnect-loop contract script: `tools/mcp_integration_reconnect_loop_contract_test.ps1`.
   - One-click integration reconnect-loop flow: `tools/run_mcp_integration_reconnect_loop_task.ps1`.
   - Integration soak runner script: `tools/run_mcp_integration_soak_task.ps1` (manual higher-iteration reconnect-loop verification).
+  - Release packaging manifest output: `dist/release/release_manifest.json` with platform, artifact names, and commit metadata.
   - Rojo parity diff script: `tools/rojo_parity_diff_check.ps1` (normalized MCP vs live Rojo comparison report).
   - One-click Rojo parity diff flow: `tools/run_rojo_parity_diff_task.ps1` (parameterized by `-ProjectFile`, `-ReportPath`, and optional `-MutationFilePath` for reversible changefeed exercise).
   - One-click Rojo parity suite flow: `tools/run_rojo_parity_suite_task.ps1` (runs all fixtures with fail-on-diff, including mutation parity checks; supports optional `-Categories`, `-Fixtures`, and `-DryRun` filtering/preview options).
@@ -186,9 +188,9 @@ The project has moved from planning/scaffolding into a working MVP implementatio
 
 - Expand current `librojo` integration to full Rojo serve parity (IDs, metadata, mutation semantics).
 - Add parity and edge-case compatibility tests against live Rojo serve behavior.
-- Add reconnect/replay hardening and broader conflict policy options.
-- Add automated integration/e2e tests for plugin + server.
-- Add packaging/release automation for plugin distribution and server artifacts.
+- Continue reconnect/replay hardening and broader conflict-policy options for non-baseline scenarios.
+- Expand automated plugin+server integration/e2e coverage beyond the current CI baseline.
+- Finalize plugin distribution packaging/versioning and Day-0 fresh-machine validation using packaged artifacts.
 
 ## Quick Verification Commands
 

@@ -268,5 +268,5 @@ Example initialize request:
 
 1. Expand current `librojo` integration from snapshot parity to full mutation/changefeed parity with Rojo serve session internals.
 2. Add Rojo payload parity checks against live Rojo serve behavior.
-3. Harden reconnect/replay windows and conflict merge policy.
-4. Add Studio plugin packaging flow and integration testing pipeline.
+3. Continue hardening reconnect/replay windows and conflict merge policy beyond baseline reliability gates.
+4. Finalize installable Studio plugin packaging/versioning and complete Day-0 validation from packaged artifacts.

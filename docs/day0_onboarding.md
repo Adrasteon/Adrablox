@@ -27,7 +27,7 @@ If this passes, the server and protocol flow are functional on your machine.
 
 ## Minimum Live Authoring Path (Current State)
 
-Because plugin packaging is not finalized yet, one temporary manual step is required.
+Release packaging automation now exists for server + plugin source artifacts, but plugin install packaging is not finalized yet; one temporary manual step is still required.
 
 1. Start server from VS Code task:
    - `Day-0: 2) Run Server (manual Studio session)`
@@ -39,7 +39,7 @@ Because plugin packaging is not finalized yet, one temporary manual step is requ
 
 ## Simplest Future UX (Target)
 
-After packaging/release automation is added, the target flow is:
+After installable plugin packaging and Day-0 validation are finalized, the target flow is:
 
 1. Install extension/plugin bundle.
 2. Click **Start MCP Server**.
@@ -51,3 +51,8 @@ After packaging/release automation is added, the target flow is:
 - Re-run `Day-0: 1) Smoke Test (start+run+stop)` first.
 - Confirm Studio **Allow HTTP Requests** is enabled.
 - Confirm plugin endpoint is exactly `http://127.0.0.1:44877/mcp`.
+
+## Distribution Baseline (Current)
+
+- Manual packaging command: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/package_release_artifacts.ps1`
+- Current packaged outputs: `dist/release/mcp-server-<platform>.zip`, `dist/release/mcp-studio-plugin-source.zip`, `dist/release/release_manifest.json`
