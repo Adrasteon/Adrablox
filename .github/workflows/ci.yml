@@ -3,6 +3,13 @@ name: CI
 on:
   push:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      run_rojo_parity_diff:
+        description: "Run optional MCP vs live Rojo parity diff task"
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   validate-windows:
@@ -35,6 +42,36 @@ jobs:
       - name: Run Rojo compatibility task
         shell: pwsh
         run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_compat_task.ps1
+
+      - name: Run Rojo changefeed edge-case task
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_changefeed_task.ps1
+
+      - name: Run MCP conflict race contract task
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_conflict_race_task.ps1
+
+      - name: Run MCP reconnect/replay contract task
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_reconnect_replay_task.ps1
+
+      - name: Run MCP invalid-session contract task
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_invalid_session_task.ps1
+
+      - name: Run MCP protocol contract task
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_protocol_task.ps1
+
+      - name: Run Rojo parity diff task (optional)
+        if: github.event_name == 'workflow_dispatch' && inputs.run_rojo_parity_diff == true
+        shell: pwsh
+        run: |
+          if (-not (Get-Command rojo -ErrorAction SilentlyContinue)) {
+            Write-Host "Rojo CLI not found on runner; skipping optional parity diff."
+            exit 0
+          }
+          powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_parity_diff_task.ps1
 
   validate-unix:
     name: Validate (${{ matrix.os }})

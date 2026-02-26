@@ -31,13 +31,54 @@ Last updated: 2026-02-26
 - End-to-end integration coverage between plugin and server is not yet comprehensive.
 - Packaging/release automation for production distribution is not finished.
 
-## Next Milestones
+## Last-Mile Plan (Spec-Complete Gates)
 
-1. Complete serve-semantic parity for `librojo`-backed sessions (IDs/metadata/mutation/changefeed behavior).
-2. Add parity stress tests that compare behavior against live Rojo across edge cases.
-3. Harden reconnect/replay behavior and expand conflict-policy scenarios.
-4. Add plugin+server end-to-end integration tests in CI.
-5. Add release packaging for server artifacts and plugin distribution.
+### Milestone 1 — Serve-Semantic Parity Lock
+
+Current: IN PROGRESS
+
+Goal: Close remaining behavioral differences with Rojo serve internals for snapshot/read/subscribe/apply flows.
+
+Deliverables:
+- Expand parity contract suite to cover remaining edge semantics across IDs, metadata, and changefeed behavior.
+- Run side-by-side parity checks against live Rojo serve for agreed fixture projects.
+
+Pass/Fail gate:
+- **PASS** if parity suite shows no unresolved behavioral deltas for agreed fixtures and all existing contract tests remain green.
+- **FAIL** if any blocking semantic mismatch remains (especially cursor, mutation, or changefeed equivalence).
+
+### Milestone 2 — Integration and Reliability Hardening
+
+Current: IN PROGRESS
+
+Goal: Prove stable plugin+server behavior under realistic reconnect/conflict/long-running usage.
+
+Deliverables:
+- Add plugin+server integration/e2e scenarios in CI.
+- Add soak/reliability checks for reconnect windows, stale cursor replay, invalid-session recovery, and conflict rollback loops.
+
+Pass/Fail gate:
+- **PASS** if integration suite is green in CI and reliability runs complete without unrecovered sync divergence.
+- **FAIL** if any test leaves plugin/server out of sync without deterministic recovery.
+
+### Milestone 3 — Distribution and Day-0 Usability
+
+Current: FAIL
+
+Goal: Ship a repeatable install/run path for new users without dev-only manual steps.
+
+Deliverables:
+- Plugin packaging + versioned distribution workflow.
+- Server artifact packaging and release workflow.
+- Finalized Day-0 onboarding validation against fresh-machine setup.
+
+Pass/Fail gate:
+- **PASS** if a fresh user can install, run, connect, and complete a live-authoring round trip using published artifacts and docs only.
+- **FAIL** if setup still requires source-level/manual developer-only steps.
+
+### Spec-Complete Declaration Criteria
+
+Declare “spec-complete” only when **all** milestone gates above are in PASS state simultaneously.
 
 ## Summary
 
@@ -101,15 +142,20 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - One-click reconnect/replay flow: `tools/run_mcp_reconnect_replay_task.ps1`.
   - Invalid-session contract script: `tools/mcp_invalid_session_contract_test.ps1`.
   - One-click invalid-session flow: `tools/run_mcp_invalid_session_task.ps1`.
+  - Rojo parity diff script: `tools/rojo_parity_diff_check.ps1` (normalized MCP vs live Rojo comparison report).
+  - One-click Rojo parity diff flow: `tools/run_rojo_parity_diff_task.ps1` (parameterized by `-ProjectFile` and `-ReportPath`).
+  - Latest baseline fixture parity run (`default.project.json`) reports `diffCount=0` in `tools/parity_diff_report.json`.
+  - Latest complex fixture parity run (`fixtures/complex.project.json`) reports `diffCount=0` in `tools/parity_diff_report_complex.json`.
   - Cross-platform protocol contract script: `tools/mcp_protocol_contract_test.py`.
   - Windows protocol task runner: `tools/run_mcp_protocol_task.ps1`.
   - Linux/macOS protocol task runner: `tools/run_mcp_protocol_task.sh`.
   - Server-only run script: `tools/run_mcp_server.ps1`.
   - Rojo compatibility check script: `tools/rojo_compat_check.ps1`.
-  - VS Code tasks for server run, smoke, policy contract, Rojo compatibility, Rojo changefeed edge-case, conflict race contract, reconnect/replay contract, invalid-session contract, and protocol contract flows.
+  - VS Code tasks for server run, smoke, policy contract, Rojo compatibility, Rojo changefeed edge-case, conflict race contract, reconnect/replay contract, invalid-session contract, Rojo parity diff, and protocol contract flows.
   - GitHub Actions CI (`.github/workflows/ci.yml`) runs:
-    - Windows: tests + smoke + policy contract + Rojo compatibility checks,
+    - Windows: tests + smoke + policy contract + Rojo compatibility + Rojo changefeed edge-case + conflict race + reconnect/replay + invalid-session + protocol contract checks,
     - Linux/macOS: tests + protocol contract checks.
+  - Optional CI parity gate: manual `workflow_dispatch` with `run_rojo_parity_diff=true` runs Rojo parity diff task on Windows (skips if `rojo` CLI is not present).
 
 ## In Progress / Remaining
 

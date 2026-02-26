@@ -274,6 +274,24 @@ impl RojoAdapter {
 
         let mut instances = HashMap::new();
         let mut file_paths = HashMap::new();
+
+        if snapshot.class_name.to_string() == "DataModel" {
+            let root_node = self.convert_rojo_node(
+                &root_id,
+                None,
+                snapshot,
+                &mut instances,
+                &mut file_paths,
+            );
+            instances.insert(root_id.clone(), root_node);
+
+            return ProjectSnapshot {
+                root_id,
+                instances,
+                file_paths,
+            };
+        }
+
         let root_data_model_id = self.rojo_node_id(&snapshot, &root_id, 0);
 
         instances.insert(

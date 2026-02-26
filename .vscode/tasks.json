@@ -110,6 +110,19 @@
 			"isBackground": false
 		},
 		{
+			"label": "MCP: Rojo Parity Diff (start+run+compare+stop)",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"tools/run_rojo_parity_diff_task.ps1"
+			],
+			"isBackground": false
+		},
+		{
 			"label": "MCP: Protocol Contract Test (start+run+stop)",
 			"type": "shell",
 			"command": "powershell",

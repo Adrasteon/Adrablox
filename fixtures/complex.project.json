@@ -1,0 +1,33 @@
+{
+  "name": "McpParityComplexFixture",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "Main": {
+        "$path": "complex_src/Main.server.lua"
+      },
+      "Systems": {
+        "$className": "Folder",
+        "Bootstrap": {
+          "$path": "complex_src/Systems/Bootstrap.module.lua"
+        },
+        "Config": {
+          "$path": "complex_src/Systems/Config.module.lua"
+        }
+      }
+    },
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Shared": {
+        "$className": "Folder",
+        "Net": {
+          "$path": "complex_src/Shared/Net.module.lua"
+        },
+        "Types": {
+          "$path": "complex_src/Shared/Types.module.lua"
+        }
+      }
+    }
+  }
+}

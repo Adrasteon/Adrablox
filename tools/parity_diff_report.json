@@ -1,0 +1,54 @@
+{
+    "timestampUtc":  "2026-02-26T11:04:50.2537561Z",
+    "projectPath":  "default.project.json",
+    "mcpBase":  "http://127.0.0.1:44877",
+    "rojoBase":  "http://127.0.0.1:34872",
+    "compared":  {
+                     "open":  {
+                                  "mcpRootInstanceId":  "ref_root",
+                                  "rojoRootInstanceId":  "23b23cece078cb517c236a6a33a9f7cb",
+                                  "mcpHasSessionId":  true,
+                                  "rojoHasSessionId":  true
+                              },
+                     "readSummary":  {
+                                         "mcp":  {
+                                                     "cursor":  "0",
+                                                     "instanceCount":  3,
+                                                     "sourceNodeCount":  1,
+                                                     "classHistogram":  {
+                                                                            "ServerScriptService":  1,
+                                                                            "ModuleScript":  1,
+                                                                            "DataModel":  1
+                                                                        },
+                                                     "uniqueNameClassCount":  3
+                                                 },
+                                         "rojo":  {
+                                                      "cursor":  "",
+                                                      "instanceCount":  3,
+                                                      "sourceNodeCount":  1,
+                                                      "classHistogram":  {
+                                                                             "ServerScriptService":  1,
+                                                                             "ModuleScript":  1,
+                                                                             "DataModel":  1
+                                                                         },
+                                                      "uniqueNameClassCount":  3
+                                                  }
+                                     },
+                     "subscribeSummary":  {
+                                              "mcp":  {
+                                                          "available":  true,
+                                                          "cursor":  "0",
+                                                          "addedCount":  0,
+                                                          "updatedCount":  0,
+                                                          "removedCount":  0
+                                                      },
+                                              "rojo":  {
+                                                           "available":  false
+                                                       }
+                                          }
+                 },
+    "diffCount":  0,
+    "diffs":  [
+
+              ]
+}

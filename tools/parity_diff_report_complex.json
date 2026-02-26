@@ -1,0 +1,60 @@
+{
+    "timestampUtc":  "2026-02-26T11:11:29.4543050Z",
+    "projectPath":  "fixtures/complex.project.json",
+    "mcpBase":  "http://127.0.0.1:44877",
+    "rojoBase":  "http://127.0.0.1:34872",
+    "compared":  {
+                     "open":  {
+                                  "mcpRootInstanceId":  "ref_root",
+                                  "rojoRootInstanceId":  "6e61520dcd1c1fa02104fd645438f894",
+                                  "mcpHasSessionId":  true,
+                                  "rojoHasSessionId":  true
+                              },
+                     "readSummary":  {
+                                         "mcp":  {
+                                                     "cursor":  "0",
+                                                     "instanceCount":  10,
+                                                     "sourceNodeCount":  5,
+                                                     "classHistogram":  {
+                                                                            "Script":  1,
+                                                                            "ModuleScript":  4,
+                                                                            "ReplicatedStorage":  1,
+                                                                            "DataModel":  1,
+                                                                            "Folder":  2,
+                                                                            "ServerScriptService":  1
+                                                                        },
+                                                     "uniqueNameClassCount":  10
+                                                 },
+                                         "rojo":  {
+                                                      "cursor":  "",
+                                                      "instanceCount":  10,
+                                                      "sourceNodeCount":  5,
+                                                      "classHistogram":  {
+                                                                             "Script":  1,
+                                                                             "ModuleScript":  4,
+                                                                             "ReplicatedStorage":  1,
+                                                                             "DataModel":  1,
+                                                                             "Folder":  2,
+                                                                             "ServerScriptService":  1
+                                                                         },
+                                                      "uniqueNameClassCount":  10
+                                                  }
+                                     },
+                     "subscribeSummary":  {
+                                              "mcp":  {
+                                                          "available":  true,
+                                                          "cursor":  "0",
+                                                          "addedCount":  0,
+                                                          "updatedCount":  0,
+                                                          "removedCount":  0
+                                                      },
+                                              "rojo":  {
+                                                           "available":  false
+                                                       }
+                                          }
+                 },
+    "diffCount":  0,
+    "diffs":  [
+
+              ]
+}
