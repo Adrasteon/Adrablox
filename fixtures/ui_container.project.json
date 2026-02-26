@@ -1,0 +1,36 @@
+{
+  "name": "McpParityUiContainerFixture",
+  "tree": {
+    "$className": "DataModel",
+    "StarterGui": {
+      "$className": "StarterGui",
+      "MainGui": {
+        "$className": "ScreenGui",
+        "Root": {
+          "$className": "Frame",
+          "Hud": {
+            "$className": "Frame",
+            "HealthLabel": {
+              "$path": "ui_container_src/StarterGui/MainGui/HealthLabel.lua"
+            }
+          },
+          "Menu": {
+            "$className": "Frame",
+            "PlayButton": {
+              "$path": "ui_container_src/StarterGui/MainGui/PlayButton.lua"
+            }
+          }
+        }
+      }
+    },
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "UiShared": {
+        "$className": "Folder",
+        "Theme": {
+          "$path": "ui_container_src/Shared/Theme.module.lua"
+        }
+      }
+    }
+  }
+}
