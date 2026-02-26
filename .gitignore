@@ -5,3 +5,4 @@ Thumbs.db
 *.tmp
 *.rbxl
 *.rbxlx
+tools/parity_diff_report*.json
