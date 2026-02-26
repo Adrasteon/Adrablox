@@ -56,3 +56,5 @@ After installable plugin packaging and Day-0 validation are finalized, the targe
 
 - Manual packaging command: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/package_release_artifacts.ps1`
 - Current packaged outputs: `dist/release/mcp-server-<platform>.zip`, `dist/release/mcp-studio-plugin-source.zip`, `dist/release/release_manifest.json`
+- Manual packaged-validation command: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_day0_packaged_validation_task.ps1`
+- VS Code packaged-validation task: `Day-0: 3) Validate Packaged Artifacts (start+run+stop)`

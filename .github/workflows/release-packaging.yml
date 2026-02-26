@@ -23,7 +23,11 @@ jobs:
 
       - name: Build and package release artifacts
         shell: pwsh
-        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/package_release_artifacts.ps1
+        run: ./tools/package_release_artifacts.ps1
+
+      - name: Validate packaged Day-0 artifacts
+        shell: pwsh
+        run: ./tools/run_day0_packaged_validation_task.ps1 -SkipPackaging
 
       - name: Upload packaged artifacts
         uses: actions/upload-artifact@v4

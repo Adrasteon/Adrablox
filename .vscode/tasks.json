@@ -212,6 +212,19 @@
 				"tools/package_release_artifacts.ps1"
 			],
 			"isBackground": false
+		},
+		{
+			"label": "Day-0: 3) Validate Packaged Artifacts (start+run+stop)",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"tools/run_day0_packaged_validation_task.ps1"
+			],
+			"isBackground": false
 		}
 	]
 }
