@@ -146,6 +146,7 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - One-click integration roundtrip flow: `tools/run_mcp_integration_roundtrip_task.ps1`.
   - Integration reconnect-loop contract script: `tools/mcp_integration_reconnect_loop_contract_test.ps1`.
   - One-click integration reconnect-loop flow: `tools/run_mcp_integration_reconnect_loop_task.ps1`.
+  - Integration soak runner script: `tools/run_mcp_integration_soak_task.ps1` (manual higher-iteration reconnect-loop verification).
   - Rojo parity diff script: `tools/rojo_parity_diff_check.ps1` (normalized MCP vs live Rojo comparison report).
   - One-click Rojo parity diff flow: `tools/run_rojo_parity_diff_task.ps1` (parameterized by `-ProjectFile`, `-ReportPath`, and optional `-MutationFilePath` for reversible changefeed exercise).
   - One-click Rojo parity suite flow: `tools/run_rojo_parity_suite_task.ps1` (runs all fixtures with fail-on-diff, including mutation parity checks; supports optional `-Categories`, `-Fixtures`, and `-DryRun` filtering/preview options).
@@ -169,7 +170,7 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - Linux/macOS protocol task runner: `tools/run_mcp_protocol_task.sh`.
   - Server-only run script: `tools/run_mcp_server.ps1`.
   - Rojo compatibility check script: `tools/rojo_compat_check.ps1`.
-  - VS Code tasks for server run, smoke, policy contract, Rojo compatibility, Rojo changefeed edge-case, conflict race contract, reconnect/replay contract, invalid-session contract, integration roundtrip contract, integration reconnect-loop contract, Rojo parity diff, Rojo parity suite, Rojo parity release gate, and protocol contract flows.
+  - VS Code tasks for server run, smoke, policy contract, Rojo compatibility, Rojo changefeed edge-case, conflict race contract, reconnect/replay contract, invalid-session contract, integration roundtrip contract, integration reconnect-loop contract, integration soak contract, Rojo parity diff, Rojo parity suite, Rojo parity release gate, and protocol contract flows.
   - GitHub Actions CI (`.github/workflows/ci.yml`) runs:
     - Windows: tests + smoke + policy contract + Rojo compatibility + Rojo changefeed edge-case + conflict race + reconnect/replay + invalid-session + integration roundtrip + integration reconnect-loop + protocol contract checks,
     - Linux/macOS: tests + protocol contract checks.

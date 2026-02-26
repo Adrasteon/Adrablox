@@ -136,6 +136,19 @@
 			"isBackground": false
 		},
 		{
+			"label": "MCP: Integration Soak Contract Test (manual, start+run+stop)",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"tools/run_mcp_integration_soak_task.ps1"
+			],
+			"isBackground": false
+		},
+		{
 			"label": "MCP: Rojo Parity Diff (start+run+compare+stop)",
 			"type": "shell",
 			"command": "powershell",
