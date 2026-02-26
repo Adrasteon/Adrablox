@@ -5,6 +5,7 @@ param(
     [int]$MutationSettleMs = 500,
     [string]$Categories = "",
     [string]$Fixtures = "",
+    [switch]$IncludeDistributionEvidence,
     [switch]$SkipReliability,
     [switch]$SkipParitySuite,
     [switch]$SkipParitySummary,
@@ -55,6 +56,7 @@ try {
     Write-Host "- mutationSettleMs=$MutationSettleMs"
     Write-Host "- categories='$Categories'"
     Write-Host "- fixtures='$Fixtures'"
+    Write-Host "- includeDistributionEvidence=$IncludeDistributionEvidence"
     Write-Host "- skipReliability=$SkipReliability"
     Write-Host "- skipParitySuite=$SkipParitySuite"
     Write-Host "- skipParitySummary=$SkipParitySummary"
@@ -103,6 +105,17 @@ try {
     }
     else {
         Write-Host "[parity-summary] Skipped"
+    }
+
+    if ($IncludeDistributionEvidence) {
+        Invoke-ToolScript -Name 'distribution-package' -ScriptPath 'tools/package_release_artifacts.ps1' -Arguments @('-RequireRojo')
+        Invoke-ToolScript -Name 'distribution-manifest' -ScriptPath 'tools/validate_release_manifest.ps1' -Arguments @('-RequireInstallable')
+        Invoke-ToolScript -Name 'distribution-checksums-generate' -ScriptPath 'tools/generate_release_checksums.ps1'
+        Invoke-ToolScript -Name 'distribution-checksums-verify' -ScriptPath 'tools/generate_release_checksums.ps1' -Arguments @('-Verify')
+        Invoke-ToolScript -Name 'distribution-day0-published' -ScriptPath 'tools/run_day0_published_artifact_validation_task.ps1' -Arguments @('-RequireInstallable')
+    }
+    else {
+        Write-Host "[distribution] Skipped"
     }
 
     if (-not $SkipReadiness) {

@@ -34,6 +34,7 @@ Last updated: 2026-02-26
 - Manual release workflow now runs published-artifact Day-0 validation against `dist/release` bundle contents.
 - Consolidated spec readiness evidence reporting is now available (`tools/run_spec_readiness_report.ps1`) and writes milestone-status output to `tools/spec_readiness_report.json`.
 - One-command release-candidate evidence orchestration is now available (`tools/run_release_candidate_evidence_pack_task.ps1`) to run reliability + parity + readiness in sequence.
+- Release-candidate evidence orchestration now supports optional full distribution evidence generation (`-IncludeDistributionEvidence`) before readiness evaluation.
 
 ## Not Ready
 
@@ -170,7 +171,7 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - Parity fixture manifest: `tools/parity_fixtures.json` (suite fixture definitions are now data-driven with fixture metadata: `name`, `category`, `enabled`).
   - One-click local parity release gate flow: `tools/run_rojo_parity_release_gate_task.ps1` (runs fixture suite and strict summary checks; supports optional `-Categories`, `-Fixtures`, and `-DryRun` filtering/preview options).
   - Consolidated spec readiness report: `tools/run_spec_readiness_report.ps1` (computes Milestone 1/2/3 + overall spec-complete PASS/FAIL/UNKNOWN from parity/reliability/release evidence artifacts).
-  - Release-candidate evidence pack runner: `tools/run_release_candidate_evidence_pack_task.ps1` (orchestrates reliability suite + parity suite/strict summary + readiness reporting with optional targeted scope).
+  - Release-candidate evidence pack runner: `tools/run_release_candidate_evidence_pack_task.ps1` (orchestrates reliability suite + parity suite/strict summary + optional distribution evidence generation + readiness reporting with optional targeted scope).
   - Fixture coverage now includes: `default.project.json`, `fixtures/complex.project.json`, `fixtures/service_heavy.project.json`, `fixtures/nested_modules.project.json`, `fixtures/mixed_services.project.json`, `fixtures/lifecycle_ops.project.json`, `fixtures/ui_container.project.json`, `fixtures/serverstorage_flow.project.json`, `fixtures/presentation_services.project.json`, `fixtures/starterpack_inventory.project.json`, `fixtures/teams_spawns.project.json`, `fixtures/startercharacter_flow.project.json`, and `fixtures/metadata_churn.project.json`.
   - Latest baseline fixture parity run (`default.project.json`) reports `diffCount=0` in `tools/parity_diff_report.json`.
   - Latest complex fixture parity run (`fixtures/complex.project.json`) reports `diffCount=0` in `tools/parity_diff_report_complex.json`.

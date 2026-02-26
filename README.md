@@ -264,6 +264,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_release_candidate_
 ```
 
 This runs integration reliability evidence, Rojo parity fixture suite + strict summary checks, and then writes `tools/spec_readiness_report.json`.
+Optional: pass `-IncludeDistributionEvidence` to generate full Milestone 3 evidence (release packaging with required installable plugin, manifest/checksum validation, and published Day-0 validation) before readiness evaluation.
 Optional: pass `-SkipParitySuite` to reuse existing parity reports (no Rojo execution), `-Categories`/`-Fixtures` to target parity scope, and `-FailIfNotPass` to fail unless all milestone gates are PASS.
 
 Policy contract test (start+run+stop in one command):
