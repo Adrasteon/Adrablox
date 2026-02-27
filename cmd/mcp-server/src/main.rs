@@ -655,13 +655,11 @@ async fn handle_mcp(
             // Provide sanitized tool names that conform to the extension's
             // allowed pattern ([a-z0-9_-]) while mapping back to the
             // canonical MCP tool names for dispatch.
-            let canonical = vec![
-                ("roblox.openSession", "Open a Rojo-backed session"),
+            let canonical = [("roblox.openSession", "Open a Rojo-backed session"),
                 ("roblox.readTree", "Read a tree/subtree snapshot"),
                 ("roblox.subscribeChanges", "Subscribe to incremental changes"),
                 ("roblox.applyPatch", "Apply a mutation patch"),
-                ("roblox.closeSession", "Close session"),
-            ];
+                ("roblox.closeSession", "Close session")];
 
             let tools: Vec<Value> = canonical
                 .iter()

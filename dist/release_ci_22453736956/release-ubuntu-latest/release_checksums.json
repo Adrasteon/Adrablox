@@ -1,0 +1,22 @@
+{
+  "generatedUtc": "2026-02-26T17:36:22.2421518Z",
+  "algorithm": "SHA256",
+  "entries": [
+    {
+      "file": "mcp-server-linux.zip",
+      "sha256": "222c333901b8b8aabcbc703076abb1895800c9fd85b4a61ec5c793d279937946"
+    },
+    {
+      "file": "mcp-studio-plugin-source-0.1.0-689cf31.zip",
+      "sha256": "07ff2a34afb0ae47f8ece018257bedc462a3c2a5ee6a74c499859c809556807b"
+    },
+    {
+      "file": "release_manifest.json",
+      "sha256": "bc3f39c33ceed14e07bcf5b467d7f3dd4a967a5d2b83e857745277e88758ec55"
+    },
+    {
+      "file": "mcp-studio-plugin-0.1.0-689cf31.rbxm",
+      "sha256": "0c3e8f5d6816b337616a8842dd82fd3c8101faa04ad4e35ee2798228b60150e1"
+    }
+  ]
+}

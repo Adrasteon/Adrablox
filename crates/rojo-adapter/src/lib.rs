@@ -36,6 +36,12 @@ pub struct ProjectSnapshot {
 #[derive(Debug, Clone)]
 pub struct RojoAdapter;
 
+impl Default for RojoAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RojoAdapter {
     pub fn new() -> Self {
         Self
@@ -275,7 +281,7 @@ impl RojoAdapter {
         let mut instances = HashMap::new();
         let mut file_paths = HashMap::new();
 
-        if snapshot.class_name.to_string() == "DataModel" {
+        if snapshot.class_name == "DataModel" {
             let root_node = self.convert_rojo_node(
                 &root_id,
                 None,
@@ -508,10 +514,5 @@ fn append_child(instances: &mut HashMap<String, AdapterNode>, parent_id: &str, c
 
 fn sanitize_path_component(value: &str) -> String {
     value
-        .replace(':', "_")
-        .replace('\\', "_")
-        .replace('/', "_")
-        .replace('.', "_")
-        .replace('-', "_")
-        .replace(' ', "_")
+        .replace([':', '\\', '/', '.', '-', ' '], "_")
 }

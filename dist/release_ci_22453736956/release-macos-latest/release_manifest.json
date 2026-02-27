@@ -1,0 +1,12 @@
+{
+  "createdUtc": "2026-02-26T17:40:50.1237540Z",
+  "platform": "macos",
+  "serverArchive": "mcp-server-macos.zip",
+  "pluginArchive": "mcp-studio-plugin-source-0.1.0-689cf31.zip",
+  "pluginSourceArchive": "mcp-studio-plugin-source-0.1.0-689cf31.zip",
+  "pluginVersion": "0.1.0+689cf31",
+  "pluginInstallableAvailable": true,
+  "pluginInstallableArtifact": "mcp-studio-plugin-0.1.0-689cf31.rbxm",
+  "binaryName": "mcp-server",
+  "commit": "689cf31"
+}
