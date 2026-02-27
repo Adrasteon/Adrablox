@@ -24,6 +24,20 @@ function postJson(url, obj) {
       res.on('data', (chunk) => data += chunk);
       res.on('end', () => {
         try {
+        if (cmd === 'subscribe') {
+          const sessionId = argv[1];
+          const cursor = argv[2] || null;
+          if (!sessionId) {
+            console.error('Usage: adrablox-studio subscribe <sessionId> [cursor]');
+            process.exit(2);
+          }
+          const args = { sessionId };
+          if (cursor !== null) args.cursor = cursor;
+          const payload = { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'roblox.subscribeChanges', arguments: args } };
+          const resp = await postJson(url, payload);
+          console.log(JSON.stringify(resp, null, 2));
+          return;
+        }
         if (cmd === 'apply-patch') {
           // Usage: apply-patch <sessionId> <patchId> <baseCursor> <origin> '<operationsJson>'
           const sessionId = argv[1];
