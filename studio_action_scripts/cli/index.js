@@ -2,6 +2,7 @@
 const http = require('http');
 const https = require('https');
 const { URL } = require('url');
+const fs = require('fs');
 
 function postJson(url, obj) {
   return new Promise((resolve, reject) => {
@@ -167,6 +168,47 @@ async function main() {
         }
         process.exit(3);
       }
+      console.log(JSON.stringify(resp.result || resp, null, 2));
+      return;
+    }
+
+    if (cmd === 'snapshot-export') {
+      // Usage: snapshot-export <sessionId> [outFile]
+      const sessionId = argv[1];
+      const outFile = argv[2] || null;
+      if (!sessionId) {
+        console.error('Usage: adrablox-studio snapshot-export <sessionId> [outFile]');
+        process.exit(2);
+      }
+      const payload = { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'roblox.exportSnapshot', arguments: { sessionId } } };
+      const resp = await postJson(url, payload);
+      const content = resp.result || resp;
+      if (outFile) {
+        try {
+          fs.writeFileSync(outFile, JSON.stringify(content, null, 2), 'utf8');
+          console.log('Wrote snapshot to', outFile);
+        } catch (e) {
+          console.error('Failed to write file:', e.message);
+          process.exit(3);
+        }
+      } else {
+        console.log(JSON.stringify(content, null, 2));
+      }
+      return;
+    }
+
+    if (cmd === 'snapshot-import') {
+      // Usage: snapshot-import <sessionId> <inFile>
+      const sessionId = argv[1];
+      const inFile = argv[2];
+      if (!sessionId || !inFile) {
+        console.error('Usage: adrablox-studio snapshot-import <sessionId> <inFile>');
+        process.exit(2);
+      }
+      let data;
+      try { data = JSON.parse(fs.readFileSync(inFile, 'utf8')); } catch (e) { console.error('Failed to read/parse snapshot:', e.message); process.exit(3); }
+      const payload = { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'roblox.importSnapshot', arguments: { sessionId, snapshot: data } } };
+      const resp = await postJson(url, payload);
       console.log(JSON.stringify(resp.result || resp, null, 2));
       return;
     }
