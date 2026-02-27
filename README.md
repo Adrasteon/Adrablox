@@ -16,6 +16,11 @@ First use (download and deploy):
   - On Windows, use the provided launcher to get a visible console with live logs: double-click `run-mcp-server.bat` (or run `run-mcp-server.ps1` from PowerShell). These wrappers start the packaged `mcp-server.exe` in a detached console and keep stdout/stderr visible.
   - Alternatively you can run `mcp-server.exe` directly; note that some shells/shortcuts may start it detached without showing logs.
 4. In Roblox Studio, import the `.rbxm` plugin, open it, and connect to `http://127.0.0.1:44877/mcp`.
+
+Notes about recent changes:
+- The MCP server now advertises sanitized tool names in `tools/list` (e.g. `roblox-opensession`). Plugins should either call canonical names (e.g. `roblox.openSession`) or accept sanitized names; the provided Studio plugin has been updated to accept both.
+- Snapshot export from the server is returned wrapped in the JSON-RPC `tools/call` response under `structuredContent`; the plugin now unwraps this and understands `snake_case` fields (`root_id`, `file_paths`).
+- The server exposes a WebSocket push endpoint at `ws://127.0.0.1:44877/mcp-stream` for progress events. Studio plugins can poll the RPC `roblox.importProgress` as a fallback — the supplied plugin implements polling for import progress.
 5. In VS Code, open this project folder and (if using Copilot MCP tools) add/connect an MCP server at `http://127.0.0.1:44877/mcp` so VS Code and Studio use the same local server.
 
 If you get stuck, open `day0_onboarding.md` in the release files and follow it step by step.
@@ -121,9 +126,14 @@ Server endpoints:
 
 - `GET http://127.0.0.1:44877/health`
 - `POST http://127.0.0.1:44877/mcp`
+  - Protocol notes: JSON-RPC `tools/list` / `tools/call` are used for capabilities and tool invocation. Tool payloads may be wrapped with `structuredContent`.
 - `POST http://127.0.0.1:44877/api/rojo`
 - `GET http://127.0.0.1:44877/api/read/{instanceId}`
 - `GET http://127.0.0.1:44877/api/subscribe/{sessionId}/{cursor}`
+
+Additional endpoints:
+- WebSocket push stream: `ws://127.0.0.1:44877/mcp-stream` (import progress and server events)
+- Polling RPC: call `tools/call` with name `roblox.importProgress` and params `{ sessionId }` to poll import progress when WebSocket is not available.
 
 ## Smoke test script
 

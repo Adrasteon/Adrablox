@@ -11,6 +11,7 @@ function pluginController.start(plugin)
 
     local syncEngine = SyncEngine.new(connection)
     local widget = Widget.mount(plugin, connection)
+    syncEngine:setWidget(widget)
     syncEngine:setStatusSink(function(status)
         widget.updateStatus(status)
     end)

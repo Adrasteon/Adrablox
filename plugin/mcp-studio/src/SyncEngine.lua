@@ -8,6 +8,7 @@ SyncEngine.__index = SyncEngine
 function SyncEngine.new(connectionManager)
     local self = setmetatable({}, SyncEngine)
     self.connectionManager = connectionManager
+    self.widget = nil
     self.sessionId = nil
     self.cursor = 0
     self.running = false
@@ -24,6 +25,10 @@ function SyncEngine.new(connectionManager)
     self.fileBackedById = {}
     self.sessionCapabilities = nil
     return self
+end
+
+function SyncEngine:setWidget(widget)
+    self.widget = widget
 end
 
 function SyncEngine:_applySessionMetadata(payload)
@@ -609,6 +614,12 @@ function SyncEngine:bootstrap()
     self.sessionId = openSession.sessionId
     self.cursor = tonumber(openSession.initialCursor) or 0
     self:_applySessionMetadata(openSession)
+
+    if self.widget and self.widget.setSession then
+        pcall(function()
+            self.widget.setSession(self.sessionId)
+        end)
+    end
 
     local readOk, tree, readErr = self.connectionManager:readTree(self.sessionId, openSession.rootInstanceId)
     if not readOk then

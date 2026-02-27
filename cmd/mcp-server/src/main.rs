@@ -1163,9 +1163,9 @@ async fn handle_mcp(
                         }
 
                         json!({
-                            "rootId": session.root_id,
+                            "root_id": session.root_id,
                             "instances": instances_map,
-                            "filePaths": session.file_paths
+                            "file_paths": session.file_paths
                         })
                     };
 

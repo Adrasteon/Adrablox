@@ -1,0 +1,46 @@
+{
+  "content": [
+    {
+      "text": "{\"file_paths\":{\"ref_file_App_module_lua\":\"\\\\\\\\?\\\\D:\\\\adrablox\\\\src\\\\App.module.lua\"},\"instances\":{\"ref_file_App_module_lua\":{\"Children\":[],\"ClassName\":\"ModuleScript\",\"Id\":\"ref_file_App_module_lua\",\"Name\":\"App\",\"Parent\":\"ref_server_script_service\",\"Properties\":{\"Source\":\"local App = {}\\r\\n\\r\\nfunction App.greet(name)\\r\\n    return \\\"Hello, \\\" .. tostring(name)\\r\\nend\\r\\n\\r\\nreturn App\\r\\n\"}},\"ref_root\":{\"Children\":[\"ref_server_script_service\"],\"ClassName\":\"DataModel\",\"Id\":\"ref_root\",\"Name\":\"Game\",\"Parent\":null,\"Properties\":{}},\"ref_server_script_service\":{\"Children\":[\"ref_file_App_module_lua\"],\"ClassName\":\"ServerScriptService\",\"Id\":\"ref_server_script_service\",\"Name\":\"ServerScriptService\",\"Parent\":\"ref_root\",\"Properties\":{}}},\"root_id\":\"ref_root\"}",
+      "type": "text"
+    }
+  ],
+  "structuredContent": {
+    "file_paths": {
+      "ref_file_App_module_lua": "\\\\?\\D:\\adrablox\\src\\App.module.lua"
+    },
+    "instances": {
+      "ref_file_App_module_lua": {
+        "Children": [],
+        "ClassName": "ModuleScript",
+        "Id": "ref_file_App_module_lua",
+        "Name": "App",
+        "Parent": "ref_server_script_service",
+        "Properties": {
+          "Source": "local App = {}\r\n\r\nfunction App.greet(name)\r\n    return \"Hello, \" .. tostring(name)\r\nend\r\n\r\nreturn App\r\n"
+        }
+      },
+      "ref_root": {
+        "Children": [
+          "ref_server_script_service"
+        ],
+        "ClassName": "DataModel",
+        "Id": "ref_root",
+        "Name": "Game",
+        "Parent": null,
+        "Properties": {}
+      },
+      "ref_server_script_service": {
+        "Children": [
+          "ref_file_App_module_lua"
+        ],
+        "ClassName": "ServerScriptService",
+        "Id": "ref_server_script_service",
+        "Name": "ServerScriptService",
+        "Parent": "ref_root",
+        "Properties": {}
+      }
+    },
+    "root_id": "ref_root"
+  }
+}

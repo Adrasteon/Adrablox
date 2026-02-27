@@ -224,6 +224,12 @@ async function main() {
       }
       let data;
       try { data = JSON.parse(fs.readFileSync(inFile, 'utf8')); } catch (e) { console.error('Failed to read/parse snapshot:', e.message); process.exit(3); }
+      // If the snapshot was exported via tools/call wrapper, unwrap structuredContent
+      if (data && data.structuredContent) {
+        data = data.structuredContent;
+      } else if (data && data.result && data.result.structuredContent) {
+        data = data.result.structuredContent;
+      }
       const payload = { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'roblox.importSnapshot', arguments: { sessionId, snapshot: data } } };
       const resp = await postJson(url, payload);
       console.log(JSON.stringify(resp.result || resp, null, 2));

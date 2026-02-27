@@ -50,7 +50,34 @@ function Widget.mount(plugin, connection)
     refreshButton.Font = Enum.Font.Code
     refreshButton.TextSize = 12
     refreshButton.Parent = frame
+    
+    local snapshotExportButton = Instance.new("TextButton")
+    snapshotExportButton.Size = UDim2.new(0, 122, 0, 20)
+    snapshotExportButton.Position = UDim2.new(1, -122, 0, 86)
+    snapshotExportButton.Text = "Export Snapshot"
+    snapshotExportButton.Font = Enum.Font.Code
+    snapshotExportButton.TextSize = 12
+    snapshotExportButton.Parent = frame
 
+    local snapshotImportButton = Instance.new("TextButton")
+    snapshotImportButton.Size = UDim2.new(0, 122, 0, 20)
+    snapshotImportButton.Position = UDim2.new(1, -122, 0, 110)
+    snapshotImportButton.Text = "Import Snapshot"
+    snapshotImportButton.Font = Enum.Font.Code
+    snapshotImportButton.TextSize = 12
+    snapshotImportButton.Parent = frame
+
+    local progressLabel = Instance.new("TextLabel")
+    progressLabel.BackgroundTransparency = 1
+    progressLabel.Size = UDim2.new(1, -140, 0, 60)
+    progressLabel.Position = UDim2.new(0, 0, 0, 62)
+    progressLabel.TextXAlignment = Enum.TextXAlignment.Left
+    progressLabel.TextYAlignment = Enum.TextYAlignment.Top
+    progressLabel.TextWrapped = true
+    progressLabel.Font = Enum.Font.Code
+    progressLabel.TextSize = 12
+    progressLabel.Text = ""
+    progressLabel.Parent = frame
     local conflictLabel = Instance.new("TextLabel")
     conflictLabel.BackgroundTransparency = 1
     conflictLabel.Size = UDim2.new(1, 0, 1, -86)
@@ -98,11 +125,88 @@ function Widget.mount(plugin, connection)
         refreshAction = callback
     end
 
+    local sessionId = nil
+
+    local function setSession(sid)
+        sessionId = sid
+    end
+
+    local function appendProgress(line)
+        if progressLabel.Text == "" then
+            progressLabel.Text = line
+        else
+            progressLabel.Text = progressLabel.Text .. "\n" .. line
+        end
+    end
+
+    snapshotExportButton.MouseButton1Click:Connect(function()
+        if not sessionId then
+            updateStatus("No session available")
+            return
+        end
+        updateStatus("Exporting snapshot...")
+        local ok, snapshot, err = pcall(function()
+            return connection:exportSnapshot(sessionId)
+        end)
+        if not ok or not snapshot then
+            updateStatus("Export failed: " .. tostring(err))
+            return
+        end
+        updateStatus("Exported snapshot")
+        appendProgress("Exported snapshot payload")
+    end)
+
+    snapshotImportButton.MouseButton1Click:Connect(function()
+        if not sessionId then
+            updateStatus("No session available")
+            return
+        end
+        updateStatus("Exporting snapshot (for import)...")
+        local ok, snapshot, err = connection:exportSnapshot(sessionId)
+        if not ok then
+            updateStatus("Export failed: " .. tostring(snapshot))
+            return
+        end
+        updateStatus("Importing snapshot...")
+        local impOk, impRes, impErr = connection:importSnapshot(sessionId, snapshot)
+        if not impOk then
+            updateStatus("Import failed: " .. tostring(impRes))
+            return
+        end
+
+        appendProgress("Import started")
+
+        -- Poll importProgress until imported
+        task.spawn(function()
+            while true do
+                local pOk, pRes, pErr = connection:importProgress(sessionId)
+                if not pOk then
+                    appendProgress("importProgress error: " .. tostring(pRes))
+                    updateStatus("importProgress error")
+                    break
+                end
+                if pRes and pRes.importSummary then
+                    appendProgress("chunks=" .. tostring(pRes.importSummary.chunks) .. " appliedCursor=" .. tostring(pRes.importSummary.appliedCursor))
+                elseif pRes and pRes.imported then
+                    appendProgress("imported: " .. tostring(pRes.imported))
+                else
+                    appendProgress("progress: " .. tostring(pRes and pRes.cursor or "?"))
+                end
+                if pRes and pRes.imported then
+                    updateStatus("Import complete")
+                    break
+                end
+                task.wait(0.5)
+            end
+        end)
+    end)
+
     return {
         updateStatus = updateStatus,
         addConflict = addConflict,
         clearConflicts = clearConflicts,
         setRefreshAction = setRefreshAction,
+        setSession = setSession,
         dock = dock,
     }
 end
