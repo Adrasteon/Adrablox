@@ -77,6 +77,9 @@ try {
             throw "rojo build failed with exit code $LASTEXITCODE"
         }
         $pluginInstallableAvailable = $true
+        if (-not (Test-Path $pluginInstallableArtifact) -or ((Get-Item $pluginInstallableArtifact).Length -eq 0)) {
+            throw "Rojo built plugin artifact not found or is zero bytes at $pluginInstallableArtifact"
+        }
     }
     else {
         Write-Host "Rojo CLI not found; skipping installable plugin artifact (.rbxm) generation."
@@ -96,7 +99,6 @@ try {
         createdUtc = (Get-Date).ToUniversalTime().ToString("o")
         platform = $platformName
         serverArchive = [System.IO.Path]::GetFileName($serverArchive)
-        pluginArchive = [System.IO.Path]::GetFileName($pluginSourceArchive)
         pluginSourceArchive = [System.IO.Path]::GetFileName($pluginSourceArchive)
         pluginVersion = $PluginVersion
         pluginInstallableAvailable = $pluginInstallableAvailable

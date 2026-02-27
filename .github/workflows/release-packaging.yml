@@ -52,6 +52,34 @@ jobs:
         shell: pwsh
         run: ./tools/generate_release_checksums.ps1 -Verify
 
+      - name: Read release manifest
+        id: read_manifest
+        shell: pwsh
+        run: |
+          $manifestPath = 'dist/release/release_manifest.json'
+          if (-not (Test-Path $manifestPath)) {
+            echo "installable=false" >> $GITHUB_OUTPUT
+            echo "artifact=" >> $GITHUB_OUTPUT
+            exit 0
+          }
+          $m = Get-Content $manifestPath | ConvertFrom-Json
+          if ($m.pluginInstallableAvailable -and $m.pluginInstallableArtifact) {
+            echo "installable=true" >> $GITHUB_OUTPUT
+            echo "artifact=$($m.pluginInstallableArtifact)" >> $GITHUB_OUTPUT
+          }
+          else {
+            echo "installable=false" >> $GITHUB_OUTPUT
+            echo "artifact=" >> $GITHUB_OUTPUT
+          }
+
+      - name: Upload plugin installable artifact
+        if: steps.read_manifest.outputs.installable == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-${{ matrix.os }}
+          path: dist/release/${{ steps.read_manifest.outputs.artifact }}
+          if-no-files-found: error
+
       - name: Upload packaged artifacts
         uses: actions/upload-artifact@v4
         with:
