@@ -24,6 +24,37 @@ function postJson(url, obj) {
       res.on('data', (chunk) => data += chunk);
       res.on('end', () => {
         try {
+        if (cmd === 'apply-patch') {
+          // Usage: apply-patch <sessionId> <patchId> <baseCursor> <origin> '<operationsJson>'
+          const sessionId = argv[1];
+          const patchId = argv[2] || 'cli_patch_001';
+          const baseCursor = argv[3] || null;
+          const origin = argv[4] || 'cli';
+          const opsJson = argv[5] || '[]';
+          const operations = opsJson ? JSON.parse(opsJson) : [];
+          const args = { sessionId, patchId, baseCursor, origin, operations };
+          const payload = { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'roblox.applyPatch', arguments: args } };
+          const resp = await postJson(url, payload);
+          console.log(JSON.stringify(resp, null, 2));
+          return;
+        }
+
+        if (cmd === 'set-name') {
+          // Convenience: setName <sessionId> <instanceId> <name>
+          const sessionId = argv[1];
+          const instanceId = argv[2];
+          const name = argv[3];
+          if (!sessionId || !instanceId || !name) {
+            console.error('Usage: adrablox-studio set-name <sessionId> <instanceId> <name>');
+            process.exit(2);
+          }
+          const operations = [{ op: 'setName', instanceId, name }];
+          const args = { sessionId, patchId: 'set_name_cli', baseCursor: null, origin: 'cli-set-name', operations };
+          const payload = { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'roblox.applyPatch', arguments: args } };
+          const resp = await postJson(url, payload);
+          console.log(JSON.stringify(resp, null, 2));
+          return;
+        }
         if (cmd === 'get-properties') {
           const sessionId = argv[1];
           const instanceId = argv[2];
