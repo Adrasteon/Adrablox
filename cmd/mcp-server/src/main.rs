@@ -147,6 +147,32 @@ fn tool_ok(id: Value, payload: Value) -> (StatusCode, Json<Value>) {
     )
 }
 
+fn sanitize_tool_name(orig: &str) -> String {
+    let mut out = String::with_capacity(orig.len());
+    for c in orig.chars() {
+        if c.is_ascii_alphanumeric() {
+            out.push(c.to_ascii_lowercase());
+        } else {
+            out.push('-');
+        }
+    }
+    // collapse consecutive hyphens
+    let mut compact = String::with_capacity(out.len());
+    let mut last_dash = false;
+    for ch in out.chars() {
+        if ch == '-' {
+            if !last_dash {
+                compact.push(ch);
+                last_dash = true;
+            }
+        } else {
+            compact.push(ch);
+            last_dash = false;
+        }
+    }
+    compact.trim_matches('-').to_string()
+}
+
 fn session_not_found_rpc(id: Value) -> (StatusCode, Json<Value>) {
     (
         StatusCode::BAD_REQUEST,
@@ -625,35 +651,66 @@ async fn handle_mcp(
                 })),
             )
         }
-        "tools/list" => (
-            StatusCode::OK,
-            Json(json!({
-                "jsonrpc": "2.0",
-                "id": id,
-                "result": {
-                    "tools": [
-                        {"name": "roblox.openSession", "description": "Open a Rojo-backed session"},
-                        {"name": "roblox.readTree", "description": "Read a tree/subtree snapshot"},
-                        {"name": "roblox.subscribeChanges", "description": "Subscribe to incremental changes"},
-                        {"name": "roblox.applyPatch", "description": "Apply a mutation patch"},
-                        {"name": "roblox.closeSession", "description": "Close session"}
-                    ]
-                }
-            })),
-        ),
+        "tools/list" => {
+            // Provide sanitized tool names that conform to the extension's
+            // allowed pattern ([a-z0-9_-]) while mapping back to the
+            // canonical MCP tool names for dispatch.
+            let canonical = vec![
+                ("roblox.openSession", "Open a Rojo-backed session"),
+                ("roblox.readTree", "Read a tree/subtree snapshot"),
+                ("roblox.subscribeChanges", "Subscribe to incremental changes"),
+                ("roblox.applyPatch", "Apply a mutation patch"),
+                ("roblox.closeSession", "Close session"),
+            ];
+
+            let tools: Vec<Value> = canonical
+                .iter()
+                .map(|(name, desc)| {
+                    let sanitized = sanitize_tool_name(name);
+                    json!({"name": sanitized, "description": desc})
+                })
+                .collect();
+
+            (
+                StatusCode::OK,
+                Json(json!({
+                    "jsonrpc": "2.0",
+                    "id": id,
+                    "result": { "tools": tools }
+                })),
+            )
+        }
         "tools/call" => {
-            let name = request
+            let mut name = request
                 .params
                 .get("name")
                 .and_then(Value::as_str)
-                .unwrap_or("");
+                .unwrap_or("")
+                .to_string();
+
+            // Allow clients to call the sanitized tool name that was
+            // advertised in `tools/list`. If the client provided a
+            // sanitized name, map it back to the canonical MCP tool name.
+            let canonical = vec![
+                ("roblox.openSession", "Open a Rojo-backed session"),
+                ("roblox.readTree", "Read a tree/subtree snapshot"),
+                ("roblox.subscribeChanges", "Subscribe to incremental changes"),
+                ("roblox.applyPatch", "Apply a mutation patch"),
+                ("roblox.closeSession", "Close session"),
+            ];
+            for (orig, _desc) in &canonical {
+                if sanitize_tool_name(orig) == name {
+                    name = orig.to_string();
+                    break;
+                }
+            }
             let args = request
                 .params
                 .get("arguments")
                 .cloned()
                 .unwrap_or_else(|| json!({}));
 
-            match name {
+            match name.as_str() {
                 "roblox.openSession" => {
                     let project_path = args
                         .get("projectPath")
