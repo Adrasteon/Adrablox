@@ -25,7 +25,9 @@ try {
 
     $manifest = Get-Content -Raw -Path $manifestPath | ConvertFrom-Json
     $serverArchivePath = Join-Path $outputRoot ([string]$manifest.serverArchive)
-    $pluginArchivePath = Join-Path $outputRoot ([string]$manifest.pluginArchive)
+    # newer manifests use pluginSourceArchive; old ones may still have pluginArchive
+    $pluginArchiveField = if ($manifest.PSObject.Properties.Name -contains 'pluginSourceArchive') { 'pluginSourceArchive' } else { 'pluginArchive' }
+    $pluginArchivePath = Join-Path $outputRoot ([string]$manifest.$pluginArchiveField)
     $pluginInstallablePath = $null
     if ($manifest.pluginInstallableArtifact) {
         $pluginInstallablePath = Join-Path $outputRoot ([string]$manifest.pluginInstallableArtifact)
