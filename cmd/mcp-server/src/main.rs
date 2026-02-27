@@ -92,7 +92,7 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(
             std::env::var("RUST_LOG")
-                .unwrap_or_else(|_| "mcp_server=info,axum=info,tower_http=info".to_string()),
+                .unwrap_or_else(|_| "mcp_server=debug,axum=debug,tower_http=debug".to_string()),
         )
         .init();
 
@@ -600,6 +600,9 @@ async fn handle_mcp(
 ) -> impl IntoResponse {
     let id = request.id.clone().unwrap_or(json!(null));
 
+    // Log incoming JSON-RPC requests for diagnostics (method, id, params)
+    info!(method = %request.method, id = ?id, params = %request.params, "received mcp json-rpc request");
+
     match request.method.as_str() {
         "initialize" => {
             let params: InitializeParams = match serde_json::from_value(request.params) {
@@ -1003,6 +1006,11 @@ async fn handle_mcp(
                 "result": {"ack": true}
             })),
         ),
+        "logging/setLevel" => {
+            // Some clients use a logging API (e.g., logging/setLevel). Accept and
+            // acknowledge it to avoid a 400 error from the client.
+            tool_ok(id, json!({}))
+        }
         m if m.starts_with("mcp.") => {
             // some clients (Copilot MCP, etc.) send utility methods such as
             // "mcp.setLogLevel" on startup.  We don't currently support any
