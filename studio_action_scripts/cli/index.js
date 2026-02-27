@@ -24,6 +24,18 @@ function postJson(url, obj) {
       res.on('data', (chunk) => data += chunk);
       res.on('end', () => {
         try {
+        if (cmd === 'get-properties') {
+          const sessionId = argv[1];
+          const instanceId = argv[2];
+          if (!sessionId || !instanceId) {
+            console.error('Usage: adrablox-studio get-properties <sessionId> <instanceId>');
+            process.exit(2);
+          }
+          const payload = { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'roblox.readObject', arguments: { sessionId, instanceId } } };
+          const resp = await postJson(url, payload);
+          console.log(JSON.stringify(resp, null, 2));
+          return;
+        }
         if (cmd === 'open-session') {
           const projectPath = argv[1] || 'src';
           const payload = { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'roblox.openSession', arguments: { projectPath } } };
