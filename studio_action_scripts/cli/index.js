@@ -48,6 +48,17 @@ async function main() {
   const url = process.env.MCP_ENDPOINT || 'http://127.0.0.1:44877/mcp';
 
   try {
+    if (cmd === 'health') {
+      // Initialize then list tools to verify server and plugin reachability
+      const initPayload = { jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-11-25', capabilities: { resources: { subscribe: true }, tools: {} }, clientInfo: { name: 'studio-cli-health', version: '0.1.0' } } };
+      const initResp = await postJson(url, initPayload);
+      console.log('initialize ->', JSON.stringify(initResp.result || initResp, null, 2));
+
+      const listPayload = { jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} };
+      const listResp = await postJson(url, listPayload);
+      console.log('tools/list ->', JSON.stringify(listResp.result || listResp, null, 2));
+      return;
+    }
     if (cmd === 'list') {
       const payload = { jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} };
       const resp = await postJson(url, payload);
