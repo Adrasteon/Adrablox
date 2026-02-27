@@ -14,6 +14,13 @@ if (Test-Path $nodeCli) {
     exit $LASTEXITCODE
 }
 
-$content = Get-Content -Raw -Path $InFile
-$params = "{\"name\":\"roblox.importSnapshot\",\"arguments\":{\"sessionId\":\"$SessionId\",\"snapshot\":$content}}"
-& "$PSScriptRoot\..\bin\send_mcp_rpc.ps1" -Method "tools/call" -Params $params -Url $Url @($Pretty ? '-Pretty' : @())
+# Read snapshot JSON and convert to object so we can embed it safely
+$snapshot = Get-Content -Raw -Path $InFile | ConvertFrom-Json
+
+$paramsObj = @{ name = 'roblox.importSnapshot'; arguments = @{ sessionId = $SessionId; snapshot = $snapshot } }
+$params = $paramsObj | ConvertTo-Json -Depth 10
+
+$flags = @()
+if ($Pretty) { $flags += '-Pretty' }
+
+& "$PSScriptRoot\..\bin\send_mcp_rpc.ps1" -Method "tools/call" -Params $params -Url $Url @flags
