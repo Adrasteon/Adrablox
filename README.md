@@ -12,7 +12,9 @@ First use (download and deploy):
 2. What these files do:
   - server zip = the local background service that handles MCP requests
   - `.rbxm` file = the Roblox Studio plugin interface that sends requests to that service
-3. Unzip the server zip to a normal folder like `Documents\Adrablox`, run `mcp-server`, and leave that window open.
+3. Unzip the server zip to a normal folder like `Documents\Adrablox`.
+  - On Windows, use the provided launcher to get a visible console with live logs: double-click `run-mcp-server.bat` (or run `run-mcp-server.ps1` from PowerShell). These wrappers start the packaged `mcp-server.exe` in a detached console and keep stdout/stderr visible.
+  - Alternatively you can run `mcp-server.exe` directly; note that some shells/shortcuts may start it detached without showing logs.
 4. In Roblox Studio, import the `.rbxm` plugin, open it, and connect to `http://127.0.0.1:44877/mcp`.
 5. In VS Code, open this project folder and (if using Copilot MCP tools) add/connect an MCP server at `http://127.0.0.1:44877/mcp` so VS Code and Studio use the same local server.
 
