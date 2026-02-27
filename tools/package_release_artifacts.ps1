@@ -53,6 +53,23 @@ try {
     $serverBinaryOut = Join-Path $serverStaging $binaryName
     Copy-Item -Path $builtBinary -Destination $serverBinaryOut -Force
 
+        # On Windows, provide a small launcher so double-clicking the package
+        # opens a visible console window that runs the server and shows stdout/stderr.
+        if ($isWindowsPlatform) {
+            $batPath = Join-Path $serverStaging "run-mcp-server.bat"
+            $batContent = "@echo off`r`ncd /d "%~dp0"`r`nstart \"mcp-server\" cmd /k "%~dp0$mcp-server.exe%"`r`n"
+            # The above uses %~dp0 to refer to the batch file directory; write ASCII to be safe.
+            $batContent = "@echo off`r`ncd /d "%~dp0"`r`nstart \"mcp-server\" cmd /k "%~dp0mcp-server.exe"`r`n"
+            Set-Content -Path $batPath -Value $batContent -Encoding ASCII
+
+            $ps1Path = Join-Path $serverStaging "run-mcp-server.ps1"
+            $ps1Content = @'
+    $here = Split-Path -Parent $MyInvocation.MyCommand.Definition
+    Start-Process -FilePath 'cmd.exe' -ArgumentList "/k `"$here\\mcp-server.exe`"" -WorkingDirectory $here
+    '@
+            Set-Content -Path $ps1Path -Value $ps1Content -Encoding UTF8
+        }
+
     $serverArchive = Join-Path $outputRoot ("mcp-server-{0}.zip" -f $platformName)
     Compress-Archive -Path $serverBinaryOut -DestinationPath $serverArchive -Force
 
