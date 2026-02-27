@@ -1,4 +1,15 @@
 {
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Studio: Open Session",
+      "type": "shell",
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -File studio_action_scripts/actions/open_session.ps1 -Pretty",
+      "problemMatcher": []
+    }
+  ]
+}
+{
 	"version": "2.0.0",
 	"tasks": [
 		{
