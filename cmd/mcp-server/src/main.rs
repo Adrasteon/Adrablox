@@ -1003,6 +1003,13 @@ async fn handle_mcp(
                 "result": {"ack": true}
             })),
         ),
+        m if m.starts_with("mcp.") => {
+            // some clients (Copilot MCP, etc.) send utility methods such as
+            // "mcp.setLogLevel" on startup.  We don't currently support any
+            // of them, but responding with a successful empty result prevents
+            // a 400 error from confusing the caller.
+            tool_ok(id, json!({}))
+        }
         _ => (
             StatusCode::BAD_REQUEST,
             Json(json!(invalid_request(id, "unsupported method"))),
