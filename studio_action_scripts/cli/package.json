@@ -1,0 +1,11 @@
+{
+  "name": "adrablox-studio-cli",
+  "version": "0.0.1",
+  "description": "Small CLI to send JSON-RPC to the local MCP server",
+  "bin": {
+    "adrablox-studio": "index.js"
+  },
+  "engines": {
+    "node": ">=14"
+  }
+}

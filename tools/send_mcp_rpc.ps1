@@ -1,3 +1,10 @@
+<#
+Sends a single JSON-RPC request to the MCP server and prints the response.
+
+Usage examples:
+  powershell -NoProfile -File tools\send_mcp_rpc.ps1 -Method tools/list -Pretty
+  powershell -NoProfile -File tools\send_mcp_rpc.ps1 -Method roblox.openSession -Params '{"protocolVersion":"2025-11-25","capabilities":{}}' -Pretty
+#>
 param(
     [string]$Method = "tools/list",
     [string]$Params = "{}",
@@ -6,23 +13,6 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-
-# Prefer calling the repo-local tools helper when present to avoid duplication.
-$repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
-$nodeCli = Join-Path $repoRoot "studio_action_scripts\cli\index.js"
-$toolsHelper = Join-Path $repoRoot "tools\send_mcp_rpc.ps1"
-
-# Prefer Node CLI if available
-if (Test-Path $nodeCli) {
-    & node $nodeCli 'call' $Method $Params -Url $Url | Out-Null
-    exit $LASTEXITCODE
-}
-
-# Fall back to the repo-local PowerShell helper
-if (Test-Path $toolsHelper) {
-    & $toolsHelper -Method $Method -Params $Params -Url $Url @($Pretty ? '-Pretty' : @())
-    exit $LASTEXITCODE
-}
 
 try {
     $paramsObj = $Params | ConvertFrom-Json
