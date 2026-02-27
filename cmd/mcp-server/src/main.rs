@@ -1,5 +1,6 @@
 use axum::{
     extract::{Path, Query, State},
+    extract::{WebSocketUpgrade, ws::{Message, WebSocket}},
     http::StatusCode,
     response::IntoResponse,
     routing::{get, post},
@@ -15,6 +16,7 @@ use std::{
     net::SocketAddr,
     sync::{Arc, Mutex},
 };
+use tokio::sync::broadcast;
 use tracing::info;
 
 #[derive(Clone)]
@@ -22,6 +24,7 @@ struct AppState {
     adapter: RojoAdapter,
     server_version: String,
     sessions: Arc<Mutex<HashMap<String, SessionState>>>,
+    broadcaster: broadcast::Sender<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -96,15 +99,19 @@ async fn main() -> anyhow::Result<()> {
         )
         .init();
 
+    let (bcast_tx, _) = broadcast::channel(128);
+
     let state = Arc::new(AppState {
         adapter: RojoAdapter::new(),
         server_version: env!("CARGO_PKG_VERSION").to_string(),
         sessions: Arc::new(Mutex::new(HashMap::new())),
+        broadcaster: bcast_tx,
     });
 
     let app = Router::new()
         .route("/health", get(health))
         .route("/mcp", post(handle_mcp))
+        .route("/mcp-stream", get(handle_ws_upgrade))
         .route("/api/rojo", post(handle_rojo_open))
         .route("/api/read/:instance_id", get(handle_rojo_read_by_instance))
         .route(
@@ -384,6 +391,102 @@ fn session_capabilities_payload() -> Value {
     })
 }
 
+fn validate_snapshot(snapshot: &rojo_adapter::ProjectSnapshot) -> Vec<String> {
+    let mut issues = Vec::new();
+    if snapshot.instances.is_empty() {
+        issues.push("snapshot has no instances".to_string());
+    }
+    if !snapshot.instances.contains_key(&snapshot.root_id) {
+        issues.push("rootId missing in instances".to_string());
+    }
+    for key in snapshot.file_paths.keys() {
+        if !snapshot.instances.contains_key(key) {
+            issues.push(format!("filePaths references unknown instance {}", key));
+        }
+    }
+    issues
+}
+
+fn apply_snapshot_to_session(session: &mut SessionState, snapshot: rojo_adapter::ProjectSnapshot, chunk_size: usize, broadcaster: Option<&broadcast::Sender<serde_json::Value>>) -> (u64, usize, usize, usize) {
+    // Convert instances hashmap into a vector for deterministic chunking
+    let entries: Vec<(String, InstanceNode)> = snapshot
+        .instances
+        .into_iter()
+        .map(|(id, node)| {
+            (
+                id,
+                InstanceNode {
+                    id: node.id,
+                    parent: node.parent,
+                    name: node.name,
+                    class_name: node.class_name,
+                    properties: node.properties,
+                    children: node.children,
+                },
+            )
+        })
+        .collect();
+
+    let total = entries.len();
+    let mut chunks = 0_usize;
+    let mut applied_cursor = session.cursor;
+
+    for chunk in entries.chunks(chunk_size) {
+        let mut added: HashMap<String, InstanceNode> = HashMap::new();
+        for (id, node) in chunk {
+            added.insert(id.clone(), node.clone());
+        }
+
+        applied_cursor = std::cmp::max(applied_cursor, session.cursor) + 1;
+        // update property last write for Name and properties touched
+        for (id, node) in &added {
+            // Name
+            session.property_last_write.insert(field_key(id, "Name"), applied_cursor);
+            // properties
+            for prop in node.properties.keys() {
+                session.property_last_write.insert(field_key(id, prop), applied_cursor);
+            }
+        }
+
+        session.changes.push(ChangeBatch {
+            cursor: applied_cursor,
+            added: added.clone(),
+            updated: vec![],
+            removed: vec![],
+        });
+
+        // Emit progress event for this chunk if broadcaster is available
+        if let Some(tx) = broadcaster {
+            let event = json!({
+                "type": "importProgress",
+                "sessionId": session.root_id.clone(),
+                "chunk": chunks + 1,
+                "appliedCursor": applied_cursor.to_string(),
+                "addedCount": added.len()
+            });
+            // ignore send errors (no listeners)
+            let _ = tx.send(event);
+        }
+
+        // merge added into session.instances
+        for (id, node) in added.into_iter() {
+            session.instances.insert(id, node);
+        }
+
+        session.cursor = applied_cursor;
+        chunks += 1;
+    }
+
+    let file_backed = snapshot.file_paths.len();
+
+    // merge file_paths
+    for (k, v) in snapshot.file_paths.into_iter() {
+        session.file_paths.insert(k, v);
+    }
+
+    (applied_cursor, total, file_backed, chunks)
+}
+
 fn open_session_for_project(state: &AppState, project_path: &str) -> Result<Value, String> {
     let mut result = state
         .adapter
@@ -655,11 +758,15 @@ async fn handle_mcp(
             // Provide sanitized tool names that conform to the extension's
             // allowed pattern ([a-z0-9_-]) while mapping back to the
             // canonical MCP tool names for dispatch.
-            let canonical = [("roblox.openSession", "Open a Rojo-backed session"),
+            let canonical = [
+                ("roblox.openSession", "Open a Rojo-backed session"),
                 ("roblox.readTree", "Read a tree/subtree snapshot"),
                 ("roblox.subscribeChanges", "Subscribe to incremental changes"),
                 ("roblox.applyPatch", "Apply a mutation patch"),
-                ("roblox.closeSession", "Close session")];
+                ("roblox.closeSession", "Close session"),
+                ("roblox.exportSnapshot", "Export a session snapshot"),
+                ("roblox.importSnapshot", "Import a session snapshot"),
+            ];
 
             let tools: Vec<Value> = canonical
                 .iter()
@@ -695,6 +802,8 @@ async fn handle_mcp(
                 ("roblox.subscribeChanges", "Subscribe to incremental changes"),
                 ("roblox.applyPatch", "Apply a mutation patch"),
                 ("roblox.closeSession", "Close session"),
+                ("roblox.exportSnapshot", "Export a session snapshot"),
+                ("roblox.importSnapshot", "Import a session snapshot"),
             ];
             for (orig, _desc) in &canonical {
                 if sanitize_tool_name(orig) == name {
@@ -1034,6 +1143,140 @@ async fn handle_mcp(
 
                     tool_ok(id, apply_result)
                 }
+                "roblox.exportSnapshot" => {
+                    let session_id = args
+                        .get("sessionId")
+                        .and_then(Value::as_str)
+                        .unwrap_or("sess:default.project.json");
+
+                    let result = {
+                        let sessions_lock = state.sessions.lock().expect("session lock poisoned");
+                        let session = match sessions_lock.get(session_id) {
+                            Some(s) => s,
+                            None => return session_not_found_rpc(id),
+                        };
+
+                        // Build ProjectSnapshot-like value from session
+                        let mut instances_map = Map::new();
+                        for (k, v) in &session.instances {
+                            instances_map.insert(k.clone(), serde_json::to_value(v).unwrap_or(json!({})));
+                        }
+
+                        json!({
+                            "rootId": session.root_id,
+                            "instances": instances_map,
+                            "filePaths": session.file_paths
+                        })
+                    };
+
+                    tool_ok(id, result)
+                }
+                "roblox.importSnapshot" => {
+                    let session_id = args
+                        .get("sessionId")
+                        .and_then(Value::as_str)
+                        .unwrap_or("");
+
+                    if session_id.is_empty() {
+                        return (
+                            StatusCode::BAD_REQUEST,
+                            Json(json!(invalid_request(id, "sessionId is required for import"))),
+                        );
+                    }
+
+                    let snapshot_val = args.get("snapshot").cloned().unwrap_or(json!({}));
+                    let snapshot: Result<rojo_adapter::ProjectSnapshot, _> = serde_json::from_value(snapshot_val);
+                    let snapshot = match snapshot {
+                        Ok(s) => s,
+                        Err(e) => {
+                            let msg = format!("invalid snapshot: {}", e);
+                            return (
+                                StatusCode::BAD_REQUEST,
+                                Json(json!(invalid_request(id, msg.as_str()))),
+                            );
+                        }
+                    };
+
+                    // validate snapshot structure before applying
+                    let issues = validate_snapshot(&snapshot);
+                    if !issues.is_empty() {
+                        return (
+                            StatusCode::BAD_REQUEST,
+                            Json(json!({
+                                "jsonrpc": "2.0",
+                                "id": id,
+                                "error": {
+                                    "code": -32003,
+                                    "message": "snapshot validation failed",
+                                    "data": { "issues": issues }
+                                }
+                            })),
+                        );
+                    }
+
+                    let mut sessions = state.sessions.lock().expect("session lock poisoned");
+                    let existing = match sessions.get(session_id) {
+                        Some(sess) => sess.project_path.clone(),
+                        None => return session_not_found_rpc(id),
+                    };
+
+                    // Replace session state with snapshot-derived session and apply in chunks
+                    let mut new_session = make_session_from_snapshot(&existing, snapshot.clone());
+
+                    // choose chunk size from args, default to 100
+                    let chunk_size = args
+                        .get("chunkSize")
+                        .and_then(Value::as_u64)
+                        .map(|v| v as usize)
+                        .unwrap_or(100);
+
+                    let (applied_cursor, imported_count, file_backed, chunks) =
+                        apply_snapshot_to_session(&mut new_session, snapshot, chunk_size, Some(&state.broadcaster));
+
+                    sessions.insert(session_id.to_string(), new_session);
+
+                    tool_ok(id, json!({
+                        "imported": true,
+                        "sessionId": session_id,
+                        "validated": true,
+                        "importSummary": {
+                            "instances": imported_count,
+                            "fileBackedInstances": file_backed,
+                            "appliedCursor": applied_cursor.to_string(),
+                            "chunks": chunks,
+                            "chunkSize": chunk_size
+                        }
+                    }))
+                }
+                "roblox.importProgress" => {
+                    // polling endpoint to fetch progress summary for a session
+                    let session_id = args
+                        .get("sessionId")
+                        .and_then(Value::as_str)
+                        .unwrap_or("");
+
+                    if session_id.is_empty() {
+                        return (
+                            StatusCode::BAD_REQUEST,
+                            Json(json!(invalid_request(id, "sessionId is required"))),
+                        );
+                    }
+
+                    let sessions = state.sessions.lock().expect("session lock poisoned");
+                    let session = match sessions.get(session_id) {
+                        Some(s) => s,
+                        None => return session_not_found_rpc(id),
+                    };
+
+                    let total_changes = session.changes.len();
+                    let last_cursor = session.cursor;
+
+                    tool_ok(id, json!({
+                        "sessionId": session_id,
+                        "cursor": last_cursor.to_string(),
+                        "changeBatches": total_changes
+                    }))
+                }
                 "roblox.closeSession" => {
                     let session_id = args
                         .get("sessionId")
@@ -1080,9 +1323,185 @@ async fn handle_mcp(
     }
 }
 
+async fn handle_ws_upgrade(
+    State(state): State<Arc<AppState>>,
+    ws: WebSocketUpgrade,
+) -> impl IntoResponse {
+    ws.on_upgrade(move |socket| ws_handler(socket, state))
+}
+
+async fn ws_handler(mut socket: WebSocket, state: Arc<AppState>) {
+    let mut rx = state.broadcaster.subscribe();
+
+    // Forward broadcast messages to the websocket client.
+    loop {
+        match rx.recv().await {
+            Ok(val) => {
+                if socket.send(Message::Text(val.to_string())).await.is_err() {
+                    // client disconnected
+                    break;
+                }
+            }
+            Err(broadcast::error::RecvError::Lagged(_)) => {
+                // skip lagged messages; continue
+                continue;
+            }
+            Err(broadcast::error::RecvError::Closed) => break,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::{has_write_conflict, make_default_session, remove_subtree};
+    use rojo_adapter::ProjectSnapshot;
+    use serde_json::{json, Map};
+
+    #[test]
+    fn make_session_from_snapshot_roundtrip() {
+        let mut instances = std::collections::HashMap::new();
+        let mut props = Map::new();
+        props.insert("PropA".to_string(), json!(123));
+
+        instances.insert(
+            "ref_root".to_string(),
+            rojo_adapter::AdapterNode {
+                id: "ref_root".to_string(),
+                parent: None,
+                name: "Game".to_string(),
+                class_name: "DataModel".to_string(),
+                properties: props.clone(),
+                children: vec![],
+            },
+        );
+
+        let snapshot = ProjectSnapshot {
+            root_id: "ref_root".to_string(),
+            instances,
+            file_paths: std::collections::HashMap::new(),
+        };
+
+        let session = super::make_session_from_snapshot("proj", snapshot);
+        assert_eq!(session.root_id, "ref_root");
+        assert!(session.instances.contains_key("ref_root"));
+        let node = session.instances.get("ref_root").unwrap();
+        assert_eq!(node.properties.get("PropA").unwrap(), &json!(123));
+    }
+
+    #[test]
+    fn validate_snapshot_detects_issues() {
+        let mut instances = std::collections::HashMap::new();
+        instances.insert(
+            "ref_child".to_string(),
+            rojo_adapter::AdapterNode {
+                id: "ref_child".to_string(),
+                parent: Some("ref_root".to_string()),
+                name: "Child".to_string(),
+                class_name: "Folder".to_string(),
+                properties: Map::new(),
+                children: vec![],
+            },
+        );
+
+        let mut file_paths = std::collections::HashMap::new();
+        file_paths.insert("unknown_id".to_string(), "path/to/file".to_string());
+
+        let snapshot = ProjectSnapshot {
+            root_id: "ref_root".to_string(), // root missing from instances
+            instances,
+            file_paths,
+        };
+
+        let issues = super::validate_snapshot(&snapshot);
+        assert!(issues.iter().any(|s| s.contains("rootId")));
+        assert!(issues.iter().any(|s| s.contains("filePaths references unknown instance")));
+    }
+
+    #[test]
+    fn apply_snapshot_to_session_chunks() {
+        // create a snapshot with 250 instances
+        let mut instances = std::collections::HashMap::new();
+        for i in 0..250 {
+            let id = format!("ref_{}", i);
+            instances.insert(
+                id.clone(),
+                rojo_adapter::AdapterNode {
+                    id: id.clone(),
+                    parent: None,
+                    name: format!("Node{}", i),
+                    class_name: "Folder".to_string(),
+                    properties: Map::new(),
+                    children: vec![],
+                },
+            );
+        }
+
+        let snapshot = ProjectSnapshot {
+            root_id: "ref_0".to_string(),
+            instances,
+            file_paths: std::collections::HashMap::new(),
+        };
+
+        let mut session = make_default_session();
+        let (applied_cursor, total, _file_backed, chunks) = super::apply_snapshot_to_session(&mut session, snapshot, 100, None);
+        assert_eq!(total, 250);
+        assert_eq!(chunks, 3);
+        assert!(applied_cursor >= 3);
+        // session should now contain the instances
+        assert!(session.instances.contains_key("ref_0"));
+        assert_eq!(session.cursor, applied_cursor);
+        // changes should have 3 new batches appended
+        assert!(session.changes.len() >= 3);
+    }
+
+    #[test]
+    fn broadcast_messages_emitted_on_chunk_apply() {
+        use tokio::sync::broadcast;
+        use serde_json::Value;
+        // small snapshot with 5 instances, chunk_size 2 -> 3 chunks
+        let mut instances = std::collections::HashMap::new();
+        for i in 0..5 {
+            let id = format!("ref_{}", i);
+            instances.insert(
+                id.clone(),
+                rojo_adapter::AdapterNode {
+                    id: id.clone(),
+                    parent: None,
+                    name: format!("Node{}", i),
+                    class_name: "Folder".to_string(),
+                    properties: Map::new(),
+                    children: vec![],
+                },
+            );
+        }
+
+        let snapshot = ProjectSnapshot {
+            root_id: "ref_0".to_string(),
+            instances,
+            file_paths: std::collections::HashMap::new(),
+        };
+
+        let mut session = make_default_session();
+        let (tx, mut rx) = broadcast::channel(16);
+
+        let (applied_cursor, total, _file_backed, chunks) =
+            super::apply_snapshot_to_session(&mut session, snapshot, 2, Some(&tx));
+
+        assert_eq!(total, 5);
+        assert_eq!(chunks, 3);
+
+        // receive 3 messages
+        let mut received = 0;
+        while let Ok(msg) = rx.try_recv() {
+            let v: Value = serde_json::from_str(&msg.to_string()).unwrap_or(json!({}));
+            if v.get("type").and_then(Value::as_str) == Some("importProgress") {
+                received += 1;
+            }
+        }
+
+        assert_eq!(received, 3);
+        assert!(applied_cursor >= 3);
+    }
 
     #[test]
     fn apply_patch_is_idempotent_for_same_patch_id() {

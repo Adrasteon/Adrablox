@@ -1,7 +1,7 @@
 use anyhow::Result;
 use librojo::{snapshot_from_vfs, InstanceContext, InstanceMetadata, InstanceSnapshot, Project, DEFAULT_PROJECT_NAMES};
 use memofs::Vfs;
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use serde_json::{Map, Value};
 use std::{
     collections::HashMap,
@@ -10,7 +10,7 @@ use std::{
 };
 use walkdir::WalkDir;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AdapterNode {
     #[serde(rename = "Id")]
     pub id: String,
@@ -26,7 +26,7 @@ pub struct AdapterNode {
     pub children: Vec<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ProjectSnapshot {
     pub root_id: String,
     pub instances: HashMap<String, AdapterNode>,

@@ -76,6 +76,23 @@ async function main() {
       return;
     }
 
+    if (cmd === 'ws-tail') {
+      // Usage: ws-tail [url]
+      const wsUrl = argv[1] || (process.env.MCP_ENDPOINT || 'http://127.0.0.1:44877/mcp').replace(/^http/, 'ws').replace(/\/mcp$/, '/mcp-stream');
+      try {
+        const WebSocket = require('ws');
+        const ws = new WebSocket(wsUrl);
+        ws.on('open', () => console.log('ws open', wsUrl));
+        ws.on('message', (data) => console.log(data.toString()));
+        ws.on('close', () => process.exit(0));
+        ws.on('error', (err) => { console.error('ws error', err.message); process.exit(3); });
+      } catch (e) {
+        console.error('WebSocket support requires the "ws" package. Install with: npm install in studio_action_scripts/cli');
+        process.exit(2);
+      }
+      return;
+    }
+
     if (cmd === 'open-session') {
       const projectPath = argv[1] || 'src';
       const payload = { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'roblox.openSession', arguments: { projectPath } } };
