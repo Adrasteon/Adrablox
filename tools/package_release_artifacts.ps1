@@ -2,7 +2,8 @@ param(
     [string]$OutputDir = "dist/release",
     [switch]$SkipServerBuild,
     [string]$PluginVersion = "",
-    [switch]$RequireRojo
+    [switch]$RequireRojo,
+    [switch]$SkipRojo
 )
 
 $ErrorActionPreference = "Stop"
@@ -85,7 +86,7 @@ Start-Process -FilePath 'cmd.exe' -ArgumentList "/k `"$here\\mcp-server.exe`"" -
         throw "Rojo CLI is required for this packaging run but was not found in PATH."
     }
 
-    if ($rojoCommand) {
+    if ($rojoCommand -and -not $SkipRojo) {
         if (-not (Test-Path $pluginProject)) {
             throw "Plugin project file not found at $pluginProject"
         }
@@ -101,7 +102,45 @@ Start-Process -FilePath 'cmd.exe' -ArgumentList "/k `"$here\\mcp-server.exe`"" -
         }
     }
     else {
-        Write-Host "Rojo CLI not found; skipping installable plugin artifact (.rbxm) generation."
+        Write-Host "Attempting to build installable plugin artifact (.rbxm) without Rojo..."
+
+        $rbxmxOut = Join-Path $outputRoot ("mcp-studio-{0}.rbxmx" -f $safePluginVersion)
+        $buildScript = Join-Path $workspace "tools/build_plugin.ps1"
+        if (-not (Test-Path $buildScript)) {
+            Write-Host "Build script not found at $buildScript; cannot produce .rbxmx"
+        }
+        else {
+            Write-Host "Generating intermediate .rbxmx via build_plugin.ps1 -> $rbxmxOut"
+            powershell -NoProfile -ExecutionPolicy Bypass -File $buildScript -PluginRoot $pluginSource -OutFile $rbxmxOut -PluginName "mcp-studio"
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "build_plugin.ps1 failed with exit code $LASTEXITCODE"
+            }
+            elseif (-not (Test-Path $rbxmxOut)) {
+                Write-Host ".rbxmx not found after build_plugin.ps1: $rbxmxOut"
+            }
+            else {
+                $rbxWriteExe = Join-Path $workspace "tools/rbx_write/target/release/rbx_write"
+                if ($isWindowsPlatform) { $rbxWriteExe += ".exe" }
+                if (-not (Test-Path $rbxWriteExe)) {
+                    Write-Host "rbx_write converter not found at $rbxWriteExe; expected prebuilt tool."
+                }
+                else {
+                    $pluginInstallableArtifact = Join-Path $outputRoot ("mcp-studio-plugin-{0}.rbxm" -f $safePluginVersion)
+                    Write-Host "Converting $rbxmxOut -> $pluginInstallableArtifact using rbx_write"
+                    & $rbxWriteExe $rbxmxOut $pluginInstallableArtifact
+                    if ($LASTEXITCODE -ne 0) {
+                        Write-Host "rbx_write failed with exit code $LASTEXITCODE"
+                    }
+                    elseif (-not (Test-Path $pluginInstallableArtifact) -or ((Get-Item $pluginInstallableArtifact).Length -eq 0)) {
+                        Write-Host "Converted .rbxm not found or is zero bytes at $pluginInstallableArtifact"
+                    }
+                    else {
+                        $pluginInstallableAvailable = $true
+                        Write-Host ".rbxm built successfully: $pluginInstallableArtifact"
+                    }
+                }
+            }
+        }
     }
 
     $readmeSource = Join-Path $workspace "README.md"

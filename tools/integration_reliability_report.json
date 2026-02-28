@@ -1,0 +1,35 @@
+﻿{
+    "generatedUtc":  "2026-02-28T02:49:42.5875380Z",
+    "reconnectIterations":  5,
+    "conflictIterations":  3,
+    "mixedIterations":  3,
+    "allPassed":  true,
+    "passedCount":  3,
+    "failedCount":  0,
+    "steps":  [
+                  {
+                      "name":  "integration-reconnect-loop",
+                      "status":  "passed",
+                      "startedUtc":  "2026-02-28T02:49:39.3870091Z",
+                      "endedUtc":  "2026-02-28T02:49:40.4632363Z",
+                      "durationSeconds":  1.076,
+                      "error":  null
+                  },
+                  {
+                      "name":  "integration-conflict-recovery",
+                      "status":  "passed",
+                      "startedUtc":  "2026-02-28T02:49:40.4747590Z",
+                      "endedUtc":  "2026-02-28T02:49:41.4911321Z",
+                      "durationSeconds":  1.016,
+                      "error":  null
+                  },
+                  {
+                      "name":  "integration-mixed-resilience",
+                      "status":  "passed",
+                      "startedUtc":  "2026-02-28T02:49:41.4911321Z",
+                      "endedUtc":  "2026-02-28T02:49:42.5731294Z",
+                      "durationSeconds":  1.082,
+                      "error":  null
+                  }
+              ]
+}

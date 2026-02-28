@@ -70,6 +70,13 @@ jobs:
       - name: Cache Rust build artifacts
         uses: Swatinem/rust-cache@v2
 
+      - name: Build rbx_write converter
+        shell: pwsh
+        run: |
+          Push-Location tools\rbx_write
+          cargo build --release
+          Pop-Location
+
       - name: Run cargo tests
         shell: pwsh
         run: |
@@ -217,25 +224,7 @@ jobs:
           path: tools/spec_readiness_report.json
           if-no-files-found: error
 
-      - name: Install Rojo for release-candidate evidence pack (optional)
-        if: github.event_name == 'workflow_dispatch' && inputs.run_release_candidate_evidence_pack == true
-        shell: pwsh
-        run: |
-          winget install --id Rojo.Rojo --exact --accept-package-agreements --accept-source-agreements
-          $rojoCommand = Get-Command rojo -ErrorAction SilentlyContinue
-          if (-not $rojoCommand) {
-            $rojoExe = Get-ChildItem (Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages') -Recurse -Filter rojo.exe -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($rojoExe) {
-              $rojoDir = Split-Path -Parent $rojoExe.FullName
-              Add-Content -Path $env:GITHUB_PATH -Value $rojoDir
-              $env:Path = "$rojoDir;$env:Path"
-              $rojoCommand = Get-Command rojo -ErrorAction SilentlyContinue
-            }
-          }
-          if (-not $rojoCommand) {
-            throw "Rojo installation succeeded but rojo.exe could not be resolved on PATH."
-          }
-          & $rojoCommand.Source --version
+      # Rojo installation removed: packaging uses tools/package_release_artifacts.ps1
 
       - name: Run release-candidate evidence pack (optional)
         if: github.event_name == 'workflow_dispatch' && inputs.run_release_candidate_evidence_pack == true
@@ -324,6 +313,11 @@ jobs:
 
       - name: Run cargo tests
         run: cargo test
+
+      - name: Build rbx_write converter
+        run: |
+          cd tools/rbx_write
+          cargo build --release
 
       - name: Make protocol task executable
         run: chmod +x tools/run_mcp_protocol_task.sh

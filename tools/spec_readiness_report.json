@@ -1,0 +1,30 @@
+﻿{
+    "generatedUtc":  "2026-02-28T02:50:07.1903191Z",
+    "milestones":  {
+                       "milestone1_parity":  {
+                                                 "status":  "PASS",
+                                                 "reason":  "Parity summary diff-free",
+                                                 "details":  {
+                                                                 "totalDiffCount":  0,
+                                                                 "reportCount":  13
+                                                             }
+                                             },
+                       "milestone2_reliability":  {
+                                                      "status":  "PASS",
+                                                      "reason":  "Reliability suite passed",
+                                                      "details":  {
+                                                                      "failedCount":  0,
+                                                                      "passedCount":  3
+                                                                  }
+                                                  },
+                       "milestone3_distribution":  {
+                                                       "status":  "UNKNOWN",
+                                                       "reason":  "Release manifest missing",
+                                                       "details":  {
+                                                                       "expectedManifestPath":  "dist/release/release_manifest.json",
+                                                                       "expectedChecksumsPath":  "dist/release/release_checksums.txt"
+                                                                   }
+                                                   }
+                   },
+    "specComplete":  "UNKNOWN"
+}

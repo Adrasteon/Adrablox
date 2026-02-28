@@ -1,0 +1,12 @@
+[package]
+name = "rbx_write"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+
+[dependencies]
+rbx_dom_weak = "4"
+rbx_xml = "2"
+rbx_binary = { version = "2", features = ["serde"] }
+anyhow = "1"
