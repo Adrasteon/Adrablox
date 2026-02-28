@@ -1,1 +1,0 @@
-﻿[{"ScriptName":"rojo_parity_diff_check.ps1","Count":4},{"ScriptName":"dispatch_mission_critical_ci_gate.ps1","Count":2},{"ScriptName":"run_spec_readiness_report.ps1","Count":1},{"ScriptName":"validate_release_manifest.ps1","Count":1},{"ScriptName":"rojo_changefeed_edge_check.ps1","Count":1},{"ScriptName":"run_release_candidate_evidence_pack_task.ps1","Count":1}]

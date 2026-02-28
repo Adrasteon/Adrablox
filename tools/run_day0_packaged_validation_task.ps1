@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$OutputDir = "dist/release",
     [switch]$SkipPackaging
 )
@@ -15,7 +15,7 @@ $validationRoot = Join-Path $workspace "dist/day0_validation"
 Push-Location $workspace
 try {
     if (-not $SkipPackaging) {
-        Write-Output "Building packaged release artifacts..."
+        Write-Host "Building packaged release artifacts..."
         & (Join-Path $workspace "tools/package_release_artifacts.ps1") -OutputDir $OutputDir
     }
 
@@ -54,7 +54,7 @@ try {
     New-Item -ItemType Directory -Path $serverExtractPath -Force | Out-Null
     New-Item -ItemType Directory -Path $pluginExtractPath -Force | Out-Null
 
-    Write-Output "Extracting server archive..."
+    Write-Host "Extracting server archive..."
     Expand-Archive -Path $serverArchivePath -DestinationPath $serverExtractPath -Force
 
     $serverBinary = Get-ChildItem -Path $serverExtractPath -Recurse -File | Where-Object { $_.Name -eq $binaryName } | Select-Object -First 1
@@ -63,11 +63,11 @@ try {
     }
 
     if (-not $IsWindows) {
-        Write-Output "Marking packaged server binary executable on Unix..."
+        Write-Host "Marking packaged server binary executable on Unix..."
         & chmod +x $serverBinary.FullName
     }
 
-    Write-Output "Starting packaged MCP server binary..."
+    Write-Host "Starting packaged MCP server binary..."
     $server = Start-Process -FilePath $serverBinary.FullName -WorkingDirectory $workspace -PassThru
 
     $ready = $false
@@ -81,7 +81,6 @@ try {
             }
         }
         catch {
-            Write-Verbose "Health check failed (ignored): $_"
         }
     }
 
@@ -89,10 +88,10 @@ try {
         throw "Packaged MCP server did not become healthy in time."
     }
 
-    Write-Output "Running smoke test against packaged MCP server..."
+    Write-Host "Running smoke test against packaged MCP server..."
     & (Join-Path $workspace "tools/mcp_smoke_test.ps1") -Endpoint $mcpUrl -ProjectPath "src"
 
-    Write-Output "Extracting plugin archive and validating expected contents..."
+    Write-Host "Extracting plugin archive and validating expected contents..."
     Expand-Archive -Path $pluginArchivePath -DestinationPath $pluginExtractPath -Force
 
     $requiredPluginFiles = @(
@@ -110,22 +109,20 @@ try {
     }
 
     if ($pluginInstallablePath) {
-        Write-Output "Installable plugin artifact present: $([System.IO.Path]::GetFileName($pluginInstallablePath))"
+        Write-Host "Installable plugin artifact present: $([System.IO.Path]::GetFileName($pluginInstallablePath))"
     }
 
-    Write-Output "Day-0 packaged artifact validation completed successfully."
+    Write-Host "Day-0 packaged artifact validation completed successfully."
 }
 finally {
     if ($server) {
         try {
             $process = Get-Process -Id $server.Id -ErrorAction Stop
-            Write-Output "Stopping packaged MCP server..."
+            Write-Host "Stopping packaged MCP server..."
             Stop-Process -Id $process.Id -Force
         }
         catch {
-            Write-Verbose "Failed to stop process (ignored): $_"
         }
     }
     Pop-Location
 }
-

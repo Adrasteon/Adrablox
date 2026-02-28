@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$OutputDir = "dist/release",
     [switch]$RequireInstallable
 )
@@ -78,12 +78,11 @@ elseif ($RequireInstallable) {
     throw "Installable plugin artifact is required but pluginInstallableAvailable=false in manifest."
 }
 
-Write-Output "Release manifest validation succeeded."
-Write-Output "- platform=$platform"
-Write-Output "- serverArchive=$serverArchive"
-Write-Output "- pluginSourceArchive=$pluginSourceArchive"
-Write-Output "- pluginInstallableAvailable=$installableAvailable"
+Write-Host "Release manifest validation succeeded."
+Write-Host "- platform=$platform"
+Write-Host "- serverArchive=$serverArchive"
+Write-Host "- pluginSourceArchive=$pluginSourceArchive"
+Write-Host "- pluginInstallableAvailable=$installableAvailable"
 if ($installableAvailable) {
-    Write-Output "- pluginInstallableArtifact=$pluginInstallableArtifact"
+    Write-Host "- pluginInstallableArtifact=$pluginInstallableArtifact"
 }
-

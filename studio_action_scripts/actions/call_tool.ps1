@@ -15,10 +15,5 @@ if (Test-Path $nodeCli) {
 }
 
 # Fallback to PowerShell helper
-$argsObj = @{ name = $ToolName; arguments = (ConvertFrom-Json $ArgumentsJson) }
-$params = $argsObj | ConvertTo-Json -Depth 8
-
-$flags = @()
-if ($Pretty) { $flags += '-Pretty' }
-
-& "$PSScriptRoot\..\bin\send_mcp_rpc.ps1" -Method "tools/call" -Params $params -Url $Url @flags
+$params = "{\"name\":\"$ToolName\",\"arguments\":$ArgumentsJson}"
+& "$PSScriptRoot\..\bin\send_mcp_rpc.ps1" -Method "tools/call" -Params $params -Url $Url @($Pretty ? '-Pretty' : @())

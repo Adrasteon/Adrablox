@@ -38,7 +38,7 @@ try {
 }
 
 if ($Pretty) {
-    $resp | ConvertTo-Json -Depth 10 | Write-Output
+    $resp | ConvertTo-Json -Depth 10 | Write-Host
 } else {
     $resp
 }

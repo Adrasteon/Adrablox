@@ -12,17 +12,5 @@ if (Test-Path $nodeCli) {
     exit $LASTEXITCODE
 }
 
-$initObj = @{
-    protocolVersion = '2025-11-25'
-    capabilities = @{ resources = @{ subscribe = $true }; tools = @{} }
-    clientInfo = @{ name = 'connect-verify'; version = '0.1.0' }
-}
-$paramsInit = $initObj | ConvertTo-Json -Depth 8
-
-$flags = @()
-if ($Pretty) { $flags += '-Pretty' }
-
-& "$PSScriptRoot\..\bin\send_mcp_rpc.ps1" -Method initialize -Params $paramsInit -Url $Url @flags
-
-$paramsList = (@{} | ConvertTo-Json -Depth 2)
-& "$PSScriptRoot\..\bin\send_mcp_rpc.ps1" -Method tools/list -Params $paramsList -Url $Url @flags
+& "$PSScriptRoot\..\bin\send_mcp_rpc.ps1" -Method initialize -Params '{"protocolVersion":"2025-11-25","capabilities":{"resources":{"subscribe":true},"tools":{}},"clientInfo":{"name":"connect-verify","version":"0.1.0"}}' -Url $Url @($Pretty ? '-Pretty' : @())
+& "$PSScriptRoot\..\bin\send_mcp_rpc.ps1" -Method tools/list -Params '{}' -Url $Url @($Pretty ? '-Pretty' : @())

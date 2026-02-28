@@ -5,8 +5,7 @@ param(
     [switch]$Pretty
 )
 
-$argsObj = @{ name = 'roblox.readTree'; arguments = @{ sessionId = $SessionId; instanceId = $InstanceId } }
-$params = $argsObj | ConvertTo-Json -Depth 8
+$params = "{\"name\":\"roblox.readTree\",\"arguments\":{\"sessionId\":\"$SessionId\",\"instanceId\":\"$InstanceId\"}}"
 
 $repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $nodeCli = Join-Path $repoRoot "studio_action_scripts\cli\index.js"
@@ -15,6 +14,4 @@ if (Test-Path $nodeCli) {
     exit $LASTEXITCODE
 }
 
-$flags = @()
-if ($Pretty) { $flags += '-Pretty' }
-& "$PSScriptRoot\..\bin\send_mcp_rpc.ps1" -Method "tools/call" -Params $params -Url $Url @flags
+& "$PSScriptRoot\..\bin\send_mcp_rpc.ps1" -Method "tools/call" -Params $params -Url $Url @($Pretty ? '-Pretty' : @())

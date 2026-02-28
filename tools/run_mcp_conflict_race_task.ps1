@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Stop"
 
 $workspace = Split-Path -Parent $PSScriptRoot
 $cargoExe = Join-Path $env:USERPROFILE '.cargo\bin\cargo.exe'
@@ -10,7 +10,7 @@ if (-not (Test-Path $cargoExe)) {
 
 Push-Location $workspace
 try {
-    Write-Output "Starting MCP server..."
+    Write-Host "Starting MCP server..."
     $server = Start-Process -FilePath $cargoExe -ArgumentList @('run','-p','mcp-server') -WorkingDirectory $workspace -PassThru
 
     $ready = $false
@@ -24,25 +24,22 @@ try {
             }
         }
         catch {
-    Write-Output 'Ignored error (empty catch) in run_mcp_conflict_race_task.ps1'
-}
+        }
     }
 
     if (-not $ready) {
         throw "MCP server did not become healthy in time."
     }
 
-    Write-Output "Server is healthy. Running conflict race contract test..."
+    Write-Host "Server is healthy. Running conflict race contract test..."
     & (Join-Path $workspace 'tools\mcp_conflict_race_contract_test.ps1')
 
-    Write-Output "Conflict race task completed successfully."
+    Write-Host "Conflict race task completed successfully."
 }
 finally {
     if ($server -and -not $server.HasExited) {
-        Write-Output "Stopping MCP server..."
+        Write-Host "Stopping MCP server..."
         Stop-Process -Id $server.Id -Force
     }
     Pop-Location
 }
-
-

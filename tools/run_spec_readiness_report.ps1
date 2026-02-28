@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$ParitySummaryPath = "tools/parity_diff_summary.json",
     [string]$ReliabilityReportPath = "tools/integration_reliability_report.json",
     [string]$ReleaseManifestPath = "dist/release/release_manifest.json",
@@ -164,13 +164,12 @@ if (-not (Test-Path $outputDir)) {
 
 $report | ConvertTo-Json -Depth 20 | Set-Content -Path $outputFull -Encoding UTF8
 
-Write-Output "Spec readiness report written: $outputFull"
-Write-Output "- milestone1=$($milestone1.status)"
-Write-Output "- milestone2=$($milestone2.status)"
-Write-Output "- milestone3=$($milestone3.status)"
-Write-Output "- specComplete=$specComplete"
+Write-Host "Spec readiness report written: $outputFull"
+Write-Host "- milestone1=$($milestone1.status)"
+Write-Host "- milestone2=$($milestone2.status)"
+Write-Host "- milestone3=$($milestone3.status)"
+Write-Host "- specComplete=$specComplete"
 
 if ($FailIfNotPass -and $specComplete -ne "PASS") {
     throw "Spec readiness check failed: specComplete=$specComplete"
 }
-

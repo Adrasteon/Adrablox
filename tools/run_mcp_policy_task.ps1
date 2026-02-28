@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Stop"
 
 $workspace = Split-Path -Parent $PSScriptRoot
 $cargoExe = Join-Path $env:USERPROFILE '.cargo\bin\cargo.exe'
@@ -10,7 +10,7 @@ if (-not (Test-Path $cargoExe)) {
 
 Push-Location $workspace
 try {
-    Write-Output "Starting MCP server..."
+    Write-Host "Starting MCP server..."
     $server = Start-Process -FilePath $cargoExe -ArgumentList @('run','-p','mcp-server') -WorkingDirectory $workspace -PassThru
 
     $ready = $false
@@ -23,25 +23,22 @@ try {
                 break
             }
         } catch {
-    Write-Output 'Ignored error (empty catch) in run_mcp_policy_task.ps1'
-}
+        }
     }
 
     if (-not $ready) {
         throw "MCP server did not become healthy in time."
     }
 
-    Write-Output "Server is healthy. Running policy contract test..."
+    Write-Host "Server is healthy. Running policy contract test..."
     & (Join-Path $workspace 'tools\mcp_policy_contract_test.ps1')
 
-    Write-Output "Policy contract task completed successfully."
+    Write-Host "Policy contract task completed successfully."
 }
 finally {
     if ($server -and -not $server.HasExited) {
-        Write-Output "Stopping MCP server..."
+        Write-Host "Stopping MCP server..."
         Stop-Process -Id $server.Id -Force
     }
     Pop-Location
 }
-
-

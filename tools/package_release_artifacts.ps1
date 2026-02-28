@@ -38,7 +38,7 @@ try {
     $safePluginVersion = ($PluginVersion -replace '[^A-Za-z0-9._-]', '-')
 
     if (-not $SkipServerBuild) {
-        Write-Output "Building release server artifact..."
+        Write-Host "Building release server artifact..."
         cargo build --release -p mcp-server
         if ($LASTEXITCODE -ne 0) {
             throw "cargo build failed with exit code $LASTEXITCODE"
@@ -90,7 +90,7 @@ Start-Process -FilePath 'cmd.exe' -ArgumentList "/k `"$here\\mcp-server.exe`"" -
             throw "Plugin project file not found at $pluginProject"
         }
         $pluginInstallableArtifact = Join-Path $outputRoot ("mcp-studio-plugin-{0}.rbxm" -f $safePluginVersion)
-        Write-Output "Building installable plugin artifact via Rojo..."
+        Write-Host "Building installable plugin artifact via Rojo..."
         rojo build $pluginProject --output $pluginInstallableArtifact
         if ($LASTEXITCODE -ne 0) {
             throw "rojo build failed with exit code $LASTEXITCODE"
@@ -101,7 +101,7 @@ Start-Process -FilePath 'cmd.exe' -ArgumentList "/k `"$here\\mcp-server.exe`"" -
         }
     }
     else {
-        Write-Output "Rojo CLI not found; skipping installable plugin artifact (.rbxm) generation."
+        Write-Host "Rojo CLI not found; skipping installable plugin artifact (.rbxm) generation."
     }
 
     $readmeSource = Join-Path $workspace "README.md"
@@ -127,13 +127,13 @@ Start-Process -FilePath 'cmd.exe' -ArgumentList "/k `"$here\\mcp-server.exe`"" -
     }
     $manifest | ConvertTo-Json -Depth 4 | Set-Content -Path $manifestPath -Encoding UTF8
 
-    Write-Output "Release artifacts created at: $outputRoot"
-    Write-Output "- $([System.IO.Path]::GetFileName($serverArchive))"
-    Write-Output "- $([System.IO.Path]::GetFileName($pluginSourceArchive))"
+    Write-Host "Release artifacts created at: $outputRoot"
+    Write-Host "- $([System.IO.Path]::GetFileName($serverArchive))"
+    Write-Host "- $([System.IO.Path]::GetFileName($pluginSourceArchive))"
     if ($pluginInstallableAvailable) {
-        Write-Output "- $([System.IO.Path]::GetFileName($pluginInstallableArtifact))"
+        Write-Host "- $([System.IO.Path]::GetFileName($pluginInstallableArtifact))"
     }
-    Write-Output "- release_manifest.json"
+    Write-Host "- release_manifest.json"
 }
 finally {
     Pop-Location

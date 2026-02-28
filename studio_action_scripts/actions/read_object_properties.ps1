@@ -12,9 +12,5 @@ if (Test-Path $nodeCli) {
     exit $LASTEXITCODE
 }
 
-$argsObj = @{ name = 'roblox.readObject'; arguments = @{ sessionId = $SessionId; instanceId = $InstanceId } }
-$params = $argsObj | ConvertTo-Json -Depth 6
-
-$flags = @()
-if ($Pretty) { $flags += '-Pretty' }
-& "$PSScriptRoot\..\bin\send_mcp_rpc.ps1" -Method "tools/call" -Params $params -Url $Url @flags
+$params = "{\"name\":\"roblox.readObject\",\"arguments\":{\"sessionId\":\"$SessionId\",\"instanceId\":\"$InstanceId\"}}"
+& "$PSScriptRoot\..\bin\send_mcp_rpc.ps1" -Method "tools/call" -Params $params -Url $Url @($Pretty ? '-Pretty' : @())

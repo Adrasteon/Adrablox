@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$Repository = "",
     [string]$Ref = "main",
     [int]$ReliabilityIterations = 5,
@@ -87,7 +87,7 @@ $resolvedRepo = Resolve-Repository -ExplicitRepository $Repository
 $distributionValue = if ($IncludeDistributionEvidence) { 'true' } else { 'false' }
 $failValue = if ($FailIfNotPass) { 'true' } else { 'false' }
 
-$ghArgs = @(
+$args = @(
     'workflow', 'run', '.github/workflows/ci.yml',
     '--repo', $resolvedRepo,
     '--ref', $Ref,
@@ -97,31 +97,31 @@ $ghArgs = @(
     '-f', 'integration_reliability_iterations=' + $ReliabilityIterations
 )
 
-Write-Output "Dispatching mission-critical CI evidence gate..."
-Write-Output ("- repo={0}" -f $resolvedRepo)
-Write-Output ("- ref={0}" -f $Ref)
-Write-Output ("- integration_reliability_iterations={0}" -f $ReliabilityIterations)
-Write-Output ("- release_candidate_include_distribution_evidence={0}" -f $distributionValue)
-Write-Output ("- release_candidate_fail_if_not_pass={0}" -f $failValue)
+Write-Host "Dispatching mission-critical CI evidence gate..."
+Write-Host ("- repo={0}" -f $resolvedRepo)
+Write-Host ("- ref={0}" -f $Ref)
+Write-Host ("- integration_reliability_iterations={0}" -f $ReliabilityIterations)
+Write-Host ("- release_candidate_include_distribution_evidence={0}" -f $distributionValue)
+Write-Host ("- release_candidate_fail_if_not_pass={0}" -f $failValue)
 
 if ($DryRun) {
-    Write-Output ("Dry-run command: gh {0}" -f ($ghArgs -join ' '))
+    Write-Host ("Dry-run command: gh {0}" -f ($args -join ' '))
     return
 }
 
 Ensure-GhAvailable
 
 try {
-    Invoke-GhStrict -GhArgs $ghArgs
+    Invoke-GhStrict -GhArgs $args
 }
 catch {
-    Write-Output "Primary dispatch by workflow path failed; retrying by workflow name 'CI'."
-    $fallbackArgs = @('workflow', 'run', 'CI') + $ghArgs[3..($ghArgs.Count - 1)]
+    Write-Host "Primary dispatch by workflow path failed; retrying by workflow name 'CI'."
+    $fallbackArgs = @('workflow', 'run', 'CI') + $args[3..($args.Count - 1)]
     Invoke-GhStrict -GhArgs $fallbackArgs
 }
 
-Write-Output "Workflow dispatched."
-Write-Output "Recent runs:"
+Write-Host "Workflow dispatched."
+Write-Host "Recent runs:"
 Invoke-GhStrict -GhArgs @('run', 'list', '--repo', $resolvedRepo, '--workflow', 'CI', '--limit', '3')
 
 if ($Watch) {
@@ -130,8 +130,7 @@ if ($Watch) {
         throw "Failed to resolve latest CI run id for watch mode."
     }
     if (-not [string]::IsNullOrWhiteSpace($latestRun)) {
-        Write-Output ("Watching run: {0}" -f $latestRun)
+        Write-Host ("Watching run: {0}" -f $latestRun)
         Invoke-GhStrict -GhArgs @('run', 'watch', $latestRun, '--repo', $resolvedRepo, '--exit-status')
     }
 }
-

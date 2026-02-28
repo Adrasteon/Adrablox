@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$ProjectPath = "default.project.json",
     [string]$McpBase = "http://127.0.0.1:44877",
     [string]$RojoBase = "http://127.0.0.1:34872",
@@ -57,8 +57,7 @@ function Try-OpenApi {
             }
         }
         catch {
-    Write-Output 'Ignored error (empty catch) in rojo_parity_diff_check.ps1'
-}
+        }
     }
 
     throw "Unable to open session via $Base/api/rojo"
@@ -83,8 +82,7 @@ function Invoke-ReadCompat {
             return Invoke-RestMethod -Uri $url -Method Get
         }
         catch {
-    Write-Output 'Ignored error (empty catch) in rojo_parity_diff_check.ps1'
-}
+        }
     }
 
     throw "Unable to read tree from $Base"
@@ -112,8 +110,7 @@ function Invoke-SubscribeCompat {
             return Invoke-RestMethod -Uri $url -Method Get
         }
         catch {
-    Write-Output 'Ignored error (empty catch) in rojo_parity_diff_check.ps1'
-}
+        }
     }
 
     return $null
@@ -468,4 +465,3 @@ if ($diffs.Count -gt 0) {
 else {
     Write-Output "No parity diffs detected for compared summaries."
 }
-

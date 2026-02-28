@@ -1,4 +1,4 @@
-﻿param(
+param(
     [int]$Iterations = 2
 )
 
@@ -14,7 +14,7 @@ if (-not (Test-Path $cargoExe)) {
 
 Push-Location $workspace
 try {
-    Write-Output "Starting MCP server..."
+    Write-Host "Starting MCP server..."
     $server = Start-Process -FilePath $cargoExe -ArgumentList @('run','-p','mcp-server') -WorkingDirectory $workspace -PassThru
 
     $ready = $false
@@ -28,25 +28,22 @@ try {
             }
         }
         catch {
-    Write-Output 'Ignored error (empty catch) in run_mcp_integration_conflict_recovery_task.ps1'
-}
+        }
     }
 
     if (-not $ready) {
         throw "MCP server did not become healthy in time."
     }
 
-    Write-Output "Server is healthy. Running integration conflict-recovery contract test..."
+    Write-Host "Server is healthy. Running integration conflict-recovery contract test..."
     & (Join-Path $workspace 'tools\mcp_integration_conflict_recovery_contract_test.ps1') -Iterations $Iterations
 
-    Write-Output "Integration conflict-recovery task completed successfully."
+    Write-Host "Integration conflict-recovery task completed successfully."
 }
 finally {
     if ($server -and -not $server.HasExited) {
-        Write-Output "Stopping MCP server..."
+        Write-Host "Stopping MCP server..."
         Stop-Process -Id $server.Id -Force
     }
     Pop-Location
 }
-
-

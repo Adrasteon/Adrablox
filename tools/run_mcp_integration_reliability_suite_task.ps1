@@ -1,4 +1,4 @@
-﻿param(
+param(
     [int]$ReconnectIterations = 5,
     [int]$ConflictIterations = 3,
     [int]$MixedIterations = 3,
@@ -29,7 +29,7 @@ function Invoke-Step {
         $actionOutput = & $Action 2>&1
         foreach ($line in @($actionOutput)) {
             if ($null -ne $line -and -not [string]::IsNullOrWhiteSpace("$line")) {
-                Write-Output $line
+                Write-Host $line
             }
         }
         $end = Get-Date
@@ -57,10 +57,10 @@ function Invoke-Step {
 
 Push-Location $workspace
 try {
-    Write-Output "Running integration reliability evidence suite..."
-    Write-Output "- reconnectIterations=$ReconnectIterations"
-    Write-Output "- conflictIterations=$ConflictIterations"
-    Write-Output "- mixedIterations=$MixedIterations"
+    Write-Host "Running integration reliability evidence suite..."
+    Write-Host "- reconnectIterations=$ReconnectIterations"
+    Write-Host "- conflictIterations=$ConflictIterations"
+    Write-Host "- mixedIterations=$MixedIterations"
 
     $steps = @()
     $steps += Invoke-Step -Name "integration-reconnect-loop" -Action {
@@ -86,16 +86,15 @@ try {
     }
 
     $report | ConvertTo-Json -Depth 10 | Set-Content -Path $absoluteReportPath -Encoding UTF8
-    Write-Output "Reliability report written: $absoluteReportPath"
+    Write-Host "Reliability report written: $absoluteReportPath"
 
     if ($failed.Count -gt 0) {
         $failedNames = ($failed | ForEach-Object { $_.name }) -join ", "
         throw "Integration reliability suite failed: $failedNames"
     }
 
-    Write-Output "Integration reliability suite completed successfully."
+    Write-Host "Integration reliability suite completed successfully."
 }
 finally {
     Pop-Location
 }
-

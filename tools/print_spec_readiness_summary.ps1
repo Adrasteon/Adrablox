@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$ReportPath = "tools/spec_readiness_report.json",
     [switch]$FailIfNotPass
 )
@@ -19,7 +19,7 @@ $m2 = [string]$report.milestones.milestone2_reliability.status
 $m3 = [string]$report.milestones.milestone3_distribution.status
 $overall = [string]$report.specComplete
 
-Write-Output ("Spec readiness summary: milestone1={0} milestone2={1} milestone3={2} specComplete={3}" -f $m1, $m2, $m3, $overall)
+Write-Host ("Spec readiness summary: milestone1={0} milestone2={1} milestone3={2} specComplete={3}" -f $m1, $m2, $m3, $overall)
 
 if ($env:GITHUB_STEP_SUMMARY) {
     $lines = @(
@@ -38,4 +38,3 @@ if ($env:GITHUB_STEP_SUMMARY) {
 if ($FailIfNotPass -and $overall -ne "PASS") {
     throw "Spec readiness is not PASS (specComplete=$overall)."
 }
-

@@ -1,4 +1,4 @@
-﻿param(
+param(
     [int]$ReconnectIterations = 1,
     [int]$ConflictIterations = 1,
     [int]$MixedIterations = 1,
@@ -19,16 +19,16 @@ $workspace = Split-Path -Parent $PSScriptRoot
 
 Push-Location $workspace
 try {
-    Write-Output "Running mission-critical local gate..."
-    Write-Output "- reconnectIterations=$ReconnectIterations"
-    Write-Output "- conflictIterations=$ConflictIterations"
-    Write-Output "- mixedIterations=$MixedIterations"
-    Write-Output "- mutationSettleMs=$MutationSettleMs"
-    Write-Output "- categories='$Categories'"
-    Write-Output "- fixtures='$Fixtures'"
-    Write-Output "- dryRun=$DryRun"
+    Write-Host "Running mission-critical local gate..."
+    Write-Host "- reconnectIterations=$ReconnectIterations"
+    Write-Host "- conflictIterations=$ConflictIterations"
+    Write-Host "- mixedIterations=$MixedIterations"
+    Write-Host "- mutationSettleMs=$MutationSettleMs"
+    Write-Host "- categories='$Categories'"
+    Write-Host "- fixtures='$Fixtures'"
+    Write-Host "- dryRun=$DryRun"
 
-    $cliArgs = @(
+    $args = @(
         '-ReconnectIterations', "$ReconnectIterations",
         '-ConflictIterations', "$ConflictIterations",
         '-MixedIterations', "$MixedIterations",
@@ -38,27 +38,26 @@ try {
     )
 
     if (-not [string]::IsNullOrWhiteSpace($Categories)) {
-        $cliArgs += @('-Categories', $Categories)
+        $args += @('-Categories', $Categories)
     }
 
     if (-not [string]::IsNullOrWhiteSpace($Fixtures)) {
-        $cliArgs += @('-Fixtures', $Fixtures)
+        $args += @('-Fixtures', $Fixtures)
     }
 
     if ($DryRun) {
-        $cliArgs += '-DryRun'
+        $args += '-DryRun'
     }
 
-    powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $workspace 'tools/run_release_candidate_evidence_pack_task.ps1') @cliArgs
+    powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $workspace 'tools/run_release_candidate_evidence_pack_task.ps1') @args
 
     if ($DryRun) {
-        Write-Output "Mission-critical local gate dry-run completed successfully."
+        Write-Host "Mission-critical local gate dry-run completed successfully."
         return
     }
 
-    Write-Output "Mission-critical local gate completed successfully."
+    Write-Host "Mission-critical local gate completed successfully."
 }
 finally {
     Pop-Location
 }
-
