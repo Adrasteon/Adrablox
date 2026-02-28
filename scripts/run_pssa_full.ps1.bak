@@ -1,0 +1,23 @@
+param(
+    [string]$OutJson = 'analysis_pssa.json',
+    [string]$OutRule = 'analysis_pssa_rule_summary.json',
+    [string]$OutFile = 'analysis_pssa_summary.json'
+)
+
+try {
+    Import-Module PSScriptAnalyzer -ErrorAction Stop
+} catch {
+    Write-Error "PSScriptAnalyzer module not available: $_"
+    exit 1
+}
+
+$res = Invoke-ScriptAnalyzer -Path . -Recurse -ErrorAction SilentlyContinue
+if (-not $res -or $res.Count -eq 0) {
+    Write-Output "NO_FINDINGS"
+    exit 0
+}
+
+$res | ConvertTo-Json -Compress | Out-File -Encoding utf8 $OutJson
+$res | Group-Object RuleName | Select @{Name='RuleName';Expression={$_.Name}},@{Name='Count';Expression={$_.Count}} | Sort-Object -Property Count -Descending | ConvertTo-Json -Compress | Out-File -Encoding utf8 $OutRule
+$res | Group-Object ScriptName | Select @{Name='ScriptName';Expression={$_.Name}},@{Name='Count';Expression={$_.Count}} | Sort-Object -Property Count -Descending | ConvertTo-Json -Compress | Out-File -Encoding utf8 $OutFile
+Write-Output "WROTE: $OutJson, $OutRule, $OutFile"

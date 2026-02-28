@@ -16,5 +16,11 @@ if (Test-Path $nodeCli) {
     exit $LASTEXITCODE
 }
 
-$params = if ($null -ne $Cursor) { "{\"name\":\"roblox.subscribeChanges\",\"arguments\":{\"sessionId\":\"$SessionId\",\"cursor\":\"$Cursor\"}}" } else { "{\"name\":\"roblox.subscribeChanges\",\"arguments\":{\"sessionId\":\"$SessionId\"}}" }
-& "$PSScriptRoot\..\bin\send_mcp_rpc.ps1" -Method "tools/call" -Params $params -Url $Url @($Pretty ? '-Pretty' : @())
+$argsObj = @{ name = 'roblox.subscribeChanges'; arguments = @{ sessionId = $SessionId } }
+if ($null -ne $Cursor) { $argsObj.arguments.cursor = $Cursor }
+
+$params = $argsObj | ConvertTo-Json -Depth 8
+
+$flags = @()
+if ($Pretty) { $flags += '-Pretty' }
+& "$PSScriptRoot\..\bin\send_mcp_rpc.ps1" -Method "tools/call" -Params $params -Url $Url @flags

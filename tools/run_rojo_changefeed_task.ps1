@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 $workspace = Split-Path -Parent $PSScriptRoot
 $cargoExe = Join-Path $env:USERPROFILE '.cargo\bin\cargo.exe'
@@ -10,7 +10,7 @@ if (-not (Test-Path $cargoExe)) {
 
 Push-Location $workspace
 try {
-    Write-Host "Starting MCP server..."
+    Write-Output "Starting MCP server..."
     $server = Start-Process -FilePath $cargoExe -ArgumentList @('run','-p','mcp-server') -WorkingDirectory $workspace -PassThru
 
     $ready = $false
@@ -24,22 +24,25 @@ try {
             }
         }
         catch {
-        }
+    Write-Output 'Ignored error (empty catch) in run_rojo_changefeed_task.ps1'
+}
     }
 
     if (-not $ready) {
         throw "MCP server did not become healthy in time."
     }
 
-    Write-Host "Server is healthy. Running Rojo changefeed edge-case check..."
+    Write-Output "Server is healthy. Running Rojo changefeed edge-case check..."
     & (Join-Path $workspace 'tools\rojo_changefeed_edge_check.ps1')
 
-    Write-Host "Rojo changefeed edge-case task completed successfully."
+    Write-Output "Rojo changefeed edge-case task completed successfully."
 }
 finally {
     if ($server -and -not $server.HasExited) {
-        Write-Host "Stopping MCP server..."
+        Write-Output "Stopping MCP server..."
         Stop-Process -Id $server.Id -Force
     }
     Pop-Location
 }
+
+

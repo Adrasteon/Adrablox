@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$OutputDir = "dist/release",
     [switch]$RequireInstallable
 )
@@ -121,7 +121,7 @@ Set-Content -Path (Join-Path $projectRoot "default.project.json") -Encoding UTF8
 
 Push-Location $workspace
 try {
-    Write-Host "Extracting packaged server archive..."
+    Write-Output "Extracting packaged server archive..."
     Expand-Archive -Path $serverArchivePath -DestinationPath $serverExtractPath -Force
 
     $serverBinary = Get-ChildItem -Path $serverExtractPath -Recurse -File | Where-Object { $_.Name -eq $binaryName } | Select-Object -First 1
@@ -130,11 +130,11 @@ try {
     }
 
     if (-not $IsWindows) {
-        Write-Host "Marking packaged server binary executable on Unix..."
+        Write-Output "Marking packaged server binary executable on Unix..."
         & chmod +x $serverBinary.FullName
     }
 
-    Write-Host "Starting packaged MCP server binary..."
+    Write-Output "Starting packaged MCP server binary..."
     $server = Start-Process -FilePath $serverBinary.FullName -WorkingDirectory $workspace -PassThru
 
     $ready = $false
@@ -148,14 +148,15 @@ try {
             }
         }
         catch {
-        }
+    Write-Output 'Ignored error (empty catch) in run_day0_published_artifact_validation_task.ps1'
+}
     }
 
     if (-not $ready) {
         throw "Packaged MCP server did not become healthy in time."
     }
 
-    Write-Host "Validating MCP flow against temp published-artifact project..."
+    Write-Output "Validating MCP flow against temp published-artifact project..."
     $init = Invoke-Mcp -Method "initialize" -Params @{
         protocolVersion = "2025-11-25"
         capabilities = @{
@@ -197,17 +198,20 @@ try {
         throw "closeSession did not report closed=true"
     }
 
-    Write-Host "Day-0 published artifact validation completed successfully."
+    Write-Output "Day-0 published artifact validation completed successfully."
 }
 finally {
     if ($server) {
         try {
             $process = Get-Process -Id $server.Id -ErrorAction Stop
-            Write-Host "Stopping packaged MCP server..."
+            Write-Output "Stopping packaged MCP server..."
             Stop-Process -Id $process.Id -Force
         }
         catch {
-        }
+    Write-Output 'Ignored error (empty catch) in run_day0_published_artifact_validation_task.ps1'
+}
     }
     Pop-Location
 }
+
+

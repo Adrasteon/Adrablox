@@ -7,3 +7,8 @@ Thumbs.db
 *.rbxlx
 tools/parity_diff_report*.json
 tools/parity_diff_summary*.json
+
+# Node CLI deps
+studio_action_scripts/cli/node_modules/
+# Exported snapshots from CLI/dev runs
+studio_action_scripts/cli/exported_*.json

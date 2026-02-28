@@ -9,12 +9,29 @@ param(
 $repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $nodeCli = Join-Path $repoRoot "studio_action_scripts\cli\index.js"
 if (Test-Path $nodeCli) {
-    $args = @('conflict-recover', $SessionId, $OperationsJson)
-    if ($BaseCursor) { $args += $BaseCursor }
-    node $nodeCli @args
+    $cliArgs = @('conflict-recover', $SessionId, $OperationsJson)
+    if ($BaseCursor) { $cliArgs += $BaseCursor }
+    node $nodeCli @cliArgs
     exit $LASTEXITCODE
 }
 
-$params = "{\"name\":\"roblox.applyPatch\",\"arguments\":{\"sessionId\":\"$SessionId\",\"patchId\":\"ps_conflict_recover\",\"baseCursor\":$([string]::IsNullOrEmpty($BaseCursor) ? 'null' : ('"' + $BaseCursor + '"')) ,\"origin\":\"ps-conflict-recover\",\"operations\":$OperationsJson}}"
+$baseCursor = $null
+if (-not [string]::IsNullOrEmpty($BaseCursor)) { $baseCursor = $BaseCursor }
 
-& "$PSScriptRoot\..\bin\send_mcp_rpc.ps1" -Method "tools/call" -Params $params -Url $Url @($Pretty ? '-Pretty' : @())
+$argsObj = @{
+    name = 'roblox.applyPatch'
+    arguments = @{
+        sessionId = $SessionId
+        patchId = 'ps_conflict_recover'
+        baseCursor = $baseCursor
+        origin = 'ps-conflict-recover'
+        operations = (ConvertFrom-Json $OperationsJson)
+    }
+}
+
+$params = $argsObj | ConvertTo-Json -Depth 10
+
+$flags = @()
+if ($Pretty) { $flags += '-Pretty' }
+
+& "$PSScriptRoot\..\bin\send_mcp_rpc.ps1" -Method "tools/call" -Params $params -Url $Url @flags

@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$Categories = "",
     [string]$Fixtures = "",
     [switch]$DryRun
@@ -23,12 +23,12 @@ try {
         $suiteArgs += '-DryRun'
     }
 
-    Write-Host "Running Rojo parity fixture suite..."
+    Write-Output "Running Rojo parity fixture suite..."
     powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_parity_suite_task.ps1 @suiteArgs
 
     if ($DryRun) {
-        Write-Host "Dry-run mode enabled; skipping strict parity summary checks."
-        Write-Host "Rojo parity release gate dry-run completed successfully."
+        Write-Output "Dry-run mode enabled; skipping strict parity summary checks."
+        Write-Output "Rojo parity release gate dry-run completed successfully."
         return
     }
 
@@ -38,11 +38,12 @@ try {
         $summaryArgs += $Categories
     }
 
-    Write-Host "Running strict parity summary checks..."
+    Write-Output "Running strict parity summary checks..."
     powershell -NoProfile -ExecutionPolicy Bypass -File tools/summarize_parity_reports.ps1 @summaryArgs
 
-    Write-Host "Rojo parity release gate completed successfully."
+    Write-Output "Rojo parity release gate completed successfully."
 }
 finally {
     Pop-Location
 }
+

@@ -4,7 +4,9 @@ param(
     [switch]$Pretty
 )
 
-$params = "{\"name\":\"roblox.openSession\",\"arguments\":{\"projectPath\":\"$ProjectPath\"}}"
+
+$argsObj = @{ name = 'roblox.openSession'; arguments = @{ projectPath = $ProjectPath } }
+$params = $argsObj | ConvertTo-Json -Depth 6
 
 $repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $nodeCli = Join-Path $repoRoot "studio_action_scripts\cli\index.js"
@@ -13,4 +15,6 @@ if (Test-Path $nodeCli) {
     exit $LASTEXITCODE
 }
 
-& "$PSScriptRoot\..\bin\send_mcp_rpc.ps1" -Method "tools/call" -Params $params -Url $Url @($Pretty ? '-Pretty' : @())
+$flags = @()
+if ($Pretty) { $flags += '-Pretty' }
+& "$PSScriptRoot\..\bin\send_mcp_rpc.ps1" -Method "tools/call" -Params $params -Url $Url @flags

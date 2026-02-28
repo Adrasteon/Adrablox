@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$OutputDir = "dist/release",
     [switch]$Verify
 )
@@ -62,9 +62,9 @@ if ($Verify) {
         }
     }
 
-    Write-Host "Release checksum verification succeeded."
-    Write-Host "- verifiedArtifacts=$($artifactNames.Count)"
-    Write-Host "- checksumFile=release_checksums.txt"
+    Write-Output "Release checksum verification succeeded."
+    Write-Output "- verifiedArtifacts=$($artifactNames.Count)"
+    Write-Output "- checksumFile=release_checksums.txt"
     return
 }
 
@@ -92,7 +92,8 @@ $jsonPayload = [ordered]@{
 }
 $jsonPayload | ConvertTo-Json -Depth 6 | Set-Content -Path $checksumsJsonPath -Encoding UTF8
 
-Write-Host "Release checksum generation succeeded."
-Write-Host "- checksumFile=release_checksums.txt"
-Write-Host "- checksumJson=release_checksums.json"
-Write-Host "- artifactCount=$($entries.Count)"
+Write-Output "Release checksum generation succeeded."
+Write-Output "- checksumFile=release_checksums.txt"
+Write-Output "- checksumJson=release_checksums.json"
+Write-Output "- artifactCount=$($entries.Count)"
+

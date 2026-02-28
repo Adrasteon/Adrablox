@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$ProjectFile = "default.project.json",
     [string]$ReportPath = "tools/parity_diff_report.json",
     [string]$MutationFilePath = "",
@@ -64,10 +64,10 @@ try {
 
     Remove-Item $mcpOut, $mcpErr, $rojoOut, $rojoErr -ErrorAction SilentlyContinue
 
-    Write-Host "Starting MCP server..."
+    Write-Output "Starting MCP server..."
     $mcpServer = Start-Process -FilePath $cargoExe -ArgumentList @('run','-p','mcp-server') -WorkingDirectory $workspace -PassThru -RedirectStandardOutput $mcpOut -RedirectStandardError $mcpErr
 
-    Write-Host "Starting Rojo serve..."
+    Write-Output "Starting Rojo serve..."
     $rojoServer = Start-Process -FilePath $rojoExe -ArgumentList @('serve',$ProjectFile,'--address','127.0.0.1','--port','34872') -WorkingDirectory $workspace -PassThru -RedirectStandardOutput $rojoOut -RedirectStandardError $rojoErr
 
     $mcpReady = $false
@@ -86,7 +86,8 @@ try {
             }
         }
         catch {
-        }
+    Write-Output 'Ignored error (empty catch) in run_rojo_parity_diff_task.ps1'
+}
     }
 
     if (-not $mcpReady) {
@@ -113,7 +114,8 @@ try {
                 break
             }
             catch {
-            }
+    Write-Output 'Ignored error (empty catch) in run_rojo_parity_diff_task.ps1'
+}
         }
     }
 
@@ -121,7 +123,7 @@ try {
         throw "Rojo serve did not become ready in time."
     }
 
-    Write-Host "Both servers are ready. Running parity diff check..."
+    Write-Output "Both servers are ready. Running parity diff check..."
     $parityArgs = @{
         ProjectPath = $ProjectFile
         ReportPath = $ReportPath
@@ -136,16 +138,18 @@ try {
     }
     & (Join-Path $workspace 'tools\rojo_parity_diff_check.ps1') @parityArgs
 
-    Write-Host "Rojo parity diff task completed."
+    Write-Output "Rojo parity diff task completed."
 }
 finally {
     if ($rojoServer -and -not $rojoServer.HasExited) {
-        Write-Host "Stopping Rojo serve..."
+        Write-Output "Stopping Rojo serve..."
         Stop-Process -Id $rojoServer.Id -Force
     }
     if ($mcpServer -and -not $mcpServer.HasExited) {
-        Write-Host "Stopping MCP server..."
+        Write-Output "Stopping MCP server..."
         Stop-Process -Id $mcpServer.Id -Force
     }
     Pop-Location
 }
+
+

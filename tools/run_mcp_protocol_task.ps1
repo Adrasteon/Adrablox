@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 $workspace = Split-Path -Parent $PSScriptRoot
 $cargoExe = Join-Path $env:USERPROFILE '.cargo\bin\cargo.exe'
@@ -59,7 +59,7 @@ $pythonCommand = Get-PythonCommand
 
 Push-Location $workspace
 try {
-    Write-Host "Starting MCP server..."
+    Write-Output "Starting MCP server..."
     $server = Start-Process -FilePath $cargoExe -ArgumentList @('run','-p','mcp-server') -WorkingDirectory $workspace -PassThru
 
     $ready = $false
@@ -73,23 +73,26 @@ try {
             }
         }
         catch {
-        }
+    Write-Output 'Ignored error (empty catch) in run_mcp_protocol_task.ps1'
+}
     }
 
     if (-not $ready) {
         throw "MCP server did not become healthy in time."
     }
 
-    Write-Host "Server is healthy. Running protocol contract test..."
+    Write-Output "Server is healthy. Running protocol contract test..."
     $scriptPath = Join-Path $workspace 'tools\mcp_protocol_contract_test.py'
     & $pythonCommand.FilePath @($pythonCommand.PrefixArgs + @($scriptPath))
 
-    Write-Host "Protocol contract task completed successfully."
+    Write-Output "Protocol contract task completed successfully."
 }
 finally {
     if ($server -and -not $server.HasExited) {
-        Write-Host "Stopping MCP server..."
+        Write-Output "Stopping MCP server..."
         Stop-Process -Id $server.Id -Force
     }
     Pop-Location
 }
+
+

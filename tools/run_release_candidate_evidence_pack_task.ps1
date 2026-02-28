@@ -56,9 +56,9 @@ function Invoke-ToolScript {
         throw "Missing required script for step '$Name': $ScriptPath"
     }
 
-    Write-Host "[$Name] Running $ScriptPath"
+    Write-Output "[$Name] Running $ScriptPath"
     if ($Arguments.Count -gt 0) {
-        Write-Host "[$Name] Args: $($Arguments -join ' ')"
+        Write-Output "[$Name] Args: $($Arguments -join ' ')"
     }
 
     if ($DryRun) {
@@ -70,20 +70,20 @@ function Invoke-ToolScript {
 
 Push-Location $workspace
 try {
-    Write-Host "Running release-candidate evidence pack..."
-    Write-Host "- reconnectIterations=$ReconnectIterations"
-    Write-Host "- conflictIterations=$ConflictIterations"
-    Write-Host "- mixedIterations=$MixedIterations"
-    Write-Host "- mutationSettleMs=$MutationSettleMs"
-    Write-Host "- categories='$Categories'"
-    Write-Host "- fixtures='$Fixtures'"
-    Write-Host "- includeDistributionEvidence=$IncludeDistributionEvidence"
-    Write-Host "- skipReliability=$SkipReliability"
-    Write-Host "- skipParitySuite=$SkipParitySuite"
-    Write-Host "- skipParitySummary=$SkipParitySummary"
-    Write-Host "- skipReadiness=$SkipReadiness"
-    Write-Host "- failIfNotPass=$FailIfNotPass"
-    Write-Host "- dryRun=$DryRun"
+    Write-Output "Running release-candidate evidence pack..."
+    Write-Output "- reconnectIterations=$ReconnectIterations"
+    Write-Output "- conflictIterations=$ConflictIterations"
+    Write-Output "- mixedIterations=$MixedIterations"
+    Write-Output "- mutationSettleMs=$MutationSettleMs"
+    Write-Output "- categories='$Categories'"
+    Write-Output "- fixtures='$Fixtures'"
+    Write-Output "- includeDistributionEvidence=$IncludeDistributionEvidence"
+    Write-Output "- skipReliability=$SkipReliability"
+    Write-Output "- skipParitySuite=$SkipParitySuite"
+    Write-Output "- skipParitySummary=$SkipParitySummary"
+    Write-Output "- skipReadiness=$SkipReadiness"
+    Write-Output "- failIfNotPass=$FailIfNotPass"
+    Write-Output "- dryRun=$DryRun"
 
     if (-not $SkipReliability) {
         $reliabilityArgs = @(
@@ -94,7 +94,7 @@ try {
         Invoke-ToolScript -Name 'reliability' -ScriptPath 'tools/run_mcp_integration_reliability_suite_task.ps1' -Arguments $reliabilityArgs
     }
     else {
-        Write-Host "[reliability] Skipped"
+        Write-Output "[reliability] Skipped"
     }
 
     if (-not $SkipParitySuite) {
@@ -111,7 +111,7 @@ try {
         Invoke-ToolScript -Name 'parity-suite' -ScriptPath 'tools/run_rojo_parity_suite_task.ps1' -Arguments $paritySuiteArgs
     }
     else {
-        Write-Host "[parity-suite] Skipped"
+        Write-Output "[parity-suite] Skipped"
     }
 
     if (-not $SkipParitySummary) {
@@ -123,7 +123,7 @@ try {
         Invoke-ToolScript -Name 'parity-summary' -ScriptPath 'tools/summarize_parity_reports.ps1' -Arguments $summaryArgs
     }
     else {
-        Write-Host "[parity-summary] Skipped"
+        Write-Output "[parity-summary] Skipped"
     }
 
     if ($IncludeDistributionEvidence) {
@@ -135,7 +135,7 @@ try {
         Invoke-ToolScript -Name 'distribution-day0-published' -ScriptPath 'tools/run_day0_published_artifact_validation_task.ps1' -Arguments @('-RequireInstallable')
     }
     else {
-        Write-Host "[distribution] Skipped"
+        Write-Output "[distribution] Skipped"
     }
 
     if (-not $SkipReadiness) {
@@ -146,15 +146,15 @@ try {
         Invoke-ToolScript -Name 'spec-readiness' -ScriptPath 'tools/run_spec_readiness_report.ps1' -Arguments $readinessArgs
     }
     else {
-        Write-Host "[spec-readiness] Skipped"
+        Write-Output "[spec-readiness] Skipped"
     }
 
     if ($DryRun) {
-        Write-Host "Release-candidate evidence pack dry-run completed successfully."
+        Write-Output "Release-candidate evidence pack dry-run completed successfully."
         return
     }
 
-    Write-Host "Release-candidate evidence pack completed successfully."
+    Write-Output "Release-candidate evidence pack completed successfully."
 }
 finally {
     Pop-Location

@@ -20,7 +20,9 @@ if (Test-Path $nodeCli) {
 
 # Fall back to the repo-local PowerShell helper
 if (Test-Path $toolsHelper) {
-    & $toolsHelper -Method $Method -Params $Params -Url $Url @($Pretty ? '-Pretty' : @())
+    $flags = @()
+    if ($Pretty) { $flags += '-Pretty' }
+    & $toolsHelper -Method $Method -Params $Params -Url $Url @flags
     exit $LASTEXITCODE
 }
 
@@ -48,7 +50,7 @@ try {
 }
 
 if ($Pretty) {
-    $resp | ConvertTo-Json -Depth 10 | Write-Host
+    $resp | ConvertTo-Json -Depth 10 | Write-Output
 } else {
     $resp
 }

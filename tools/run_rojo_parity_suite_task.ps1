@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$Categories = "",
     [string]$Fixtures = "",
     [int]$MutationSettleMs = 1200,
@@ -79,7 +79,7 @@ if (-not [string]::IsNullOrWhiteSpace($Fixtures)) {
 
 Push-Location $workspace
 try {
-    Write-Host "Selected parity fixtures: $($selectedFixtures.Count)"
+    Write-Output "Selected parity fixtures: $($selectedFixtures.Count)"
 
     foreach ($fixture in $selectedFixtures) {
         $fixtureName = [string]$fixture.name
@@ -93,11 +93,11 @@ try {
         }
 
         if ($DryRun) {
-            Write-Host "[DRY-RUN] $fixtureName ($fixtureCategory) -> project=$projectFile report=$reportPath mutation=$mutationFilePath"
+            Write-Output "[DRY-RUN] $fixtureName ($fixtureCategory) -> project=$projectFile report=$reportPath mutation=$mutationFilePath"
             continue
         }
 
-        Write-Host "Running parity diff fixture: $fixtureName ($fixtureCategory) -> $projectFile"
+        Write-Output "Running parity diff fixture: $fixtureName ($fixtureCategory) -> $projectFile"
         & (Join-Path $workspace 'tools\run_rojo_parity_diff_task.ps1') `
             -ProjectFile $projectFile `
             -ReportPath $reportPath `
@@ -107,16 +107,17 @@ try {
             -FixtureCategory $fixtureCategory `
             -FailOnDiff
 
-        Write-Host "Fixture passed: $fixtureName"
+        Write-Output "Fixture passed: $fixtureName"
     }
 
     if ($DryRun) {
-        Write-Host "Rojo parity suite dry-run completed successfully."
+        Write-Output "Rojo parity suite dry-run completed successfully."
     }
     else {
-        Write-Host "Rojo parity suite completed successfully."
+        Write-Output "Rojo parity suite completed successfully."
     }
 }
 finally {
     Pop-Location
 }
+

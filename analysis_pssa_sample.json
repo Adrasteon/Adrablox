@@ -1,0 +1,422 @@
+﻿[
+    {
+        "RuleName":  "PSUseApprovedVerbs",
+        "Message":  "The cmdlet \u0027Ensure-GhAvailable\u0027 uses an unapproved verb.",
+        "File":  "D:\\adrablox\\tools\\dispatch_mission_critical_ci_gate.ps1",
+        "Line":  36,
+        "Column":  10
+    },
+    {
+        "RuleName":  "PSAvoidAssignmentToAutomaticVariable",
+        "Message":  "The Variable \u0027args\u0027 is an automatic variable that is built into PowerShell, assigning to it might have undesired side effects. If assignment is not by design, please use a different name.",
+        "File":  "D:\\adrablox\\tools\\dispatch_mission_critical_ci_gate.ps1",
+        "Line":  90,
+        "Column":  1
+    },
+    {
+        "RuleName":  "PSAvoidDefaultValueSwitchParameter",
+        "Message":  "File \u0027dispatch_mission_critical_ci_gate.ps1\u0027 has a switch parameter default to true.",
+        "File":  "D:\\adrablox\\tools\\dispatch_mission_critical_ci_gate.ps1",
+        "Line":  6,
+        "Column":  5
+    },
+    {
+        "RuleName":  "PSReviewUnusedParameter",
+        "Message":  "The parameter \u0027Endpoint\u0027 has been declared but not used.",
+        "File":  "D:\\adrablox\\tools\\mcp_conflict_race_contract_test.ps1",
+        "Line":  2,
+        "Column":  13
+    },
+    {
+        "RuleName":  "PSUseDeclaredVarsMoreThanAssignments",
+        "Message":  "The variable \u0027restored\u0027 is assigned but never used.",
+        "File":  "D:\\adrablox\\tools\\mcp_integration_conflict_recovery_contract_test.ps1",
+        "Line":  114,
+        "Column":  1
+    },
+    {
+        "RuleName":  "PSReviewUnusedParameter",
+        "Message":  "The parameter \u0027Endpoint\u0027 has been declared but not used.",
+        "File":  "D:\\adrablox\\tools\\mcp_integration_conflict_recovery_contract_test.ps1",
+        "Line":  2,
+        "Column":  13
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\mcp_integration_mixed_resilience_contract_test.ps1",
+        "Line":  351,
+        "Column":  25
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\mcp_integration_mixed_resilience_contract_test.ps1",
+        "Line":  352,
+        "Column":  28
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\mcp_integration_mixed_resilience_contract_test.ps1",
+        "Line":  717,
+        "Column":  25
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\mcp_integration_mixed_resilience_contract_test.ps1",
+        "Line":  718,
+        "Column":  28
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\mcp_integration_mixed_resilience_contract_test.ps1",
+        "Line":  1083,
+        "Column":  25
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\mcp_integration_mixed_resilience_contract_test.ps1",
+        "Line":  1084,
+        "Column":  28
+    },
+    {
+        "RuleName":  "PSAvoidUsingEmptyCatchBlock",
+        "Message":  "Empty catch block is used. Please use Write-Error or throw statements in catch blocks.",
+        "File":  "D:\\adrablox\\tools\\mcp_integration_mixed_resilience_contract_test.ps1",
+        "Line":  699,
+        "Column":  113
+    },
+    {
+        "RuleName":  "PSAvoidUsingEmptyCatchBlock",
+        "Message":  "Empty catch block is used. Please use Write-Error or throw statements in catch blocks.",
+        "File":  "D:\\adrablox\\tools\\mcp_integration_mixed_resilience_contract_test.ps1",
+        "Line":  702,
+        "Column":  113
+    },
+    {
+        "RuleName":  "PSAvoidUsingEmptyCatchBlock",
+        "Message":  "Empty catch block is used. Please use Write-Error or throw statements in catch blocks.",
+        "File":  "D:\\adrablox\\tools\\mcp_integration_mixed_resilience_contract_test.ps1",
+        "Line":  705,
+        "Column":  113
+    },
+    {
+        "RuleName":  "PSAvoidUsingEmptyCatchBlock",
+        "Message":  "Empty catch block is used. Please use Write-Error or throw statements in catch blocks.",
+        "File":  "D:\\adrablox\\tools\\mcp_integration_mixed_resilience_contract_test.ps1",
+        "Line":  1065,
+        "Column":  113
+    },
+    {
+        "RuleName":  "PSAvoidUsingEmptyCatchBlock",
+        "Message":  "Empty catch block is used. Please use Write-Error or throw statements in catch blocks.",
+        "File":  "D:\\adrablox\\tools\\mcp_integration_mixed_resilience_contract_test.ps1",
+        "Line":  1068,
+        "Column":  113
+    },
+    {
+        "RuleName":  "PSAvoidUsingEmptyCatchBlock",
+        "Message":  "Empty catch block is used. Please use Write-Error or throw statements in catch blocks.",
+        "File":  "D:\\adrablox\\tools\\mcp_integration_mixed_resilience_contract_test.ps1",
+        "Line":  1071,
+        "Column":  113
+    },
+    {
+        "RuleName":  "PSAvoidUsingEmptyCatchBlock",
+        "Message":  "Empty catch block is used. Please use Write-Error or throw statements in catch blocks.",
+        "File":  "D:\\adrablox\\tools\\mcp_integration_mixed_resilience_contract_test.ps1",
+        "Line":  1431,
+        "Column":  113
+    },
+    {
+        "RuleName":  "PSAvoidUsingEmptyCatchBlock",
+        "Message":  "Empty catch block is used. Please use Write-Error or throw statements in catch blocks.",
+        "File":  "D:\\adrablox\\tools\\mcp_integration_mixed_resilience_contract_test.ps1",
+        "Line":  1434,
+        "Column":  113
+    },
+    {
+        "RuleName":  "PSAvoidUsingEmptyCatchBlock",
+        "Message":  "Empty catch block is used. Please use Write-Error or throw statements in catch blocks.",
+        "File":  "D:\\adrablox\\tools\\mcp_integration_mixed_resilience_contract_test.ps1",
+        "Line":  1437,
+        "Column":  113
+    },
+    {
+        "RuleName":  "PSReviewUnusedParameter",
+        "Message":  "The parameter \u0027Endpoint\u0027 has been declared but not used.",
+        "File":  "D:\\adrablox\\tools\\mcp_integration_reconnect_loop_contract_test.ps1",
+        "Line":  2,
+        "Column":  13
+    },
+    {
+        "RuleName":  "PSUseDeclaredVarsMoreThanAssignments",
+        "Message":  "The variable \u0027restoreNeeded\u0027 is assigned but never used.",
+        "File":  "D:\\adrablox\\tools\\mcp_integration_roundtrip_contract_test.ps1",
+        "Line":  78,
+        "Column":  1
+    },
+    {
+        "RuleName":  "PSReviewUnusedParameter",
+        "Message":  "The parameter \u0027Endpoint\u0027 has been declared but not used.",
+        "File":  "D:\\adrablox\\tools\\mcp_integration_roundtrip_contract_test.ps1",
+        "Line":  2,
+        "Column":  13
+    },
+    {
+        "RuleName":  "PSReviewUnusedParameter",
+        "Message":  "The parameter \u0027Endpoint\u0027 has been declared but not used.",
+        "File":  "D:\\adrablox\\tools\\mcp_invalid_session_contract_test.ps1",
+        "Line":  2,
+        "Column":  13
+    },
+    {
+        "RuleName":  "PSReviewUnusedParameter",
+        "Message":  "The parameter \u0027Endpoint\u0027 has been declared but not used.",
+        "File":  "D:\\adrablox\\tools\\mcp_policy_contract_test.ps1",
+        "Line":  2,
+        "Column":  13
+    },
+    {
+        "RuleName":  "PSReviewUnusedParameter",
+        "Message":  "The parameter \u0027Endpoint\u0027 has been declared but not used.",
+        "File":  "D:\\adrablox\\tools\\mcp_reconnect_replay_contract_test.ps1",
+        "Line":  2,
+        "Column":  13
+    },
+    {
+        "RuleName":  "PSReviewUnusedParameter",
+        "Message":  "The parameter \u0027Endpoint\u0027 has been declared but not used.",
+        "File":  "D:\\adrablox\\tools\\mcp_smoke_test.ps1",
+        "Line":  2,
+        "Column":  13
+    },
+    {
+        "RuleName":  "PSUseSingularNouns",
+        "Message":  "The cmdlet \u0027Get-SubscribeCounts\u0027 uses a plural noun. A singular noun should be used instead.",
+        "File":  "D:\\adrablox\\tools\\rojo_changefeed_edge_check.ps1",
+        "Line":  15,
+        "Column":  10
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  60,
+        "Column":  28
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  61,
+        "Column":  24
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  62,
+        "Column":  25
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  63,
+        "Column":  27
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  64,
+        "Column":  33
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  65,
+        "Column":  31
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  66,
+        "Column":  30
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  67,
+        "Column":  28
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  551,
+        "Column":  28
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  552,
+        "Column":  24
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  553,
+        "Column":  25
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  554,
+        "Column":  27
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  555,
+        "Column":  33
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  556,
+        "Column":  31
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  557,
+        "Column":  30
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  558,
+        "Column":  28
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  1045,
+        "Column":  28
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  1046,
+        "Column":  24
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  1047,
+        "Column":  25
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  1048,
+        "Column":  27
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  1049,
+        "Column":  33
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  1050,
+        "Column":  31
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  1051,
+        "Column":  30
+    },
+    {
+        "RuleName":  "InvalidLeftHandSide",
+        "Message":  "The assignment expression is not valid. The input to an assignment operator must be an object that is able to accept assignments, such as a variable or a property.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  1052,
+        "Column":  28
+    },
+    {
+        "RuleName":  "PSUseApprovedVerbs",
+        "Message":  "The cmdlet \u0027Try-OpenApi\u0027 uses an unapproved verb.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  27,
+        "Column":  10
+    },
+    {
+        "RuleName":  "PSUseApprovedVerbs",
+        "Message":  "The cmdlet \u0027Try-OpenApi\u0027 uses an unapproved verb.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  85,
+        "Column":  10
+    },
+    {
+        "RuleName":  "PSUseApprovedVerbs",
+        "Message":  "The cmdlet \u0027Summarize-ReadPayload\u0027 uses an unapproved verb.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  199,
+        "Column":  10
+    },
+    {
+        "RuleName":  "PSUseApprovedVerbs",
+        "Message":  "The cmdlet \u0027Summarize-SubscribePayload\u0027 uses an unapproved verb.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  245,
+        "Column":  10
+    },
+    {
+        "RuleName":  "PSUseApprovedVerbs",
+        "Message":  "The cmdlet \u0027Try-ParseInt64\u0027 uses an unapproved verb.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  318,
+        "Column":  10
+    },
+    {
+        "RuleName":  "PSUseApprovedVerbs",
+        "Message":  "The cmdlet \u0027Try-OpenApi\u0027 uses an unapproved verb.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  576,
+        "Column":  10
+    },
+    {
+        "RuleName":  "PSUseApprovedVerbs",
+        "Message":  "The cmdlet \u0027Summarize-ReadPayload\u0027 uses an unapproved verb.",
+        "File":  "D:\\adrablox\\tools\\rojo_parity_diff_check.ps1",
+        "Line":  690,
+        "Column":  10
+    }
+]

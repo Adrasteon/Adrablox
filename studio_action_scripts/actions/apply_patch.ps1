@@ -22,6 +22,22 @@ if (Test-Path $nodeCli) {
 }
 
 # Fallback: call PS helper
-$params = "{\"name\":\"roblox.applyPatch\",\"arguments\":{\"sessionId\":\"$SessionId\",\"patchId\":\"$PatchId\",\"baseCursor\":$([string]::IsNullOrEmpty($BaseCursor) ? 'null' : ('\"' + $BaseCursor + '\"')),\"origin\":\"$Origin\",\"operations\":$OperationsJson}}"
+if ([string]::IsNullOrEmpty($BaseCursor)) { $baseCursor = $null } else { $baseCursor = $BaseCursor }
 
-& "$PSScriptRoot\..\bin\send_mcp_rpc.ps1" -Method "tools/call" -Params $params -Url $Url @($Pretty ? '-Pretty' : @())
+$argsObj = @{
+    name = 'roblox.applyPatch'
+    arguments = @{
+        sessionId = $SessionId
+        patchId = $PatchId
+        baseCursor = $baseCursor
+        origin = $Origin
+        operations = (ConvertFrom-Json $OperationsJson)
+    }
+}
+
+$params = $argsObj | ConvertTo-Json -Depth 10
+
+$flags = @()
+if ($Pretty) { $flags += '-Pretty' }
+
+& "$PSScriptRoot\..\bin\send_mcp_rpc.ps1" -Method "tools/call" -Params $params -Url $Url @flags
