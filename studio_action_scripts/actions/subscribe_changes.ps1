@@ -7,14 +7,31 @@ param(
 
 $repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $nodeCli = Join-Path $repoRoot "studio_action_scripts\cli\index.js"
-if (Test-Path $nodeCli) {
-    if ($null -ne $Cursor) {
-        node $nodeCli 'subscribe' $SessionId $Cursor
-    } else {
-        node $nodeCli 'subscribe' $SessionId
-    }
-    exit $LASTEXITCODE
+
+$arguments = @{
+    sessionId = $SessionId
+}
+if ($null -ne $Cursor) {
+    $arguments.cursor = $Cursor
 }
 
-$params = if ($null -ne $Cursor) { "{\"name\":\"roblox.subscribeChanges\",\"arguments\":{\"sessionId\":\"$SessionId\",\"cursor\":\"$Cursor\"}}" } else { "{\"name\":\"roblox.subscribeChanges\",\"arguments\":{\"sessionId\":\"$SessionId\"}}" }
-& "$PSScriptRoot\..\bin\send_mcp_rpc.ps1" -Method "tools/call" -Params $params -Url $Url @($Pretty ? '-Pretty' : @())
+$params = @{
+    name = 'roblox.subscribeChanges'
+    arguments = $arguments
+} | ConvertTo-Json -Depth 10 -Compress
+
+$payload = [ordered]@{
+    jsonrpc = '2.0'
+    id = 1
+    method = 'tools/call'
+    params = ($params | ConvertFrom-Json)
+}
+
+$bodyJson = $payload | ConvertTo-Json -Depth 12
+$response = Invoke-RestMethod -Uri $Url -Method Post -Body $bodyJson -ContentType 'application/json'
+
+if ($Pretty) {
+    $response | ConvertTo-Json -Depth 12 | Write-Host
+} else {
+    $response
+}
