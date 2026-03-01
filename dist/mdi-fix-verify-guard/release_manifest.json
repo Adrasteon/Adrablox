@@ -1,0 +1,11 @@
+﻿{
+    "createdUtc":  "2026-03-01T13:11:13.2340491Z",
+    "platform":  "windows",
+    "serverArchive":  "mcp-server-windows.zip",
+    "pluginSourceArchive":  "mcp-studio-plugin-source-0.1.0-6a6ffec.zip",
+    "pluginVersion":  "0.1.0+6a6ffec",
+    "pluginInstallableAvailable":  true,
+    "pluginInstallableArtifact":  "mcp-studio-plugin-0.1.0-6a6ffec.rbxm",
+    "binaryName":  "mcp-server.exe",
+    "commit":  "6a6ffec"
+}

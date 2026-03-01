@@ -423,6 +423,8 @@ dependencies = [
  "anyhow",
  "rbx_binary",
  "rbx_dom_weak",
+ "rbx_reflection_database",
+ "rbx_types",
  "rbx_xml",
 ]
 

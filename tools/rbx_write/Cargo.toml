@@ -10,3 +10,5 @@ rbx_dom_weak = "4"
 rbx_xml = "2"
 rbx_binary = { version = "2", features = ["serde"] }
 anyhow = "1"
+rbx_reflection_database = "2"
+rbx_types = "3"

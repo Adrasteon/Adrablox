@@ -67,7 +67,7 @@ function ConnectionManager:initialize()
             tools = {},
         },
         clientInfo = {
-            name = "EdiyorStudioPlugin",
+            name = "AdrabloxMCP",
             version = "0.1.0",
         },
     })

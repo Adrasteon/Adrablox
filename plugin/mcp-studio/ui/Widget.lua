@@ -11,8 +11,8 @@ function Widget.mount(plugin, connection)
         160
     )
 
-    local dock = plugin:CreateDockWidgetPluginGui("EdiyorMCPWidget", widgetInfo)
-    dock.Title = "Ediyor MCP"
+    local dock = plugin:CreateDockWidgetPluginGui("AdrabloxMCPWidget", widgetInfo)
+    dock.Title = "Adrablox MCP"
 
     local frame = Instance.new("Frame")
     frame.BackgroundTransparency = 1

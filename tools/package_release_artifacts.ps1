@@ -14,6 +14,32 @@ $serverStaging = Join-Path $outputRoot "server"
 $pluginSource = Join-Path $workspace "plugin/mcp-studio"
 $pluginProject = Join-Path $workspace "plugin/mcp-studio.plugin.project.json"
 
+function Assert-ValidIntermediatePluginXml {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$FilePath
+    )
+
+    if (-not (Test-Path -LiteralPath $FilePath)) {
+        throw "Intermediate plugin XML not found: $FilePath"
+    }
+
+    $content = Get-Content -Raw -Encoding UTF8 -LiteralPath $FilePath
+
+    if ($content -match '<string\s+name="Source">') {
+        throw 'Intermediate plugin XML uses legacy <string name="Source"> serialization. Expected <ProtectedString name="Source">. File: ' + $FilePath
+    }
+
+    if ($content -match '<string\s+name="Name">__files</string>') {
+        throw 'Intermediate plugin XML contains stale __files folder layout. File: ' + $FilePath
+    }
+
+    if ($content -notmatch '<ProtectedString\s+name="Source">') {
+        throw 'Intermediate plugin XML contains no ProtectedString Source payloads; refusing to package. File: ' + $FilePath
+    }
+
+}
+
 if (-not (Test-Path $pluginSource)) {
     throw "Plugin source not found at $pluginSource"
 }
@@ -119,6 +145,8 @@ Start-Process -FilePath 'cmd.exe' -ArgumentList "/k `"$here\\mcp-server.exe`"" -
                 Write-Host ".rbxmx not found after build_plugin.ps1: $rbxmxOut"
             }
             else {
+                Assert-ValidIntermediatePluginXml -FilePath $rbxmxOut
+
                 $rbxWriteExe = Join-Path $workspace "tools/rbx_write/target/release/rbx_write"
                 if ($isWindowsPlatform) { $rbxWriteExe += ".exe" }
                 if (-not (Test-Path $rbxWriteExe)) {
