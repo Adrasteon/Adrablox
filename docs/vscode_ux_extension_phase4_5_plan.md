@@ -2,6 +2,35 @@
 
 Last updated: 2026-03-02
 
+## Implementation status (actioned)
+
+### Phase 4 status: **In progress (core foundation actioned)**
+
+- ✅ Added direct MCP client service: `src/services/mcpClient.ts` (`openSession`, `readTree`, `subscribeChanges`, `closeSession`).
+- ✅ Added RPC remediation mapping service: `src/services/errorMapper.ts`.
+- ✅ Implemented `rpc-first` execution with optional script fallback for:
+  - `adrablox.session.open`
+  - `adrablox.session.readTree`
+  - `adrablox.session.subscribeOnce`
+  - `adrablox.check.fullHealth` (open/read/subscribe segments)
+- ✅ Added extension settings:
+  - `adrablox.transport.mode` (`rpc-first` | `script-only`)
+  - `adrablox.transport.enableFallback`
+  - `adrablox.transport.endpoint`
+  - `adrablox.session.projectPath`
+- ✅ Added task history transport metadata (`rpc` vs `script`) and surfaced it in Task Output.
+- ✅ Build validation passed (`npm run compile`) and transport sanity checks were run for both RPC and script paths.
+
+### Remaining in Phase 4
+
+- ⏳ Add explicit `initialize` handshake usage in `mcpClient` path (currently tool-call path is functional without a dedicated initialize step).
+- ⏳ Add fallback simulation test case(s) and document expected UX behavior for forced-RPC-failure scenarios.
+- ⏳ Add a short Phase 4 operator note in extension README for transport-mode switching.
+
+### Phase 5 status: **Not started**
+
+- Planned only; no workflow runner or guided workflow commands have been implemented yet.
+
 ## Purpose
 
 Define post-MVP implementation for Adrablox VS Code UX in two sequential phases:
@@ -66,11 +95,11 @@ This plan assumes Phase 1–3 are complete and stable on `dev/testing-debugging`
 
 ### Deliverables
 
-1. `src/services/mcpClient.ts` with typed request/response models.
-2. `src/services/errorMapper.ts` for remediation-focused messages.
-3. Command-level strategy switch (`rpc-first` with script fallback).
-4. Task Output entries include mode metadata (`rpc` vs `script`).
-5. Extension setting(s):
+1. ✅ `src/services/mcpClient.ts` with typed request/response models.
+2. ✅ `src/services/errorMapper.ts` for remediation-focused messages.
+3. ✅ Command-level strategy switch (`rpc-first` with script fallback).
+4. ✅ Task Output entries include mode metadata (`rpc` vs `script`).
+5. ✅ Extension setting(s):
    - `adrablox.transport.mode` (`rpc-first` | `script-only`)
    - `adrablox.transport.enableFallback` (boolean)
 
@@ -163,13 +192,13 @@ This plan assumes Phase 1–3 are complete and stable on `dev/testing-debugging`
 
 ## Proposed implementation order
 
-1. Add `mcpClient` + transport settings scaffolding.
-2. Migrate `open/read/subscribe` to RPC-first with fallback.
-3. Migrate `fullHealth` internals to shared orchestration.
-4. Add workflow runner and Quick Start.
-5. Add Sync Diagnostics + report export.
-6. Add tree filter + Read Subtree action.
-7. Stabilization pass and docs updates.
+1. ✅ Add `mcpClient` + transport settings scaffolding.
+2. ✅ Migrate `open/read/subscribe` to RPC-first with fallback.
+3. ✅ Migrate `fullHealth` internals to shared orchestration.
+4. ⏳ Add workflow runner and Quick Start.
+5. ⏳ Add Sync Diagnostics + report export.
+6. ⏳ Add tree filter + Read Subtree action.
+7. ⏳ Stabilization pass and docs updates.
 
 ## Definition of done (Phases 4 + 5)
 
