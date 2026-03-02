@@ -108,6 +108,35 @@
           "group": "inline"
         }
       ]
+    },
+    "configuration": {
+      "title": "Adrablox",
+      "properties": {
+        "adrablox.transport.mode": {
+          "type": "string",
+          "enum": [
+            "rpc-first",
+            "script-only"
+          ],
+          "default": "rpc-first",
+          "description": "Transport strategy for core session actions. rpc-first uses direct MCP JSON-RPC with optional script fallback."
+        },
+        "adrablox.transport.enableFallback": {
+          "type": "boolean",
+          "default": true,
+          "description": "When enabled in rpc-first mode, failed RPC calls fall back to existing PowerShell script actions."
+        },
+        "adrablox.transport.endpoint": {
+          "type": "string",
+          "default": "http://127.0.0.1:44877/mcp",
+          "description": "MCP HTTP JSON-RPC endpoint used by direct RPC transport."
+        },
+        "adrablox.session.projectPath": {
+          "type": "string",
+          "default": "src",
+          "description": "Project path sent to roblox.openSession when using direct RPC transport."
+        }
+      }
     }
   },
   "scripts": {

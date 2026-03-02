@@ -5,9 +5,10 @@ import { TaskHistoryEntry } from '../state/types';
 class TaskHistoryItem extends vscode.TreeItem {
   constructor(public readonly entry: TaskHistoryEntry) {
     super(entry.commandLabel, vscode.TreeItemCollapsibleState.None);
-    this.description = `${entry.success ? 'ok' : 'failed'} @ ${new Date(entry.timestamp).toLocaleTimeString()}`;
+    this.description = `${entry.transportMode}:${entry.success ? 'ok' : 'failed'} @ ${new Date(entry.timestamp).toLocaleTimeString()}`;
     this.tooltip = [
       `${entry.commandLabel}`,
+      `Transport: ${entry.transportMode}`,
       `Exit code: ${entry.exitCode}`,
       entry.remediationHint ? `Hint: ${entry.remediationHint}` : 'Hint: none',
     ].join('\n');

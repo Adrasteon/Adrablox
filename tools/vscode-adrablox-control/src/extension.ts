@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { registerPhase1Commands } from './commands/phase1Commands';
+import { McpClient } from './services/mcpClient';
 import { ScriptRunner } from './services/scriptRunner';
 import { StateStore } from './state/store';
 import { ActionsViewProvider } from './views/actionsViewProvider';
@@ -11,6 +12,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const output = vscode.window.createOutputChannel('Adrablox Control');
   const store = new StateStore();
   const runner = new ScriptRunner(output);
+  const mcpClient = new McpClient(output);
 
   const statusView = new StatusViewProvider(store);
   const actionsView = new ActionsViewProvider();
@@ -26,6 +28,7 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   registerPhase1Commands(context, {
+    mcpClient,
     runner,
     store,
     statusView,

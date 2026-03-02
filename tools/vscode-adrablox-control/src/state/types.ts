@@ -1,4 +1,5 @@
 export type ServerStatus = 'unknown' | 'healthy' | 'down';
+export type TransportMode = 'script' | 'rpc';
 
 export interface WorkspaceInstanceNode {
   Id: string;
@@ -33,12 +34,14 @@ export interface RunResult {
   stdout: string;
   stderr: string;
   exitCode: number;
+  transportMode: TransportMode;
 }
 
 export interface TaskHistoryEntry {
   id: string;
   timestamp: string;
   commandLabel: string;
+  transportMode: TransportMode;
   success: boolean;
   exitCode: number;
   remediationHint: string | null;

@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import { mapRpcFailureHint } from '../services/errorMapper';
+import { McpClient, OpenSessionResult, SubscribeChangesResult } from '../services/mcpClient';
 import { ScriptRunner } from '../services/scriptRunner';
 import { StateStore } from '../state/store';
 import { RunResult, TaskHistoryEntry, WorkspaceTreeSnapshot } from '../state/types';
@@ -7,6 +9,7 @@ import { TaskOutputProvider } from '../views/taskOutputProvider';
 import { WorkspaceTreeProvider } from '../views/workspaceTreeProvider';
 
 interface CommandDeps {
+  mcpClient: McpClient;
   runner: ScriptRunner;
   store: StateStore;
   statusView: StatusViewProvider;
@@ -129,9 +132,13 @@ function parseSubscribeResult(stdout: string): { cursor: string; changed: boolea
   };
 }
 
-function getRemediationHint(scriptRelativePath: string, result: RunResult): string | null {
+function getRemediationHint(commandLabel: string, scriptRelativePath: string, result: RunResult): string | null {
   if (result.success) {
     return null;
+  }
+
+  if (result.transportMode === 'rpc') {
+    return mapRpcFailureHint(commandLabel, result.stderr);
   }
 
   if (scriptRelativePath.includes('connect_verify')) {
@@ -181,11 +188,47 @@ function makeTaskHistoryEntry(
     id: `${now.getTime()}-${Math.random().toString(16).slice(2, 8)}`,
     timestamp: now.toISOString(),
     commandLabel,
+    transportMode: result.transportMode,
     success: result.success,
     exitCode: result.exitCode,
     remediationHint,
     scriptRelativePath,
     args: [...args],
+  };
+}
+
+function getTransportConfig(): { mode: 'rpc-first' | 'script-only'; enableFallback: boolean; projectPath: string } {
+  const config = vscode.workspace.getConfiguration('adrablox');
+  const mode = config.get<'rpc-first' | 'script-only'>('transport.mode', 'rpc-first');
+  const enableFallback = config.get<boolean>('transport.enableFallback', true);
+  const projectPath = config.get<string>('session.projectPath', 'src');
+  return {
+    mode,
+    enableFallback,
+    projectPath,
+  };
+}
+
+function createRpcSuccessResult(commandLabel: string, payload: unknown): RunResult {
+  return {
+    success: true,
+    commandLabel,
+    stdout: JSON.stringify(payload),
+    stderr: '',
+    exitCode: 0,
+    transportMode: 'rpc',
+  };
+}
+
+function createRpcFailureResult(commandLabel: string, err: unknown): RunResult {
+  const message = err instanceof Error ? err.message : String(err);
+  return {
+    success: false,
+    commandLabel,
+    stdout: '',
+    stderr: message,
+    exitCode: 1,
+    transportMode: 'rpc',
   };
 }
 
@@ -200,13 +243,60 @@ export function registerPhase1Commands(context: vscode.ExtensionContext, deps: C
     deps.output.appendLine(`\n> ${commandLabel}`);
 
     const result = await deps.runner.runPowerShellScript(workspaceRoot, scriptRelativePath, args, commandLabel);
-    const remediationHint = getRemediationHint(scriptRelativePath, result);
+    const remediationHint = getRemediationHint(commandLabel, scriptRelativePath, result);
 
     updateStatusFromResult(deps.store, result);
     deps.store.addTaskHistory(makeTaskHistoryEntry(commandLabel, scriptRelativePath, args, result, remediationHint));
     refreshAllViews(deps);
 
     return { result, remediationHint };
+  };
+
+  const executeRpc = async (
+    commandLabel: string,
+    scriptRelativePathForHistory: string,
+    operation: () => Promise<unknown>,
+  ): Promise<{ result: RunResult; remediationHint: string | null; payload: unknown | null }> => {
+    deps.output.show(true);
+    deps.output.appendLine(`\n> ${commandLabel} (rpc)`);
+
+    let result: RunResult;
+    let payload: unknown | null = null;
+    try {
+      payload = await operation();
+      result = createRpcSuccessResult(commandLabel, payload);
+    } catch (err) {
+      result = createRpcFailureResult(commandLabel, err);
+    }
+
+    const remediationHint = getRemediationHint(commandLabel, scriptRelativePathForHistory, result);
+    updateStatusFromResult(deps.store, result);
+    deps.store.addTaskHistory(makeTaskHistoryEntry(commandLabel, scriptRelativePathForHistory, [], result, remediationHint));
+    refreshAllViews(deps);
+
+    return { result, remediationHint, payload };
+  };
+
+  const executeCoreAction = async (
+    commandLabel: string,
+    scriptRelativePath: string,
+    scriptArgs: string[],
+    rpcOperation: () => Promise<unknown>,
+  ): Promise<{ result: RunResult; remediationHint: string | null; payload: unknown | null }> => {
+    const transport = getTransportConfig();
+    if (transport.mode === 'script-only') {
+      const scriptResult = await executeScript(scriptRelativePath, scriptArgs, commandLabel);
+      return { ...scriptResult, payload: null };
+    }
+
+    const rpcResult = await executeRpc(commandLabel, scriptRelativePath, rpcOperation);
+    if (rpcResult.result.success || !transport.enableFallback) {
+      return rpcResult;
+    }
+
+    deps.output.appendLine(`RPC failed for ${commandLabel}; falling back to script.`);
+    const scriptResult = await executeScript(scriptRelativePath, scriptArgs, `${commandLabel} (fallback)`);
+    return { ...scriptResult, payload: null };
   };
 
   context.subscriptions.push(
@@ -233,10 +323,12 @@ export function registerPhase1Commands(context: vscode.ExtensionContext, deps: C
 
     vscode.commands.registerCommand('adrablox.session.open', async () => {
       try {
-        const { result, remediationHint } = await executeScript(
+        const transport = getTransportConfig();
+        const { result, remediationHint, payload } = await executeCoreAction(
+          'Open Session',
           'studio_action_scripts/actions/open_session.ps1',
           ['-Pretty'],
-          'Open Session',
+          () => deps.mcpClient.openSession(transport.projectPath),
         );
 
         if (!result.success) {
@@ -244,7 +336,9 @@ export function registerPhase1Commands(context: vscode.ExtensionContext, deps: C
           return;
         }
 
-        const session = parseOpenSessionResult(result.stdout);
+        const session = result.transportMode === 'rpc'
+          ? (payload as OpenSessionResult | null)
+          : parseOpenSessionResult(result.stdout);
         if (!session) {
           vscode.window.showWarningMessage('Open Session ran, but session metadata could not be parsed from output.');
           return;
@@ -273,14 +367,17 @@ export function registerPhase1Commands(context: vscode.ExtensionContext, deps: C
         }
 
         const instanceId = state.activeTargetInstanceId ?? state.activeRootInstanceId ?? 'ref_root';
-        const { result, remediationHint } = await executeScript(
+        const { result, remediationHint, payload } = await executeCoreAction(
+          'Read Tree',
           'studio_action_scripts/actions/read_tree.ps1',
           ['-SessionId', state.activeSessionId, '-InstanceId', instanceId, '-Pretty'],
-          'Read Tree',
+          () => deps.mcpClient.readTree(state.activeSessionId!, instanceId),
         );
 
         if (result.success) {
-          const tree = parseReadTreeResult(result.stdout);
+          const tree = result.transportMode === 'rpc'
+            ? (payload as WorkspaceTreeSnapshot | null)
+            : parseReadTreeResult(result.stdout);
           if (tree) {
             deps.store.patch({
               workspaceTree: tree,
@@ -317,10 +414,11 @@ export function registerPhase1Commands(context: vscode.ExtensionContext, deps: C
         }
 
         const cursor = state.lastTreeCursor ?? '0';
-        const { result, remediationHint } = await executeScript(
+        const { result, remediationHint, payload } = await executeCoreAction(
+          'Subscribe Once',
           'studio_action_scripts/actions/subscribe_changes.ps1',
           ['-SessionId', state.activeSessionId, '-Cursor', cursor, '-Pretty'],
-          'Subscribe Once',
+          () => deps.mcpClient.subscribeChanges(state.activeSessionId!, cursor),
         );
 
         if (!result.success) {
@@ -328,21 +426,26 @@ export function registerPhase1Commands(context: vscode.ExtensionContext, deps: C
           return;
         }
 
-        const subscribe = parseSubscribeResult(result.stdout);
+        const subscribe = result.transportMode === 'rpc'
+          ? (payload as SubscribeChangesResult | null)
+          : parseSubscribeResult(result.stdout);
         if (subscribe) {
           deps.store.patch({ lastTreeCursor: subscribe.cursor });
         }
 
         if (subscribe?.changed) {
           const latest = deps.store.getState();
-          const refreshTree = await executeScript(
+          const refreshTree = await executeCoreAction(
+            'Read Tree (refresh after subscribe)',
             'studio_action_scripts/actions/read_tree.ps1',
             ['-SessionId', latest.activeSessionId!, '-InstanceId', latest.activeRootInstanceId ?? 'ref_root', '-Pretty'],
-            'Read Tree (refresh after subscribe)',
+            () => deps.mcpClient.readTree(latest.activeSessionId!, latest.activeRootInstanceId ?? 'ref_root'),
           );
 
           if (refreshTree.result.success) {
-            const tree = parseReadTreeResult(refreshTree.result.stdout);
+            const tree = refreshTree.result.transportMode === 'rpc'
+              ? (refreshTree.payload as WorkspaceTreeSnapshot | null)
+              : parseReadTreeResult(refreshTree.result.stdout);
             if (tree) {
               deps.store.patch({
                 workspaceTree: tree,
@@ -486,17 +589,21 @@ export function registerPhase1Commands(context: vscode.ExtensionContext, deps: C
         deps.store.patch({ serverStatus: 'healthy' });
         summary.push('connect=ok');
 
-        const open = await executeScript(
+        const transport = getTransportConfig();
+        const open = await executeCoreAction(
+          'Health: Open Session',
           'studio_action_scripts/actions/open_session.ps1',
           ['-Pretty'],
-          'Health: Open Session',
+          () => deps.mcpClient.openSession(transport.projectPath),
         );
         if (!open.result.success) {
           refreshAllViews(deps);
           showFailureWithHint('Full Health Check', open.remediationHint);
           return;
         }
-        const session = parseOpenSessionResult(open.result.stdout);
+        const session = open.result.transportMode === 'rpc'
+          ? (open.payload as OpenSessionResult | null)
+          : parseOpenSessionResult(open.result.stdout);
         if (!session) {
           refreshAllViews(deps);
           vscode.window.showErrorMessage('Full Health Check failed: could not parse session metadata from Open Session output.');
@@ -510,17 +617,20 @@ export function registerPhase1Commands(context: vscode.ExtensionContext, deps: C
         });
         summary.push('session=ok');
 
-        const read = await executeScript(
+        const read = await executeCoreAction(
+          'Health: Read Tree',
           'studio_action_scripts/actions/read_tree.ps1',
           ['-SessionId', session.sessionId, '-InstanceId', session.rootInstanceId, '-Pretty'],
-          'Health: Read Tree',
+          () => deps.mcpClient.readTree(session.sessionId, session.rootInstanceId),
         );
         if (!read.result.success) {
           refreshAllViews(deps);
           showFailureWithHint('Full Health Check', read.remediationHint);
           return;
         }
-        const tree = parseReadTreeResult(read.result.stdout);
+        const tree = read.result.transportMode === 'rpc'
+          ? (read.payload as WorkspaceTreeSnapshot | null)
+          : parseReadTreeResult(read.result.stdout);
         if (tree) {
           deps.store.patch({
             workspaceTree: tree,
@@ -530,10 +640,11 @@ export function registerPhase1Commands(context: vscode.ExtensionContext, deps: C
         summary.push('read=ok');
 
         const cursor = deps.store.getState().lastTreeCursor ?? '0';
-        const subscribe = await executeScript(
+        const subscribe = await executeCoreAction(
+          'Health: Subscribe Once',
           'studio_action_scripts/actions/subscribe_changes.ps1',
           ['-SessionId', session.sessionId, '-Cursor', cursor, '-Pretty'],
-          'Health: Subscribe Once',
+          () => deps.mcpClient.subscribeChanges(session.sessionId, cursor),
         );
         if (!subscribe.result.success) {
           refreshAllViews(deps);

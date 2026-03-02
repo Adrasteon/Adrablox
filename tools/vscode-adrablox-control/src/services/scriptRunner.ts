@@ -41,6 +41,7 @@ export class ScriptRunner {
           stdout,
           stderr,
           exitCode,
+          transportMode: 'script',
         });
       });
 
@@ -51,6 +52,7 @@ export class ScriptRunner {
           stdout,
           stderr: `${stderr}\n${err.message}`,
           exitCode: 1,
+          transportMode: 'script',
         });
       });
     });
