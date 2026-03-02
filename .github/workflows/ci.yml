@@ -84,7 +84,7 @@ jobs:
 
       - name: Validate plugin packaging (no Rojo)
         shell: pwsh
-        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/package_release_artifacts.ps1 -SkipServerBuild -SkipRojo -OutputDir dist/ci-no-rojo
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/package_release_artifacts.ps1 -SkipRojo -OutputDir dist/ci-no-rojo
 
       - name: Run cargo tests
         shell: pwsh
