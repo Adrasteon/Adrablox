@@ -2,6 +2,9 @@
 
 Last updated: 2026-03-02
 
+Related docs:
+- `docs/vscode_ux_extension_phase4_5_plan.md` — post-MVP implementation roadmap for direct MCP client migration and guided workflow UX.
+
 ## Purpose
 
 Provide a click-first UX inside VS Code for common Adrablox workflows so users do not need to run PowerShell scripts manually for day-to-day operations.
@@ -230,6 +233,8 @@ tools/vscode-adrablox-control/
 - Add polished task output history and command rerun.
 
 ## Future enhancements (post-MVP)
+
+See detailed roadmap: `docs/vscode_ux_extension_phase4_5_plan.md`.
 
 - Replace script wrappers with direct JSON-RPC client for core actions.
 - Add guided workflows (`Quick Start`, `Release Readiness`, `Sync Diagnostics`).

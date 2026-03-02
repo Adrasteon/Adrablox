@@ -11,6 +11,7 @@ Related docs
 - `docs/studio_transport_matrix.md` — operational channel matrix, fallback policy, and validation scenarios.
 - `docs/ws_protocol.md` — protocol details for envelope, replay, auth, and limits.
 - `docs/vscode_ux_extension_mvp.md` — click-first VS Code extension design for ergonomic command execution and target selection.
+- `docs/vscode_ux_extension_phase4_5_plan.md` — post-MVP Phase 4+5 roadmap for direct MCP client transport and guided UX workflows.
 
 Goals
 -----
