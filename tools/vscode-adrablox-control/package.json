@@ -1,0 +1,122 @@
+{
+  "name": "vscode-adrablox-control",
+  "displayName": "Adrablox Control",
+  "description": "Click-first VS Code controls for Adrablox MCP workflows",
+  "version": "0.0.1",
+  "publisher": "adrasteon",
+  "private": true,
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:adrablox.status",
+    "onView:adrablox.workspaceTree",
+    "onView:adrablox.actions",
+    "onView:adrablox.taskOutput",
+    "onCommand:adrablox.check.connectVerify",
+    "onCommand:adrablox.check.fullHealth",
+    "onCommand:adrablox.session.open",
+    "onCommand:adrablox.session.readTree",
+    "onCommand:adrablox.workspace.setActiveTarget",
+    "onCommand:adrablox.session.subscribeOnce",
+    "onCommand:adrablox.snapshot.export",
+    "onCommand:adrablox.snapshot.import",
+    "onCommand:adrablox.sync.smokeTest",
+    "onCommand:adrablox.task.rerun"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "adrablox",
+          "title": "Adrablox",
+          "icon": "media/adrablox.svg"
+        }
+      ]
+    },
+    "views": {
+      "adrablox": [
+        {
+          "id": "adrablox.status",
+          "name": "Status"
+        },
+        {
+          "id": "adrablox.workspaceTree",
+          "name": "Workspace Tree"
+        },
+        {
+          "id": "adrablox.actions",
+          "name": "Actions"
+        },
+        {
+          "id": "adrablox.taskOutput",
+          "name": "Task Output"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "adrablox.check.connectVerify",
+        "title": "Adrablox: Connect Verify"
+      },
+      {
+        "command": "adrablox.check.fullHealth",
+        "title": "Adrablox: Full Health Check"
+      },
+      {
+        "command": "adrablox.session.open",
+        "title": "Adrablox: Open Session"
+      },
+      {
+        "command": "adrablox.session.readTree",
+        "title": "Adrablox: Read Tree"
+      },
+      {
+        "command": "adrablox.workspace.setActiveTarget",
+        "title": "Adrablox: Set Active Target"
+      },
+      {
+        "command": "adrablox.session.subscribeOnce",
+        "title": "Adrablox: Subscribe Once"
+      },
+      {
+        "command": "adrablox.snapshot.export",
+        "title": "Adrablox: Export Snapshot"
+      },
+      {
+        "command": "adrablox.snapshot.import",
+        "title": "Adrablox: Import Snapshot"
+      },
+      {
+        "command": "adrablox.sync.smokeTest",
+        "title": "Adrablox: Run Smoke Test"
+      },
+      {
+        "command": "adrablox.task.rerun",
+        "title": "Adrablox: Rerun Task"
+      }
+    ],
+    "menus": {
+      "view/item/context": [
+        {
+          "command": "adrablox.workspace.setActiveTarget",
+          "when": "view == adrablox.workspaceTree && viewItem == adrablox.workspaceNode",
+          "group": "inline"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.19",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.7.3"
+  }
+}
