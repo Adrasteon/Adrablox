@@ -1,6 +1,5 @@
 use axum::{
     extract::{Path, Query, State},
-    extract::{WebSocketUpgrade, ws::{Message, WebSocket}},
     http::StatusCode,
     response::IntoResponse,
     routing::{get, post},
@@ -11,6 +10,7 @@ use rojo_adapter::RojoAdapter;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Map, Value};
 use std::{
+    collections::VecDeque,
     collections::HashMap,
     fs,
     net::SocketAddr,
@@ -18,6 +18,9 @@ use std::{
 };
 use tokio::sync::broadcast;
 use tracing::info;
+mod config;
+use config::Config;
+mod ws;
 
 #[derive(Clone)]
 struct AppState {
@@ -25,6 +28,23 @@ struct AppState {
     server_version: String,
     sessions: Arc<Mutex<HashMap<String, SessionState>>>,
     broadcaster: broadcast::Sender<serde_json::Value>,
+    replay: Arc<Mutex<ReplayState>>,
+    config: Config,
+}
+
+#[derive(Debug, Clone)]
+struct ReplayState {
+    next_seq: u64,
+    events: VecDeque<Value>,
+}
+
+impl ReplayState {
+    fn new() -> Self {
+        Self {
+            next_seq: 0,
+            events: VecDeque::new(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -84,6 +104,12 @@ struct ReadQuery {
     session_id: Option<String>,
 }
 
+#[derive(Debug, Deserialize)]
+struct ReplayQuery {
+    since: Option<String>,
+    limit: Option<usize>,
+}
+
 const SESSION_NOT_FOUND_CODE: &str = "SESSION_NOT_FOUND";
 const CONFLICT_WRITE_STALE_CURSOR: &str = "CONFLICT_WRITE_STALE_CURSOR";
 const UNSUPPORTED_FILE_BACKED_MUTATION: &str = "UNSUPPORTED_FILE_BACKED_MUTATION";
@@ -101,17 +127,21 @@ async fn main() -> anyhow::Result<()> {
 
     let (bcast_tx, _) = broadcast::channel(128);
 
+    // Load runtime configuration (env-driven). Defaults favor localhost development.
+    let cfg = Config::from_env();
+
     let state = Arc::new(AppState {
         adapter: RojoAdapter::new(),
         server_version: env!("CARGO_PKG_VERSION").to_string(),
         sessions: Arc::new(Mutex::new(HashMap::new())),
         broadcaster: bcast_tx,
+        replay: Arc::new(Mutex::new(ReplayState::new())),
+        config: cfg.clone(),
     });
 
     let app = Router::new()
         .route("/health", get(health))
         .route("/mcp", post(handle_mcp))
-        .route("/mcp-stream", get(handle_ws_upgrade))
         .route("/api/rojo", post(handle_rojo_open))
         .route("/api/read/:instance_id", get(handle_rojo_read_by_instance))
         .route(
@@ -123,13 +153,15 @@ async fn main() -> anyhow::Result<()> {
             "/api/subscribe/:session_id/:cursor",
             get(handle_rojo_subscribe_with_cursor),
         )
-        .with_state(state);
+        .route("/mcp/replay", get(handle_mcp_replay));
+    let app = ws::register_ws_routes(app, state.clone(), cfg.clone());
+    let app = app.with_state(state.clone());
 
-    let addr: SocketAddr = "127.0.0.1:44877".parse()?;
+    let addr: SocketAddr = cfg.bind_addr.parse()?;
     info!(%addr, "mcp-server listening");
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await?;
+    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await?;
     Ok(())
 }
 
@@ -407,7 +439,85 @@ fn validate_snapshot(snapshot: &rojo_adapter::ProjectSnapshot) -> Vec<String> {
     issues
 }
 
-fn apply_snapshot_to_session(session: &mut SessionState, snapshot: rojo_adapter::ProjectSnapshot, chunk_size: usize, broadcaster: Option<&broadcast::Sender<serde_json::Value>>) -> (u64, usize, usize, usize) {
+fn normalize_event_to_envelope(seq: u64, event: Value) -> Value {
+    let mut payload = match event {
+        Value::Object(map) => map,
+        other => {
+            let mut map = Map::new();
+            map.insert("data".to_string(), other);
+            map
+        }
+    };
+
+    let event_type = payload
+        .get("type")
+        .and_then(Value::as_str)
+        .unwrap_or("event")
+        .to_string();
+    let session_id = payload
+        .get("sessionId")
+        .and_then(Value::as_str)
+        .map(|s| s.to_string());
+
+    payload.remove("type");
+    payload.remove("sessionId");
+
+    let mut envelope = json!({
+        "seq": seq,
+        "type": event_type,
+        "payload": Value::Object(payload),
+    });
+
+    if let Some(session_id) = session_id {
+        envelope["sessionId"] = json!(session_id);
+    }
+
+    envelope
+}
+
+fn publish_event_with_replay(
+    broadcaster: &broadcast::Sender<Value>,
+    replay: Option<&Arc<Mutex<ReplayState>>>,
+    seq_retention: usize,
+    event: Value,
+) {
+    let outbound = if let Some(replay_state) = replay {
+        let mut replay_state = replay_state.lock().expect("replay lock poisoned");
+        replay_state.next_seq += 1;
+        let envelope = normalize_event_to_envelope(replay_state.next_seq, event);
+        replay_state.events.push_back(envelope.clone());
+        while replay_state.events.len() > seq_retention {
+            replay_state.events.pop_front();
+        }
+        envelope
+    } else {
+        event
+    };
+
+    let _ = broadcaster.send(outbound);
+}
+
+pub(crate) fn replay_events_since(state: &AppState, since: u64, limit: usize) -> (u64, Vec<Value>) {
+    let replay_state = state.replay.lock().expect("replay lock poisoned");
+    let latest_seq = replay_state.next_seq;
+    let events = replay_state
+        .events
+        .iter()
+        .filter(|event| event.get("seq").and_then(Value::as_u64).unwrap_or(0) > since)
+        .take(limit)
+        .cloned()
+        .collect::<Vec<_>>();
+    (latest_seq, events)
+}
+
+fn apply_snapshot_to_session(
+    session: &mut SessionState,
+    snapshot: rojo_adapter::ProjectSnapshot,
+    chunk_size: usize,
+    broadcaster: Option<&broadcast::Sender<serde_json::Value>>,
+    replay: Option<&Arc<Mutex<ReplayState>>>,
+    seq_retention: usize,
+) -> (u64, usize, usize, usize) {
     // Convert instances hashmap into a vector for deterministic chunking
     let entries: Vec<(String, InstanceNode)> = snapshot
         .instances
@@ -464,8 +574,7 @@ fn apply_snapshot_to_session(session: &mut SessionState, snapshot: rojo_adapter:
                 "appliedCursor": applied_cursor.to_string(),
                 "addedCount": added.len()
             });
-            // ignore send errors (no listeners)
-            let _ = tx.send(event);
+            publish_event_with_replay(tx, replay, seq_retention, event);
         }
 
         // merge added into session.instances
@@ -723,10 +832,40 @@ async fn handle_rojo_subscribe_with_cursor(
     )
 }
 
+async fn handle_mcp_replay(
+    State(state): State<Arc<AppState>>,
+    Query(query): Query<ReplayQuery>,
+) -> impl IntoResponse {
+    let since = query
+        .since
+        .as_deref()
+        .and_then(|v| v.parse::<u64>().ok())
+        .unwrap_or(0);
+    let limit = query.limit.unwrap_or(100).clamp(1, 1_000);
+
+    let (latest_seq, events) = replay_events_since(&state, since, limit);
+    (
+        StatusCode::OK,
+        Json(json!({
+            "since": since,
+            "latestSeq": latest_seq,
+            "count": events.len(),
+            "events": events,
+        })),
+    )
+}
+
 async fn handle_mcp(
     State(state): State<Arc<AppState>>,
     Json(request): Json<JsonRpcRequest>,
 ) -> impl IntoResponse {
+    handle_mcp_request(state, request).await
+}
+
+pub(crate) async fn handle_mcp_request(
+    state: Arc<AppState>,
+    request: JsonRpcRequest,
+) -> (StatusCode, Json<Value>) {
     let id = request.id.clone().unwrap_or(json!(null));
 
     // Log incoming JSON-RPC requests for diagnostics (method, id, params)
@@ -1231,7 +1370,14 @@ async fn handle_mcp(
                         .unwrap_or(100);
 
                     let (applied_cursor, imported_count, file_backed, chunks) =
-                        apply_snapshot_to_session(&mut new_session, snapshot, chunk_size, Some(&state.broadcaster));
+                        apply_snapshot_to_session(
+                            &mut new_session,
+                            snapshot,
+                            chunk_size,
+                            Some(&state.broadcaster),
+                            Some(&state.replay),
+                            state.config.seq_retention,
+                        );
 
                     sessions.insert(session_id.to_string(), new_session);
 
@@ -1323,39 +1469,28 @@ async fn handle_mcp(
     }
 }
 
-async fn handle_ws_upgrade(
-    State(state): State<Arc<AppState>>,
-    ws: WebSocketUpgrade,
-) -> impl IntoResponse {
-    ws.on_upgrade(move |socket| ws_handler(socket, state))
-}
-
-async fn ws_handler(mut socket: WebSocket, state: Arc<AppState>) {
-    let mut rx = state.broadcaster.subscribe();
-
-    // Forward broadcast messages to the websocket client.
-    loop {
-        match rx.recv().await {
-            Ok(val) => {
-                if socket.send(Message::Text(val.to_string())).await.is_err() {
-                    // client disconnected
-                    break;
-                }
-            }
-            Err(broadcast::error::RecvError::Lagged(_)) => {
-                // skip lagged messages; continue
-                continue;
-            }
-            Err(broadcast::error::RecvError::Closed) => break,
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use super::{has_write_conflict, make_default_session, remove_subtree};
+    use super::{
+        has_write_conflict, make_default_session, publish_event_with_replay, remove_subtree,
+        replay_events_since, AppState, Config, ReplayState,
+    };
     use rojo_adapter::ProjectSnapshot;
     use serde_json::{json, Map};
+    use std::{collections::HashMap, sync::{Arc, Mutex}};
+    use tokio::sync::broadcast;
+
+    fn test_app_state() -> AppState {
+        let (tx, _rx) = broadcast::channel(16);
+        AppState {
+            adapter: rojo_adapter::RojoAdapter::new(),
+            server_version: "test".to_string(),
+            sessions: Arc::new(Mutex::new(HashMap::new())),
+            broadcaster: tx,
+            replay: Arc::new(Mutex::new(ReplayState::new())),
+            config: Config::from_env(),
+        }
+    }
 
     #[test]
     fn make_session_from_snapshot_roundtrip() {
@@ -1443,7 +1578,8 @@ mod tests {
         };
 
         let mut session = make_default_session();
-        let (applied_cursor, total, _file_backed, chunks) = super::apply_snapshot_to_session(&mut session, snapshot, 100, None);
+        let (applied_cursor, total, _file_backed, chunks) =
+            super::apply_snapshot_to_session(&mut session, snapshot, 100, None, None, 10_000);
         assert_eq!(total, 250);
         assert_eq!(chunks, 3);
         assert!(applied_cursor >= 3);
@@ -1485,7 +1621,7 @@ mod tests {
         let (tx, mut rx) = broadcast::channel(16);
 
         let (applied_cursor, total, _file_backed, chunks) =
-            super::apply_snapshot_to_session(&mut session, snapshot, 2, Some(&tx));
+            super::apply_snapshot_to_session(&mut session, snapshot, 2, Some(&tx), None, 10_000);
 
         assert_eq!(total, 5);
         assert_eq!(chunks, 3);
@@ -1558,5 +1694,30 @@ mod tests {
         assert!(has_write_conflict(Some(5), 4));
         assert!(!has_write_conflict(Some(5), 5));
         assert!(!has_write_conflict(None, 1));
+    }
+
+    #[test]
+    fn replay_sequence_and_retrieval() {
+        let state = test_app_state();
+
+        publish_event_with_replay(
+            &state.broadcaster,
+            Some(&state.replay),
+            state.config.seq_retention,
+            json!({"type": "importProgress", "sessionId": "sess-1", "chunk": 1}),
+        );
+        publish_event_with_replay(
+            &state.broadcaster,
+            Some(&state.replay),
+            state.config.seq_retention,
+            json!({"type": "importProgress", "sessionId": "sess-1", "chunk": 2}),
+        );
+
+        let (latest, events) = replay_events_since(&state, 0, 10);
+        assert_eq!(latest, 2);
+        assert_eq!(events.len(), 2);
+        assert_eq!(events[0].get("seq").and_then(|v| v.as_u64()), Some(1));
+        assert_eq!(events[1].get("seq").and_then(|v| v.as_u64()), Some(2));
+        assert_eq!(events[0].get("type").and_then(|v| v.as_str()), Some("importProgress"));
     }
 }

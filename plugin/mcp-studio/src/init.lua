@@ -7,6 +7,7 @@ local pluginController = {}
 function pluginController.start(plugin)
     local connection = ConnectionManager.new({
         endpoint = "http://127.0.0.1:44877/mcp",
+        wsAuthToken = nil,
     })
 
     local syncEngine = SyncEngine.new(connection)

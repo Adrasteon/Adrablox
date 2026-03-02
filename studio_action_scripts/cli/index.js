@@ -4,6 +4,47 @@ const https = require('https');
 const { URL } = require('url');
 const fs = require('fs');
 
+function parseWsTailArgs(args) {
+  const out = {
+    url: null,
+    authToken: process.env.MCP_WS_AUTH_TOKEN || null,
+    since: null,
+    limit: 100,
+    dryRun: false,
+  };
+
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
+    if (arg === '--auth-token') {
+      out.authToken = args[i + 1] || null;
+      i += 1;
+      continue;
+    }
+    if (arg === '--since') {
+      const raw = args[i + 1];
+      out.since = raw != null ? Number(raw) : null;
+      i += 1;
+      continue;
+    }
+    if (arg === '--limit') {
+      const raw = args[i + 1];
+      const parsed = Number(raw);
+      out.limit = Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 100;
+      i += 1;
+      continue;
+    }
+    if (arg === '--dry-run') {
+      out.dryRun = true;
+      continue;
+    }
+    if (!out.url && !arg.startsWith('--')) {
+      out.url = arg;
+    }
+  }
+
+  return out;
+}
+
 function postJson(url, obj) {
   return new Promise((resolve, reject) => {
     const u = new URL(url);
@@ -42,7 +83,7 @@ async function main() {
   const argv = process.argv.slice(2);
   if (argv.length === 0) {
     console.error('Usage: adrablox-studio <command> [args]');
-    console.error('Commands: health | list | call | open-session | read-tree | get-properties | apply-patch | set-name | conflict-recover');
+    console.error('Commands: health | list | call | ws-tail | open-session | read-tree | get-properties | apply-patch | set-name | conflict-recover');
     process.exit(2);
   }
   const cmd = argv[0];
@@ -77,12 +118,41 @@ async function main() {
     }
 
     if (cmd === 'ws-tail') {
-      // Usage: ws-tail [url]
-      const wsUrl = argv[1] || (process.env.MCP_ENDPOINT || 'http://127.0.0.1:44877/mcp').replace(/^http/, 'ws').replace(/\/mcp$/, '/mcp-stream');
+      // Usage: ws-tail [url] [--auth-token token] [--since seq] [--limit n] [--dry-run]
+      const parsed = parseWsTailArgs(argv.slice(1));
+      const endpoint = process.env.MCP_ENDPOINT || 'http://127.0.0.1:44877/mcp';
+      const defaultPushUrl = endpoint.replace(/^http/, 'ws').replace(/\/mcp$/, '/mcp-stream');
+      const defaultRpcUrl = endpoint.replace(/^http/, 'ws').replace(/\/mcp$/, '/mcp-stream/ws-rpc');
+      const wsUrl = parsed.url || (parsed.since != null ? defaultRpcUrl : defaultPushUrl);
+
+      if (parsed.dryRun) {
+        console.log(JSON.stringify({
+          command: 'ws-tail',
+          wsUrl,
+          hasAuthToken: !!parsed.authToken,
+          since: parsed.since,
+          limit: parsed.limit,
+        }, null, 2));
+        return;
+      }
+
       try {
         const WebSocket = require('ws');
-        const ws = new WebSocket(wsUrl);
-        ws.on('open', () => console.log('ws open', wsUrl));
+        const options = {};
+        if (parsed.authToken) {
+          options.headers = {
+            Authorization: `Bearer ${parsed.authToken}`,
+          };
+          options.protocol = `bearer,${parsed.authToken}`;
+        }
+
+        const ws = new WebSocket(wsUrl, options);
+        ws.on('open', () => {
+          console.log('ws open', wsUrl);
+          if (parsed.since != null) {
+            ws.send(JSON.stringify({ cmd: 'replay', since: parsed.since, limit: parsed.limit }));
+          }
+        });
         ws.on('message', (data) => console.log(data.toString()));
         ws.on('close', () => process.exit(0));
         ws.on('error', (err) => { console.error('ws error', err.message); process.exit(3); });

@@ -112,6 +112,9 @@ If you get stuck, open `day0_onboarding.md` in the release files and follow it s
 - [docs/day0_onboarding.md](docs/day0_onboarding.md) — minimum setup/run actions for brand-new users
 - [docs/mcp_studio_unified_project_plan.md](docs/mcp_studio_unified_project_plan.md) — project plan, phases, risks, and success gates
 - [docs/mcp_contract_v1.md](docs/mcp_contract_v1.md) — working MCP contract and tool payloads
+- [mcp_transport_plan.md](mcp_transport_plan.md) — staged hybrid transport implementation plan (HTTP + WS/WebStream)
+- [docs/studio_transport_matrix.md](docs/studio_transport_matrix.md) — channel selection and fallback playbook for Studio ↔ VS Code communications
+- [docs/ws_transport_migration_guide.md](docs/ws_transport_migration_guide.md) — migration checklist for adopting hybrid HTTP + WS transport
 - [docs/proposed_structure.md](docs/proposed_structure.md) — repository/language structure decisions
 - [docs/implementation_status.md](docs/implementation_status.md) — current implementation snapshot and remaining work
 

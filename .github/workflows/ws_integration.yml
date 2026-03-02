@@ -1,0 +1,85 @@
+name: ws_integration
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_rojo_parity_diff:
+        description: "Run optional Rojo parity suite after WS transport checks pass"
+        required: false
+        default: false
+        type: boolean
+      strict_rojo_parity_categories:
+        description: "Comma-separated categories for targeted parity run"
+        required: false
+        default: ""
+        type: string
+
+jobs:
+  ws-transport:
+    name: WS Transport Integration
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run WS replay task
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_ws_replay_task.ps1
+
+      - name: Run stream client compatibility task
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_stream_client_compat_task.ps1
+
+      - name: Upload WS transport reports artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-transport-reports
+          path: |
+            tools/ws_replay_report.json
+            tools/stream_client_compat_report.json
+          if-no-files-found: error
+
+  rojo-parity:
+    name: Rojo Parity (Gated)
+    runs-on: windows-latest
+    needs: ws-transport
+    if: inputs.run_rojo_parity_diff == true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run Rojo parity suite task
+        shell: pwsh
+        run: |
+          if (-not (Get-Command rojo -ErrorAction SilentlyContinue)) {
+            Write-Host "Rojo CLI not found on runner; skipping parity suite."
+            exit 0
+          }
+          $suiteArgs = @()
+          $strictCategories = '${{ inputs.strict_rojo_parity_categories }}'.Trim()
+          if (-not [string]::IsNullOrWhiteSpace($strictCategories)) {
+            $suiteArgs += '-Categories'
+            $suiteArgs += $strictCategories
+          }
+          powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_parity_suite_task.ps1 @suiteArgs
+
+      - name: Upload parity reports artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rojo-parity-reports
+          path: |
+            tools/parity_diff_report*.json
+            tools/parity_diff_summary.json
+          if-no-files-found: warn

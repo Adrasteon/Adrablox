@@ -1,0 +1,12 @@
+﻿{
+    "status":  "PASS",
+    "generatedAtUtc":  "2026-03-02T15:11:05.5065726Z",
+    "checks":  [
+                   "mcp_reconnect_replay_contract_test",
+                   "ws_cli_flag_smoke_test"
+               ],
+    "notes":  [
+                  "Server replay contract passed",
+                  "CLI ws-tail replay/auth flags validated"
+              ]
+}
