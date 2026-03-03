@@ -156,6 +156,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_day0_published_art
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_release_candidate_evidence_pack_task.ps1
 ```
 
+Use `-UseRojoCompatServer` with Day-0 packaged/published validation only when intentionally validating `serverArchiveRojoCompat` from the manifest; native `serverArchive` remains the default selection.
+
 Mission-critical local strict gate:
 
 ```powershell

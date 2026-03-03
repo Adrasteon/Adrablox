@@ -69,6 +69,7 @@ Current target flow:
 - Optional installable output (when `rojo` CLI is present): `dist/release/mcp-studio-plugin-<version>.rbxm`
 - Manual packaged-validation command: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_day0_packaged_validation_task.ps1`
 - VS Code packaged-validation task: `Day-0: 3) Validate Packaged Artifacts (start+run+stop)`
+- Optional compatibility archive validation: append `-UseRojoCompatServer` to Day-0 packaged/published validation commands when intentionally testing `serverArchiveRojoCompat`.
 
 ## CI Artifact Naming (Manual Dispatch)
 

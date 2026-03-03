@@ -1,6 +1,7 @@
 param(
     [string]$OutputDir = "dist/release",
-    [switch]$SkipPackaging
+    [switch]$SkipPackaging,
+    [switch]$UseRojoCompatServer
 )
 
 $ErrorActionPreference = "Stop"
@@ -11,6 +12,30 @@ $manifestPath = Join-Path $outputRoot "release_manifest.json"
 $healthUrl = "http://127.0.0.1:44877/health"
 $mcpUrl = "http://127.0.0.1:44877/mcp"
 $validationRoot = Join-Path $workspace "dist/day0_validation"
+$isWindowsPlatform = ($env:OS -eq "Windows_NT")
+
+function Resolve-ServerArchiveFromManifest {
+    param(
+        [Parameter(Mandatory = $true)]$Manifest,
+        [switch]$UseRojoCompatServer
+    )
+
+    $nativeArchive = [string]$Manifest.serverArchive
+    if ([string]::IsNullOrWhiteSpace($nativeArchive)) {
+        throw "Manifest field 'serverArchive' is missing or empty."
+    }
+
+    if (-not $UseRojoCompatServer) {
+        return $nativeArchive
+    }
+
+    $compatArchive = if ($Manifest.PSObject.Properties.Name -contains 'serverArchiveRojoCompat') { [string]$Manifest.serverArchiveRojoCompat } else { "" }
+    if ([string]::IsNullOrWhiteSpace($compatArchive)) {
+        throw "-UseRojoCompatServer was requested, but manifest does not provide serverArchiveRojoCompat."
+    }
+
+    return $compatArchive
+}
 
 Push-Location $workspace
 try {
@@ -24,7 +49,8 @@ try {
     }
 
     $manifest = Get-Content -Raw -Path $manifestPath | ConvertFrom-Json
-    $serverArchivePath = Join-Path $outputRoot ([string]$manifest.serverArchive)
+    $selectedServerArchive = Resolve-ServerArchiveFromManifest -Manifest $manifest -UseRojoCompatServer:$UseRojoCompatServer
+    $serverArchivePath = Join-Path $outputRoot $selectedServerArchive
     # newer manifests use pluginSourceArchive; old ones may still have pluginArchive
     $pluginArchiveField = if ($manifest.PSObject.Properties.Name -contains 'pluginSourceArchive') { 'pluginSourceArchive' } else { 'pluginArchive' }
     $pluginArchivePath = Join-Path $outputRoot ([string]$manifest.$pluginArchiveField)
@@ -55,6 +81,7 @@ try {
     New-Item -ItemType Directory -Path $pluginExtractPath -Force | Out-Null
 
     Write-Host "Extracting server archive..."
+    Write-Host "Using packaged server archive: $selectedServerArchive"
     Expand-Archive -Path $serverArchivePath -DestinationPath $serverExtractPath -Force
 
     $serverBinary = Get-ChildItem -Path $serverExtractPath -Recurse -File | Where-Object { $_.Name -eq $binaryName } | Select-Object -First 1
@@ -62,7 +89,7 @@ try {
         throw "Packaged server binary '$binaryName' not found after archive extraction."
     }
 
-    if (-not $IsWindows) {
+    if (-not $isWindowsPlatform) {
         Write-Host "Marking packaged server binary executable on Unix..."
         & chmod +x $serverBinary.FullName
     }
