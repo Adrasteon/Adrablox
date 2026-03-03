@@ -702,6 +702,18 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(feature = "rojo-compat"))]
+    fn select_adapter_explicit_rojo_mode_flag_is_inert_without_feature() {
+        let mut cfg = base_config();
+        cfg.project_adapter_mode = "rojo".to_string();
+        cfg.enable_rojo_adapter_mode = true;
+        cfg.enable_native_project_manifest = false;
+
+        let (_adapter, kind) = select_project_adapter(&cfg);
+        assert_eq!(kind, "native");
+    }
+
+    #[test]
     fn select_adapter_explicit_native_mode() {
         let mut cfg = base_config();
         cfg.project_adapter_mode = "native".to_string();

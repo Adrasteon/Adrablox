@@ -472,6 +472,7 @@ Mapping requirement:
 - Explicit `MCP_PROJECT_ADAPTER_MODE=rojo` is deprecation-gated and requires `MCP_ENABLE_ROJO_ADAPTER_MODE=true`.
 - `MCP_PROJECT_ADAPTER_MODE=auto` defaults to native selection unless Rojo mode is explicitly enabled.
 - Rojo compatibility implementation is compile-time gated by cargo feature `rojo-compat` (default builds are native-only).
+- In non-`rojo-compat` builds, `MCP_ENABLE_ROJO_ADAPTER_MODE` is inert and does not change adapter selection.
 
 ## 11) Non-Functional Targets (v1)
 

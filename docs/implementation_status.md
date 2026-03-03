@@ -27,6 +27,7 @@ Last updated: 2026-03-03
 - Resource methods are implemented (`resources/list`, `resources/read`) for MCP clients that browse/read resources.
 - Native project-manifest migration entrypoint is available (`adrablox.project.json`) with native resolver mode (`native-manifest`).
 - Explicit Rojo adapter mode selection is now deprecation-gated (`MCP_ENABLE_ROJO_ADAPTER_MODE=true` required for `MCP_PROJECT_ADAPTER_MODE=rojo`).
+- `MCP_ENABLE_ROJO_ADAPTER_MODE` is only effective in binaries built with `rojo-compat`; otherwise the flag is ignored and adapter selection remains native.
 - Adapter `auto` mode now defaults to native and only permits Rojo selection when the same Rojo adapter gate is enabled.
 - Rojo adapter selection/delegation is isolated in a dedicated compatibility boundary module (`cmd/mcp-server/src/compat_rojo.rs`) to simplify future removal.
 - Rojo compatibility now requires compile-time feature enablement (`mcp-server` cargo feature `rojo-compat`); default build excludes Rojo linkage.

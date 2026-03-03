@@ -18,7 +18,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 use tokio::sync::broadcast;
-use tracing::info;
+use tracing::{info, warn};
 mod adapters;
 mod compat_rojo;
 mod config;
@@ -137,10 +137,18 @@ async fn main() -> anyhow::Result<()> {
 
     // Load runtime configuration (env-driven). Defaults favor localhost development.
     let cfg = Config::from_env();
+    let rojo_adapter_mode_effective = cfg!(feature = "rojo-compat") && cfg.enable_rojo_adapter_mode;
+    if cfg.enable_rojo_adapter_mode && !cfg!(feature = "rojo-compat") {
+        warn!(
+            "MCP_ENABLE_ROJO_ADAPTER_MODE is set, but this binary was built without rojo-compat; ignoring flag"
+        );
+    }
     let (adapter, adapter_kind) = select_project_adapter(&cfg);
     info!(
         project_adapter_mode = %cfg.project_adapter_mode,
-        rojo_adapter_mode_enabled = %cfg.enable_rojo_adapter_mode,
+        rojo_compat_compiled = %cfg!(feature = "rojo-compat"),
+        rojo_adapter_mode_requested = %cfg.enable_rojo_adapter_mode,
+        rojo_adapter_mode_effective = %rojo_adapter_mode_effective,
         selected_adapter = %adapter_kind,
         legacy_rojo_routes_compiled = %cfg!(feature = "rojo-compat"),
         legacy_rojo_routes_enabled = %cfg.enable_legacy_rojo_routes,
