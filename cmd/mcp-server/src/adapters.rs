@@ -667,7 +667,17 @@ pub fn select_project_adapter(config: &Config) -> (Arc<dyn ProjectAdapter>, &'st
                     "native",
                 )
             } else {
-                (Arc::new(RojoAdapter::new()), "rojo")
+                if config.enable_rojo_adapter_mode {
+                    (Arc::new(RojoAdapter::new()), "rojo")
+                } else {
+                    (
+                        Arc::new(NativeManifestAdapter::new(
+                            config.enable_native_project_manifest,
+                            config.native_project_manifest_path.clone(),
+                        )),
+                        "native",
+                    )
+                }
             }
         }
     }
@@ -746,9 +756,21 @@ mod tests {
         let mut cfg = base_config();
         cfg.project_adapter_mode = "auto".to_string();
         cfg.enable_native_project_manifest = false;
+        cfg.enable_rojo_adapter_mode = true;
 
         let (_adapter, kind) = select_project_adapter(&cfg);
         assert_eq!(kind, "rojo");
+    }
+
+    #[test]
+    fn select_adapter_auto_mode_prefers_native_when_rojo_mode_not_enabled() {
+        let mut cfg = base_config();
+        cfg.project_adapter_mode = "auto".to_string();
+        cfg.enable_native_project_manifest = false;
+        cfg.enable_rojo_adapter_mode = false;
+
+        let (_adapter, kind) = select_project_adapter(&cfg);
+        assert_eq!(kind, "native");
     }
 
     #[test]

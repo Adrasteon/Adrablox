@@ -470,6 +470,7 @@ Mapping requirement:
 
 - Responses must remain semantically equivalent to current Rojo output where practical.
 - Explicit `MCP_PROJECT_ADAPTER_MODE=rojo` is deprecation-gated and requires `MCP_ENABLE_ROJO_ADAPTER_MODE=true`.
+- `MCP_PROJECT_ADAPTER_MODE=auto` defaults to native selection unless Rojo mode is explicitly enabled.
 
 ## 11) Non-Functional Targets (v1)
 

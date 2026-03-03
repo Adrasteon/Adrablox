@@ -75,7 +75,7 @@ Native manifest migration:
 - Local run scripts set `MCP_ENABLE_NATIVE_PROJECT_MANIFEST=true` and `MCP_NATIVE_PROJECT_MANIFEST_PATH=adrablox.project.json`.
 - Adapter selection supports `MCP_PROJECT_ADAPTER_MODE=auto|native|rojo`.
 - Explicit `rojo` mode is deprecated-gated and requires `MCP_ENABLE_ROJO_ADAPTER_MODE=true`; otherwise it falls back to `native`.
-- `auto` mode picks `native` when native manifest mode is enabled; otherwise it uses current compatibility default behavior.
+- `auto` mode picks `native` by default; it only selects `rojo` when `MCP_ENABLE_ROJO_ADAPTER_MODE=true` and native manifest mode is disabled.
 - Legacy compatibility HTTP routes are opt-in via `MCP_ENABLE_LEGACY_ROJO_ROUTES=true` (default is disabled).
 - `openSession` resolves through native manifest mapping defined by `session.defaultProjectPath` / `compatibility.rojoProjectPath`.
 - Native manifest fallback order is: `session.defaultProjectPath` → `compatibility.rojoProjectPath` → `default.project.json`.

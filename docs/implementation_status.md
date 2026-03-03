@@ -27,6 +27,7 @@ Last updated: 2026-03-03
 - Resource methods are implemented (`resources/list`, `resources/read`) for MCP clients that browse/read resources.
 - Native project-manifest migration entrypoint is available (`adrablox.project.json`) with native resolver mode (`native-manifest`).
 - Explicit Rojo adapter mode selection is now deprecation-gated (`MCP_ENABLE_ROJO_ADAPTER_MODE=true` required for `MCP_PROJECT_ADAPTER_MODE=rojo`).
+- Adapter `auto` mode now defaults to native and only permits Rojo selection when the same Rojo adapter gate is enabled.
 - File-backed edit durability is enforced: mapped script `Source` writes persist to disk, with cursored updates and structured conflict handling.
 - Rojo compatibility API routes are available as opt-in legacy endpoints (`MCP_ENABLE_LEGACY_ROJO_ROUTES=true` for `/api/rojo`, `/api/read`, `/api/subscribe`).
 - Validation baseline exists and has recent green runs across Rust tests, smoke flow, policy contract flow, and protocol contract flow.
