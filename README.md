@@ -87,9 +87,9 @@ Native manifest migration:
 
 - `GET /health`
 - `POST /mcp` (JSON-RPC; `tools/list`, `tools/call`)
-- `GET /api/read/{instanceId}` (legacy; requires `MCP_ENABLE_LEGACY_ROJO_ROUTES=true`)
-- `GET /api/subscribe/{sessionId}/{cursor}` (legacy; requires `MCP_ENABLE_LEGACY_ROJO_ROUTES=true`)
-- `POST /api/rojo` (legacy; requires `MCP_ENABLE_LEGACY_ROJO_ROUTES=true`)
+- `GET /api/read/{instanceId}` (legacy; requires `rojo-compat` build + `MCP_ENABLE_LEGACY_ROJO_ROUTES=true`)
+- `GET /api/subscribe/{sessionId}/{cursor}` (legacy; requires `rojo-compat` build + `MCP_ENABLE_LEGACY_ROJO_ROUTES=true`)
+- `POST /api/rojo` (legacy; requires `rojo-compat` build + `MCP_ENABLE_LEGACY_ROJO_ROUTES=true`)
 - `ws://127.0.0.1:44877/mcp-stream` (push stream)
 
 Notes:

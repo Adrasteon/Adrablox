@@ -460,7 +460,7 @@ For conflict handling, apply the same pattern:
 
 ## 10) Compatibility with Existing Rojo Flows
 
-Compatibility endpoints (legacy adapter mode; enable with `MCP_ENABLE_LEGACY_ROJO_ROUTES=true`) should preserve:
+Compatibility endpoints (legacy adapter mode; build with cargo feature `rojo-compat` and enable with `MCP_ENABLE_LEGACY_ROJO_ROUTES=true`) should preserve:
 
 - `POST /api/rojo`
 - `GET /api/read/{instanceId}`

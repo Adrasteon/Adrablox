@@ -32,6 +32,7 @@ Last updated: 2026-03-03
 - Rojo compatibility now requires compile-time feature enablement (`mcp-server` cargo feature `rojo-compat`); default build excludes Rojo linkage.
 - File-backed edit durability is enforced: mapped script `Source` writes persist to disk, with cursored updates and structured conflict handling.
 - Rojo compatibility API routes are available as opt-in legacy endpoints (`MCP_ENABLE_LEGACY_ROJO_ROUTES=true` for `/api/rojo`, `/api/read`, `/api/subscribe`).
+- Legacy Rojo compatibility API routes are also compile-time gated and only built when `mcp-server` is compiled with cargo feature `rojo-compat`.
 - Validation baseline exists and has recent green runs across Rust tests, smoke flow, policy contract flow, and protocol contract flow.
 - CI is configured to run contract checks across Windows and protocol checks across Linux/macOS.
 - Integration reliability baseline is in CI (`integration roundtrip` + `integration reconnect-loop`) with a manual higher-iteration soak runner.

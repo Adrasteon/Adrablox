@@ -1,10 +1,12 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Query, State},
     http::StatusCode,
     response::IntoResponse,
     routing::{get, post},
     Json, Router,
 };
+#[cfg(feature = "rojo-compat")]
+use axum::extract::Path;
 use mcp_core::{initialize_result, invalid_request, InitializeParams, JsonRpcRequest};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Map, Value};
@@ -97,12 +99,14 @@ struct SessionState {
 }
 
 #[derive(Debug, Deserialize)]
+#[cfg(feature = "rojo-compat")]
 struct RojoOpenRequest {
     #[serde(rename = "projectPath")]
     project_path: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
+#[cfg(feature = "rojo-compat")]
 struct ReadQuery {
     #[serde(rename = "sessionId")]
     session_id: Option<String>,
@@ -138,7 +142,8 @@ async fn main() -> anyhow::Result<()> {
         project_adapter_mode = %cfg.project_adapter_mode,
         rojo_adapter_mode_enabled = %cfg.enable_rojo_adapter_mode,
         selected_adapter = %adapter_kind,
-        legacy_rojo_routes = %cfg.enable_legacy_rojo_routes,
+        legacy_rojo_routes_compiled = %cfg!(feature = "rojo-compat"),
+        legacy_rojo_routes_enabled = %cfg.enable_legacy_rojo_routes,
         "project adapter selected"
     );
 
@@ -151,11 +156,31 @@ async fn main() -> anyhow::Result<()> {
         config: cfg.clone(),
     });
 
-    let mut app = Router::new()
+    let app = Router::<Arc<AppState>>::new()
         .route("/health", get(health))
         .route("/mcp", post(handle_mcp))
         .route("/mcp/replay", get(handle_mcp_replay));
+    let app = register_legacy_rojo_routes(app, &cfg);
+    let app = ws::register_ws_routes(app, state.clone(), cfg.clone());
+    let app = app.with_state(state.clone());
 
+    let addr: SocketAddr = cfg.bind_addr.parse()?;
+    info!(%addr, "mcp-server listening");
+
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await?;
+    Ok(())
+}
+
+async fn health() -> impl IntoResponse {
+    Json(json!({"ok": true, "service": "mcp-server"}))
+}
+
+#[cfg(feature = "rojo-compat")]
+fn register_legacy_rojo_routes(
+    mut app: Router<Arc<AppState>>,
+    cfg: &Config,
+) -> Router<Arc<AppState>> {
     if cfg.enable_legacy_rojo_routes {
         app = app
             .route("/api/rojo", post(handle_rojo_open))
@@ -170,19 +195,13 @@ async fn main() -> anyhow::Result<()> {
                 get(handle_rojo_subscribe_with_cursor),
             );
     }
-    let app = ws::register_ws_routes(app, state.clone(), cfg.clone());
-    let app = app.with_state(state.clone());
 
-    let addr: SocketAddr = cfg.bind_addr.parse()?;
-    info!(%addr, "mcp-server listening");
-
-    let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await?;
-    Ok(())
+    app
 }
 
-async fn health() -> impl IntoResponse {
-    Json(json!({"ok": true, "service": "mcp-server"}))
+#[cfg(not(feature = "rojo-compat"))]
+fn register_legacy_rojo_routes(app: Router<Arc<AppState>>, _cfg: &Config) -> Router<Arc<AppState>> {
+    app
 }
 
 fn tool_ok(id: Value, payload: Value) -> (StatusCode, Json<Value>) {
@@ -245,6 +264,7 @@ fn session_not_found_rpc(id: Value) -> (StatusCode, Json<Value>) {
     )
 }
 
+#[cfg(feature = "rojo-compat")]
 fn session_not_found_http() -> (StatusCode, Json<Value>) {
     (
         StatusCode::BAD_REQUEST,
@@ -846,6 +866,7 @@ fn resource_read_payload(state: &AppState, uri: &str) -> Result<Value, String> {
     Err("unsupported resource uri".to_string())
 }
 
+#[cfg(feature = "rojo-compat")]
 fn resolve_session_id(requested: Option<&str>, sessions: &HashMap<String, SessionState>) -> Option<String> {
     if let Some(session_id) = requested {
         return Some(session_id.to_string());
@@ -854,6 +875,7 @@ fn resolve_session_id(requested: Option<&str>, sessions: &HashMap<String, Sessio
     sessions.keys().next().cloned()
 }
 
+#[cfg(feature = "rojo-compat")]
 async fn handle_rojo_open(
     State(state): State<Arc<AppState>>,
     Json(body): Json<RojoOpenRequest>,
@@ -869,6 +891,7 @@ async fn handle_rojo_open(
     }
 }
 
+#[cfg(feature = "rojo-compat")]
 async fn handle_rojo_read_by_instance(
     State(state): State<Arc<AppState>>,
     Path(instance_id): Path<String>,
@@ -898,6 +921,7 @@ async fn handle_rojo_read_by_instance(
     }
 }
 
+#[cfg(feature = "rojo-compat")]
 async fn handle_rojo_read_by_session_and_instance(
     State(state): State<Arc<AppState>>,
     Path((session_id, instance_id)): Path<(String, String)>,
@@ -916,6 +940,7 @@ async fn handle_rojo_read_by_session_and_instance(
     }
 }
 
+#[cfg(feature = "rojo-compat")]
 async fn handle_rojo_subscribe(
     State(state): State<Arc<AppState>>,
     Path(session_id): Path<String>,
@@ -930,6 +955,7 @@ async fn handle_rojo_subscribe(
     (StatusCode::OK, Json(subscribe_result(session, 0, &session_id)))
 }
 
+#[cfg(feature = "rojo-compat")]
 async fn handle_rojo_subscribe_with_cursor(
     State(state): State<Arc<AppState>>,
     Path((session_id, cursor)): Path<(String, String)>,
