@@ -2,6 +2,12 @@ name: Release Packaging
 
 on:
   workflow_dispatch:
+    inputs:
+      include_rojo_compat_server:
+        description: "Also package optional mcp-server rojo-compat artifact variant"
+        required: false
+        default: false
+        type: boolean
 
 env:
   ROJO_VERSION: 7.7.0-rc.1
@@ -30,7 +36,12 @@ jobs:
 
       - name: Build and package release artifacts
         shell: pwsh
-        run: ./tools/package_release_artifacts.ps1 -RequireRojo
+        run: |
+          $args = @('-RequireRojo')
+          if ('${{ inputs.include_rojo_compat_server }}' -eq 'true') {
+            $args += '-IncludeRojoCompatServer'
+          }
+          ./tools/package_release_artifacts.ps1 @args
 
       - name: Validate release manifest and artifact naming
         shell: pwsh

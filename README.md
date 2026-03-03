@@ -148,6 +148,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_rojo_parity_releas
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/package_release_artifacts.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/package_release_artifacts.ps1 -IncludeRojoCompatServer
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/validate_release_manifest.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/generate_release_checksums.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_day0_packaged_validation_task.ps1

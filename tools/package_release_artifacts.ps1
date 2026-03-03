@@ -1,6 +1,7 @@
 param(
     [string]$OutputDir = "dist/release",
     [switch]$SkipServerBuild,
+    [switch]$IncludeRojoCompatServer,
     [string]$PluginVersion = "",
     [switch]$RequireRojo,
     [switch]$SkipRojo
@@ -11,6 +12,7 @@ $ErrorActionPreference = "Stop"
 $workspace = Split-Path -Parent $PSScriptRoot
 $outputRoot = Join-Path $workspace $OutputDir
 $serverStaging = Join-Path $outputRoot "server"
+$serverRojoCompatStaging = Join-Path $outputRoot "server-rojo-compat"
 $pluginSource = Join-Path $workspace "plugin/mcp-studio"
 $pluginProject = Join-Path $workspace "plugin/mcp-studio.plugin.project.json"
 
@@ -49,6 +51,9 @@ if (Test-Path $outputRoot) {
 }
 
 New-Item -ItemType Directory -Path $serverStaging -Force | Out-Null
+if ($IncludeRojoCompatServer) {
+    New-Item -ItemType Directory -Path $serverRojoCompatStaging -Force | Out-Null
+}
 
 $isWindowsPlatform = ($env:OS -eq "Windows_NT")
 $isMacPlatform = (-not $isWindowsPlatform) -and ($PSVersionTable.OS -match "Darwin")
@@ -70,6 +75,9 @@ try {
         if ($LASTEXITCODE -ne 0) {
             throw "cargo build failed with exit code $LASTEXITCODE"
         }
+    }
+    elseif ($IncludeRojoCompatServer) {
+        throw "-IncludeRojoCompatServer requires server builds; do not combine with -SkipServerBuild."
     }
 
     $builtBinary = Join-Path $workspace "target/release/$binaryName"
@@ -101,6 +109,26 @@ Start-Process -FilePath 'cmd.exe' -ArgumentList "/k `"$here\\mcp-server.exe`"" -
 
     $serverArchive = Join-Path $outputRoot ("mcp-server-{0}.zip" -f $platformName)
     Compress-Archive -Path $serverBinaryOut -DestinationPath $serverArchive -Force
+
+    $serverRojoCompatArchive = $null
+    if ($IncludeRojoCompatServer) {
+        Write-Host "Building release server artifact (rojo-compat)..."
+        cargo build --release -p mcp-server --features rojo-compat
+        if ($LASTEXITCODE -ne 0) {
+            throw "cargo build --features rojo-compat failed with exit code $LASTEXITCODE"
+        }
+
+        $builtRojoCompatBinary = Join-Path $workspace "target/release/$binaryName"
+        if (-not (Test-Path $builtRojoCompatBinary)) {
+            throw "Built rojo-compat server binary not found at $builtRojoCompatBinary"
+        }
+
+        $serverRojoCompatBinaryOut = Join-Path $serverRojoCompatStaging $binaryName
+        Copy-Item -Path $builtRojoCompatBinary -Destination $serverRojoCompatBinaryOut -Force
+
+        $serverRojoCompatArchive = Join-Path $outputRoot ("mcp-server-{0}-rojo-compat.zip" -f $platformName)
+        Compress-Archive -Path $serverRojoCompatBinaryOut -DestinationPath $serverRojoCompatArchive -Force
+    }
 
     $pluginSourceArchive = Join-Path $outputRoot ("mcp-studio-plugin-source-{0}.zip" -f $safePluginVersion)
     Compress-Archive -Path (Join-Path $pluginSource "*") -DestinationPath $pluginSourceArchive -Force
@@ -185,6 +213,8 @@ Start-Process -FilePath 'cmd.exe' -ArgumentList "/k `"$here\\mcp-server.exe`"" -
         createdUtc = (Get-Date).ToUniversalTime().ToString("o")
         platform = $platformName
         serverArchive = [System.IO.Path]::GetFileName($serverArchive)
+        rojoCompatServerIncluded = $IncludeRojoCompatServer.IsPresent
+        serverArchiveRojoCompat = $(if ($IncludeRojoCompatServer -and $serverRojoCompatArchive) { [System.IO.Path]::GetFileName($serverRojoCompatArchive) } else { $null })
         pluginSourceArchive = [System.IO.Path]::GetFileName($pluginSourceArchive)
         pluginVersion = $PluginVersion
         pluginInstallableAvailable = $pluginInstallableAvailable
@@ -196,6 +226,9 @@ Start-Process -FilePath 'cmd.exe' -ArgumentList "/k `"$here\\mcp-server.exe`"" -
 
     Write-Host "Release artifacts created at: $outputRoot"
     Write-Host "- $([System.IO.Path]::GetFileName($serverArchive))"
+    if ($IncludeRojoCompatServer -and $serverRojoCompatArchive) {
+        Write-Host "- $([System.IO.Path]::GetFileName($serverRojoCompatArchive))"
+    }
     Write-Host "- $([System.IO.Path]::GetFileName($pluginSourceArchive))"
     if ($pluginInstallableAvailable) {
         Write-Host "- $([System.IO.Path]::GetFileName($pluginInstallableArtifact))"

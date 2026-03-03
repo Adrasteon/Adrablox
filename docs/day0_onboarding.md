@@ -65,6 +65,7 @@ Current target flow:
 
 - Manual packaging command: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/package_release_artifacts.ps1`
 - Current packaged outputs: `dist/release/mcp-server-<platform>.zip`, `dist/release/mcp-studio-plugin-source-<version>.zip`, `dist/release/release_manifest.json`
+- Optional compatibility server output: `dist/release/mcp-server-<platform>-rojo-compat.zip` (when `-IncludeRojoCompatServer` is supplied)
 - Optional installable output (when `rojo` CLI is present): `dist/release/mcp-studio-plugin-<version>.rbxm`
 - Manual packaged-validation command: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_day0_packaged_validation_task.ps1`
 - VS Code packaged-validation task: `Day-0: 3) Validate Packaged Artifacts (start+run+stop)`
