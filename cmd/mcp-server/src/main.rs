@@ -18,6 +18,7 @@ use std::{
 use tokio::sync::broadcast;
 use tracing::info;
 mod adapters;
+mod compat_rojo;
 mod config;
 use adapters::{select_project_adapter, ProjectAdapter};
 use config::Config;
@@ -1631,6 +1632,7 @@ pub(crate) async fn handle_mcp_request(
 
 #[cfg(test)]
 mod tests {
+    use crate::adapters::select_project_adapter;
     use super::{
         has_write_conflict, make_default_session, publish_event_with_replay, remove_subtree,
         replay_events_since, AppState, Config, ReplayState,
@@ -1642,13 +1644,15 @@ mod tests {
 
     fn test_app_state() -> AppState {
         let (tx, _rx) = broadcast::channel(16);
+        let config = Config::from_env();
+        let (adapter, _) = select_project_adapter(&config);
         AppState {
-            adapter: Arc::new(rojo_adapter::RojoAdapter::new()),
+            adapter,
             server_version: "test".to_string(),
             sessions: Arc::new(Mutex::new(HashMap::new())),
             broadcaster: tx,
             replay: Arc::new(Mutex::new(ReplayState::new())),
-            config: Config::from_env(),
+            config,
         }
     }
 

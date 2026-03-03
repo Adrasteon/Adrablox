@@ -1,5 +1,4 @@
 use anyhow::Result as AnyResult;
-use rojo_adapter::RojoAdapter;
 use serde::Deserialize;
 use serde_json::Value;
 use std::{
@@ -10,6 +9,7 @@ use std::{
 };
 
 use crate::config::Config;
+use crate::compat_rojo::maybe_select_rojo_adapter;
 
 #[derive(Debug, Deserialize, Default)]
 struct AdrabloxManifestCompatibility {
@@ -281,32 +281,6 @@ impl NativeManifestAdapter {
             instances,
             file_paths,
         })
-    }
-}
-
-impl ProjectAdapter for RojoAdapter {
-    fn resolve_project_target(&self, requested_path: &str) -> Result<ResolvedProjectTarget, String> {
-        let requested = if requested_path.trim().is_empty() {
-            "src".to_string()
-        } else {
-            requested_path.trim().to_string()
-        };
-
-        Ok(ResolvedProjectTarget {
-            requested_path: requested.clone(),
-            adapter_project_path: requested,
-            compatibility_mode: "rojo-direct".to_string(),
-            native_manifest_path: None,
-            project_name: None,
-        })
-    }
-
-    fn open_session(&self, project_path: &str) -> AnyResult<Value> {
-        RojoAdapter::open_session(self, project_path)
-    }
-
-    fn snapshot_project(&self, project_path: &str) -> AnyResult<rojo_adapter::ProjectSnapshot> {
-        RojoAdapter::snapshot_project(self, project_path)
     }
 }
 
@@ -636,20 +610,18 @@ fn canonical_path_string(path: &Path) -> String {
 
 pub fn select_project_adapter(config: &Config) -> (Arc<dyn ProjectAdapter>, &'static str) {
     let mode = config.project_adapter_mode.trim().to_ascii_lowercase();
+    if let Some(selection) = maybe_select_rojo_adapter(config, mode.as_str()) {
+        return selection;
+    }
+
     match mode.as_str() {
-        "rojo" => {
-            if config.enable_rojo_adapter_mode {
-                (Arc::new(RojoAdapter::new()), "rojo")
-            } else {
-                (
-                    Arc::new(NativeManifestAdapter::new(
-                        config.enable_native_project_manifest,
-                        config.native_project_manifest_path.clone(),
-                    )),
-                    "native",
-                )
-            }
-        }
+        "rojo" => (
+            Arc::new(NativeManifestAdapter::new(
+                config.enable_native_project_manifest,
+                config.native_project_manifest_path.clone(),
+            )),
+            "native",
+        ),
         "native" => (
             Arc::new(NativeManifestAdapter::new(
                 config.enable_native_project_manifest,
@@ -667,17 +639,13 @@ pub fn select_project_adapter(config: &Config) -> (Arc<dyn ProjectAdapter>, &'st
                     "native",
                 )
             } else {
-                if config.enable_rojo_adapter_mode {
-                    (Arc::new(RojoAdapter::new()), "rojo")
-                } else {
-                    (
-                        Arc::new(NativeManifestAdapter::new(
-                            config.enable_native_project_manifest,
-                            config.native_project_manifest_path.clone(),
-                        )),
-                        "native",
-                    )
-                }
+                (
+                    Arc::new(NativeManifestAdapter::new(
+                        config.enable_native_project_manifest,
+                        config.native_project_manifest_path.clone(),
+                    )),
+                    "native",
+                )
             }
         }
     }
