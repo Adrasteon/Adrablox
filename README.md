@@ -64,20 +64,46 @@ This starts the server, runs smoke checks, and stops the server.
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_server.ps1
 ```
 
+Wait for health before manual MCP calls:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/wait_for_mcp_health.ps1
+```
+
+Native manifest migration:
+- Preferred project config is `adrablox.project.json`.
+- Local run scripts set `MCP_ENABLE_NATIVE_PROJECT_MANIFEST=true` and `MCP_NATIVE_PROJECT_MANIFEST_PATH=adrablox.project.json`.
+- Adapter selection supports `MCP_PROJECT_ADAPTER_MODE=auto|native|rojo`.
+- Explicit `rojo` mode is deprecated-gated and requires `MCP_ENABLE_ROJO_ADAPTER_MODE=true`; otherwise it falls back to `native`.
+- `auto` mode picks `native` when native manifest mode is enabled; otherwise it uses current compatibility default behavior.
+- Legacy compatibility HTTP routes are opt-in via `MCP_ENABLE_LEGACY_ROJO_ROUTES=true` (default is disabled).
+- `openSession` resolves through native manifest mapping defined by `session.defaultProjectPath` / `compatibility.rojoProjectPath`.
+- Native manifest fallback order is: `session.defaultProjectPath` → `compatibility.rojoProjectPath` → `default.project.json`.
+
 ---
 
 ## 3) Core endpoints
 
 - `GET /health`
 - `POST /mcp` (JSON-RPC; `tools/list`, `tools/call`)
-- `GET /api/read/{instanceId}`
-- `GET /api/subscribe/{sessionId}/{cursor}`
-- `POST /api/rojo`
+- `GET /api/read/{instanceId}` (legacy; requires `MCP_ENABLE_LEGACY_ROJO_ROUTES=true`)
+- `GET /api/subscribe/{sessionId}/{cursor}` (legacy; requires `MCP_ENABLE_LEGACY_ROJO_ROUTES=true`)
+- `POST /api/rojo` (legacy; requires `MCP_ENABLE_LEGACY_ROJO_ROUTES=true`)
 - `ws://127.0.0.1:44877/mcp-stream` (push stream)
 
 Notes:
 - Tool responses may include `structuredContent` wrappers.
 - Import progress can be consumed via stream and/or polled by tool (`roblox.importProgress`) depending on client capability.
+
+Current tool surface:
+- `roblox.openSession`
+- `roblox.readTree`
+- `roblox.subscribeChanges`
+- `roblox.applyPatch`
+- `roblox.importProgress`
+- `roblox.closeSession`
+- `roblox.exportSnapshot`
+- `roblox.importSnapshot`
 
 ---
 

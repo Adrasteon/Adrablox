@@ -3,6 +3,11 @@ use std::env;
 #[derive(Debug, Clone)]
 pub struct Config {
     pub bind_addr: String,
+    pub project_adapter_mode: String,
+    pub enable_rojo_adapter_mode: bool,
+    pub enable_legacy_rojo_routes: bool,
+    pub enable_native_project_manifest: bool,
+    pub native_project_manifest_path: String,
     pub enable_ws_rpc: bool,
     pub require_ws_token: bool,
     pub ws_auth_token: Option<String>,
@@ -17,6 +22,19 @@ pub struct Config {
 impl Config {
     pub fn from_env() -> Self {
         let bind_addr = env::var("MCP_BIND_ADDR").unwrap_or_else(|_| "127.0.0.1:44877".to_string());
+        let project_adapter_mode = env::var("MCP_PROJECT_ADAPTER_MODE")
+            .unwrap_or_else(|_| "auto".to_string());
+        let enable_rojo_adapter_mode = env::var("MCP_ENABLE_ROJO_ADAPTER_MODE")
+            .map(|v| v == "true")
+            .unwrap_or(false);
+        let enable_legacy_rojo_routes = env::var("MCP_ENABLE_LEGACY_ROJO_ROUTES")
+            .map(|v| v == "true")
+            .unwrap_or(false);
+        let enable_native_project_manifest = env::var("MCP_ENABLE_NATIVE_PROJECT_MANIFEST")
+            .map(|v| v == "true")
+            .unwrap_or(false);
+        let native_project_manifest_path = env::var("MCP_NATIVE_PROJECT_MANIFEST_PATH")
+            .unwrap_or_else(|_| "adrablox.project.json".to_string());
         let enable_ws_rpc = env::var("MCP_ENABLE_WS_RPC").map(|v| v == "true").unwrap_or(true);
         let require_ws_token = env::var("MCP_REQUIRE_WS_TOKEN").map(|v| v == "true").unwrap_or(false);
         let ws_auth_token = env::var("MCP_WS_AUTH_TOKEN").ok().and_then(|v| {
@@ -52,6 +70,11 @@ impl Config {
 
         Config {
             bind_addr,
+            project_adapter_mode,
+            enable_rojo_adapter_mode,
+            enable_legacy_rojo_routes,
+            enable_native_project_manifest,
+            native_project_manifest_path,
             enable_ws_rpc,
             require_ws_token,
             ws_auth_token,
@@ -74,6 +97,11 @@ mod tests {
     fn default_config_values() {
         // Ensure env vars absent
         env::remove_var("MCP_BIND_ADDR");
+        env::remove_var("MCP_PROJECT_ADAPTER_MODE");
+        env::remove_var("MCP_ENABLE_ROJO_ADAPTER_MODE");
+        env::remove_var("MCP_ENABLE_LEGACY_ROJO_ROUTES");
+        env::remove_var("MCP_ENABLE_NATIVE_PROJECT_MANIFEST");
+        env::remove_var("MCP_NATIVE_PROJECT_MANIFEST_PATH");
         env::remove_var("MCP_ENABLE_WS_RPC");
         env::remove_var("MCP_REQUIRE_WS_TOKEN");
         env::remove_var("MCP_WS_AUTH_TOKEN");
@@ -86,6 +114,11 @@ mod tests {
 
         let cfg = Config::from_env();
         assert_eq!(cfg.bind_addr, "127.0.0.1:44877");
+        assert_eq!(cfg.project_adapter_mode, "auto");
+        assert!(!cfg.enable_rojo_adapter_mode);
+        assert!(!cfg.enable_legacy_rojo_routes);
+        assert!(!cfg.enable_native_project_manifest);
+        assert_eq!(cfg.native_project_manifest_path, "adrablox.project.json");
         assert!(cfg.enable_ws_rpc);
         assert!(!cfg.require_ws_token);
         assert!(cfg.ws_auth_token.is_none());

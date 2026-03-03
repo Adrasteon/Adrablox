@@ -1,4 +1,8 @@
-﻿local Selection = game:GetService("Selection")
+local Selection = game:GetService("Selection")
+local ScriptEditorService = nil
+pcall(function()
+    ScriptEditorService = game:GetService("ScriptEditorService")
+end)
 
 local PatchSerializer = require(script.Parent.PatchSerializer)
 
@@ -20,11 +24,30 @@ function SyncEngine.new(connectionManager)
     self.selectionConnection = nil
     self.instanceChangedConnection = nil
     self.observedInstance = nil
+    self.scriptEditorChangedConnection = nil
     self.lastSentValues = {}
     self.suppressLocalChanges = false
     self.fileBackedById = {}
     self.sessionCapabilities = nil
+    self.realtimeMode = "http"
+    self.realtimeHealthy = false
+    self.pollingPausedForRealtime = false
+    self.lastReplaySeq = 0
     return self
+end
+
+function SyncEngine:_setRealtimeHealthy(value)
+    local nextValue = value == true
+    local changed = self.realtimeHealthy ~= nextValue
+    self.realtimeHealthy = nextValue
+
+    if changed then
+        if self.realtimeHealthy then
+            self:_emitStatus("Realtime healthy: mode=" .. tostring(self.realtimeMode))
+        else
+            self:_emitStatus("Realtime unhealthy: mode=" .. tostring(self.realtimeMode))
+        end
+    end
 end
 
 function SyncEngine:setWidget(widget)
@@ -71,14 +94,38 @@ function SyncEngine:_isSessionMissingError(err, errCode)
     return string.find(text, "session does not exist", 1, true) ~= nil
 end
 
+function SyncEngine:_openSessionPreferred()
+    local targets = {
+        "adrablox.project.json",
+        "default.project.json",
+        "src",
+    }
+
+    local lastErr = nil
+    for index, target in ipairs(targets) do
+        local ok, openSession, openErr = self.connectionManager:openSession(target)
+        if ok then
+            if index > 1 then
+                self:_emitStatus("OpenSession fallback target selected: " .. tostring(target))
+            end
+            return true, openSession, nil, target
+        end
+        lastErr = openErr
+    end
+
+    return false, nil, lastErr, nil
+end
+
 function SyncEngine:_recoverSession(reason)
     self:_emitStatus("Recovering session: " .. tostring(reason))
 
-    local openOk, openSession, openErr = self.connectionManager:openSession("src")
+    local openOk, openSession, openErr, projectTarget = self:_openSessionPreferred()
     if not openOk then
         self:_emitStatus("Session recovery open failed: " .. tostring(openErr))
         return false
     end
+
+    self:_emitStatus("Session recovery open target: " .. tostring(projectTarget))
 
     self.sessionId = openSession.sessionId
     self.cursor = tonumber(openSession.initialCursor) or 0
@@ -97,6 +144,8 @@ function SyncEngine:_recoverSession(reason)
     self.cursor = tonumber(tree.cursor) or self.cursor
     self:_bindTreeToStudioInstances(tree)
     self:_bindSelectionWatcher()
+    self:_bindScriptEditorHooks()
+    self:_startRealtime()
     self:_emitStatus(string.format("Session recovered (session=%s, cursor=%d)", tostring(self.sessionId), self.cursor))
     return true
 end
@@ -113,6 +162,66 @@ function SyncEngine:_emitConflict(message)
     end
 end
 
+function SyncEngine:_handleRealtimeEvent(payload, mode)
+    if type(payload) ~= "table" then
+        return
+    end
+
+    local seq = tonumber(payload.seq)
+    if seq and seq > self.lastReplaySeq then
+        self.lastReplaySeq = seq
+    end
+
+    local eventType = payload.type
+    if eventType == "importProgress" then
+        local info = payload.payload or payload
+        self:_emitStatus(string.format(
+            "Realtime(%s) import chunk=%s added=%s",
+            tostring(mode),
+            tostring(info.chunk or "?"),
+            tostring(info.addedCount or 0)
+        ))
+    elseif eventType == "change" and type(payload.payload) == "table" then
+        self:_applyRemoteChanges(payload.payload)
+    end
+end
+
+function SyncEngine:_startRealtime()
+    if not self.sessionId then
+        return
+    end
+
+    local ok, mode, err = self.connectionManager:startRealtime(
+        self.sessionId,
+        self.lastReplaySeq,
+        function(eventPayload, transportMode)
+            self:_handleRealtimeEvent(eventPayload, transportMode)
+        end,
+        function(status)
+            local lower = string.lower(tostring(status))
+            if string.find(lower, "connected via", 1, true) then
+                self:_setRealtimeHealthy(true)
+            elseif string.find(lower, "closed", 1, true)
+                or string.find(lower, "error", 1, true)
+                or string.find(lower, "unavailable", 1, true)
+            then
+                self:_setRealtimeHealthy(false)
+            end
+            self:_emitStatus(status)
+        end
+    )
+
+    if ok then
+        self.realtimeMode = mode or "http"
+        self:_setRealtimeHealthy(false)
+        self:_emitStatus("Realtime mode: " .. tostring(self.realtimeMode))
+    else
+        self.realtimeMode = "http"
+        self:_setRealtimeHealthy(false)
+        self:_emitStatus("Realtime fallback to HTTP polling: " .. tostring(err or "unavailable"))
+    end
+end
+
 function SyncEngine:_startPolling()
     if self.running then
         return
@@ -121,6 +230,20 @@ function SyncEngine:_startPolling()
     self.running = true
     task.spawn(function()
         while self.running do
+            if self.realtimeHealthy then
+                if not self.pollingPausedForRealtime then
+                    self.pollingPausedForRealtime = true
+                    self:_emitStatus("Polling paused (realtime healthy, mode=" .. tostring(self.realtimeMode) .. ")")
+                end
+                task.wait(1.5)
+                continue
+            end
+
+            if self.pollingPausedForRealtime then
+                self.pollingPausedForRealtime = false
+                self:_emitStatus("Polling resumed (realtime unavailable, last mode=" .. tostring(self.realtimeMode) .. ")")
+            end
+
             local ok, changes, err, errCode = self.connectionManager:subscribeChanges(self.sessionId, self.cursor)
             if not ok then
                 if self:_isSessionMissingError(err, errCode) then
@@ -551,6 +674,35 @@ function SyncEngine:_observeInstance(instance)
     self:_emitStatus("Watching local changes: " .. instance:GetFullName())
 end
 
+function SyncEngine:_bindScriptEditorHooks()
+    if self.scriptEditorChangedConnection then
+        self.scriptEditorChangedConnection:Disconnect()
+        self.scriptEditorChangedConnection = nil
+    end
+
+    if not ScriptEditorService then
+        return
+    end
+
+    local changeSignal = ScriptEditorService.TextDocumentDidChange
+    if not changeSignal then
+        return
+    end
+
+    self.scriptEditorChangedConnection = changeSignal:Connect(function()
+        if self.suppressLocalChanges or (not self.sessionId) then
+            return
+        end
+
+        local instance = self.observedInstance
+        if not instance or not instance:IsA("LuaSourceContainer") then
+            return
+        end
+
+        self:_onObservedInstanceChanged(instance, "Source")
+    end)
+end
+
 function SyncEngine:_bindSelectionWatcher()
     if self.selectionConnection then
         self.selectionConnection:Disconnect()
@@ -577,6 +729,9 @@ end
 
 function SyncEngine:stop()
     self.running = false
+    self:_setRealtimeHealthy(false)
+    self.pollingPausedForRealtime = false
+    self.connectionManager:stopRealtime()
 
     if self.selectionConnection then
         self.selectionConnection:Disconnect()
@@ -586,6 +741,11 @@ function SyncEngine:stop()
     if self.instanceChangedConnection then
         self.instanceChangedConnection:Disconnect()
         self.instanceChangedConnection = nil
+    end
+
+    if self.scriptEditorChangedConnection then
+        self.scriptEditorChangedConnection:Disconnect()
+        self.scriptEditorChangedConnection = nil
     end
 
     if self.sessionId then
@@ -605,11 +765,13 @@ function SyncEngine:bootstrap()
 
     self.connectionManager:sendInitialized()
 
-    local openOk, openSession, openErr = self.connectionManager:openSession("src")
+    local openOk, openSession, openErr, projectTarget = self:_openSessionPreferred()
     if not openOk then
         self:_emitStatus("OpenSession failed: " .. tostring(openErr))
         return false
     end
+
+    self:_emitStatus("OpenSession target: " .. tostring(projectTarget))
 
     self.sessionId = openSession.sessionId
     self.cursor = tonumber(openSession.initialCursor) or 0
@@ -632,12 +794,13 @@ function SyncEngine:bootstrap()
     self.cursor = tonumber(tree.cursor) or self.cursor
     self:_bindTreeToStudioInstances(tree)
     self:_bindSelectionWatcher()
+    self:_bindScriptEditorHooks()
 
     self:_emitStatus(string.format("Connected (session=%s, cursor=%d)", tostring(self.sessionId), self.cursor))
+    self:_startRealtime()
     self:_startPolling()
 
     return true
 end
 
 return SyncEngine
-

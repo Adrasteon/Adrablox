@@ -10,6 +10,8 @@ if (-not (Test-Path $cargoExe)) {
 Push-Location $workspace
 try {
     Write-Host "Starting MCP server (manual mode)..."
+    $env:MCP_ENABLE_NATIVE_PROJECT_MANIFEST = 'true'
+    $env:MCP_NATIVE_PROJECT_MANIFEST_PATH = 'adrablox.project.json'
     & $cargoExe run -p mcp-server
 }
 finally {

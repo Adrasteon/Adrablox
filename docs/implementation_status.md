@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last updated: 2026-03-02
+Last updated: 2026-03-03
 
 ## External Stakeholder Summary
 
@@ -23,9 +23,12 @@ Last updated: 2026-03-02
 
 ## Ready
 
-- Core lifecycle and tool surface are implemented and working (`openSession`, `readTree`, `subscribeChanges`, `applyPatch`, `closeSession`).
+- Core lifecycle and tool surface are implemented and working (`openSession`, `readTree`, `subscribeChanges`, `applyPatch`, `importProgress`, `exportSnapshot`, `importSnapshot`, `closeSession`).
+- Resource methods are implemented (`resources/list`, `resources/read`) for MCP clients that browse/read resources.
+- Native project-manifest migration entrypoint is available (`adrablox.project.json`) with native resolver mode (`native-manifest`).
+- Explicit Rojo adapter mode selection is now deprecation-gated (`MCP_ENABLE_ROJO_ADAPTER_MODE=true` required for `MCP_PROJECT_ADAPTER_MODE=rojo`).
 - File-backed edit durability is enforced: mapped script `Source` writes persist to disk, with cursored updates and structured conflict handling.
-- Rojo compatibility API routes are available (`/api/rojo`, `/api/read`, `/api/subscribe`).
+- Rojo compatibility API routes are available as opt-in legacy endpoints (`MCP_ENABLE_LEGACY_ROJO_ROUTES=true` for `/api/rojo`, `/api/read`, `/api/subscribe`).
 - Validation baseline exists and has recent green runs across Rust tests, smoke flow, policy contract flow, and protocol contract flow.
 - CI is configured to run contract checks across Windows and protocol checks across Linux/macOS.
 - Integration reliability baseline is in CI (`integration roundtrip` + `integration reconnect-loop`) with a manual higher-iteration soak runner.
@@ -119,6 +122,9 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - `roblox.readTree`
   - `roblox.subscribeChanges`
   - `roblox.applyPatch`
+  - `roblox.importProgress`
+  - `roblox.exportSnapshot`
+  - `roblox.importSnapshot`
   - `roblox.closeSession`
 
 - State and mutation behavior

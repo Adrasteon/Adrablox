@@ -1,4 +1,4 @@
-﻿local PatchSerializer = {}
+local PatchSerializer = {}
 
 local function sanitizeSessionId(sessionId)
     return string.gsub(sessionId or "session", "[^%w]", "_")
@@ -30,4 +30,3 @@ function PatchSerializer.setProperty(instanceId, property, value)
 end
 
 return PatchSerializer
-

@@ -1,4 +1,5 @@
-﻿local HttpService = game:GetService("HttpService")
+local HttpService = game:GetService("HttpService")
+local MAX_STREAM_CLIENTS = 6
 
 local ConnectionManager = {}
 ConnectionManager.__index = ConnectionManager
@@ -6,10 +7,152 @@ ConnectionManager.__index = ConnectionManager
 function ConnectionManager.new(config)
     local self = setmetatable({}, ConnectionManager)
     self.endpoint = config.endpoint
+    self.wsAuthToken = config.wsAuthToken
     self.nextId = 1
     self.protocolVersion = "2025-11-25"
     self.connected = false
+    self.realtimeClient = nil
+    self.realtimeConnections = {}
+    self.transportMode = "http"
     return self
+end
+
+function ConnectionManager:_streamUrl(path)
+    local url = self.endpoint
+    url = string.gsub(url, "^http", "ws")
+    url = string.gsub(url, "/mcp$", path)
+    return url
+end
+
+function ConnectionManager:_closeRealtimeClient()
+    for _, connection in ipairs(self.realtimeConnections) do
+        if connection and connection.Disconnect then
+            connection:Disconnect()
+        end
+    end
+    self.realtimeConnections = {}
+
+    if self.realtimeClient then
+        pcall(function()
+            self.realtimeClient:Close()
+        end)
+        self.realtimeClient = nil
+    end
+
+    self.transportMode = "http"
+end
+
+function ConnectionManager:stopRealtime()
+    self:_closeRealtimeClient()
+end
+
+function ConnectionManager:startRealtime(sessionId, sinceSeq, onEvent, onStatus)
+    if self.realtimeClient and onStatus then
+        onStatus("Realtime stream client cap reached; closing least-recently-used stream")
+    end
+    self:_closeRealtimeClient()
+
+    if not HttpService.CreateWebStreamClient then
+        if onStatus then
+            onStatus("Realtime transport unavailable in this Studio runtime; using HTTP polling")
+        end
+        return false, "http", "CreateWebStreamClient unavailable"
+    end
+
+    local function attachClient(client, mode)
+        local activeClients = 0
+        if self.realtimeClient then
+            activeClients += 1
+        end
+        if activeClients >= MAX_STREAM_CLIENTS then
+            if onStatus then
+                onStatus("Realtime stream client cap reached; using HTTP polling")
+            end
+            pcall(function()
+                client:Close()
+            end)
+            return
+        end
+
+        self.realtimeClient = client
+        self.transportMode = mode
+
+        table.insert(self.realtimeConnections, client.Opened:Connect(function()
+            if onStatus then
+                onStatus("Realtime transport connected via " .. mode)
+            end
+            if mode == "ws" and sinceSeq and sinceSeq > 0 then
+                pcall(function()
+                    client:Send(HttpService:JSONEncode({ cmd = "replay", since = sinceSeq, limit = 200 }))
+                end)
+            end
+        end))
+
+        table.insert(self.realtimeConnections, client.MessageReceived:Connect(function(message)
+            local decodeOk, payload = pcall(function()
+                return HttpService:JSONDecode(message)
+            end)
+            if decodeOk and onEvent then
+                onEvent(payload, mode)
+            end
+        end))
+
+        table.insert(self.realtimeConnections, client.Error:Connect(function(_statusCode, errorMessage)
+            if onStatus then
+                onStatus("Realtime transport error: " .. tostring(errorMessage))
+            end
+        end))
+
+        table.insert(self.realtimeConnections, client.Closed:Connect(function()
+            if onStatus then
+                onStatus("Realtime transport closed; HTTP polling remains active")
+            end
+        end))
+    end
+
+    local wsHeaders = {}
+    if self.wsAuthToken and self.wsAuthToken ~= "" then
+        wsHeaders["Authorization"] = "Bearer " .. self.wsAuthToken
+        wsHeaders["Sec-WebSocket-Protocol"] = "bearer," .. self.wsAuthToken
+    end
+
+    local wsClientOk, wsClient = pcall(function()
+        return HttpService:CreateWebStreamClient(Enum.WebStreamClientType.WebSocket, {
+            Url = self:_streamUrl("/mcp-stream/ws-rpc"),
+            Method = "GET",
+            Headers = wsHeaders,
+        })
+    end)
+
+    if wsClientOk and wsClient then
+        attachClient(wsClient, "ws")
+        return true, "ws", nil
+    end
+
+    if onStatus then
+        onStatus("WebSocket realtime unavailable; trying RawStream fallback")
+    end
+
+    local rawClientOk, rawClient = pcall(function()
+        return HttpService:CreateWebStreamClient(Enum.WebStreamClientType.RawStream, {
+            Url = self:_streamUrl("/mcp-stream"),
+            Method = "GET",
+        })
+    end)
+
+    if rawClientOk and rawClient then
+        attachClient(rawClient, "rawstream")
+        return true, "rawstream", nil
+    end
+
+    if onStatus then
+        onStatus("Realtime transport unavailable; using HTTP polling")
+    end
+    return false, "http", "WebSocket and RawStream clients unavailable"
+end
+
+function ConnectionManager:getTransportMode()
+    return self.transportMode
 end
 
 function ConnectionManager:_request(method, params)
@@ -216,5 +359,4 @@ function ConnectionManager:callNormalized(name, arguments)
 end
 
 return ConnectionManager
-
 

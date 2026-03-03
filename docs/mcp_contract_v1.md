@@ -87,7 +87,10 @@ Server declares at minimum:
 - `roblox.readTree`
 - `roblox.subscribeChanges`
 - `roblox.applyPatch`
+- `roblox.importProgress`
 - `roblox.closeSession`
+- `roblox.exportSnapshot`
+- `roblox.importSnapshot`
 
 Notes:
 
@@ -155,9 +158,7 @@ Input:
 
 ```json
 {
-  "projectPath": "D:/workspace/default.project.json",
-  "workspaceRoot": "D:/workspace",
-  "requestedCompatibilityVersion": "1.x"
+  "projectPath": "D:/workspace/adrablox.project.json"
 }
 ```
 
@@ -166,17 +167,21 @@ Result:
 ```json
 {
   "sessionId": "sess_abc123",
-  "serverVersion": "0.1.0",
-  "compatibilityVersion": "1.x",
   "rootInstanceId": "ref_root",
-  "initialCursor": "42"
+  "initialCursor": "42",
+  "requestedProjectPath": "adrablox.project.json",
+  "resolvedProjectPath": "default.project.json",
+  "compatibilityMode": "native-manifest",
+  "nativeProjectManifestPath": "adrablox.project.json",
+  "projectName": "Adrablox Workspace"
 }
 ```
 
 Validation:
 
-- Path must exist and resolve to a valid Rojo project.
-- Reject if incompatible compatibility version.
+- When native manifest mode is enabled, `projectPath` may target `adrablox.project.json`; server resolves adapter path via `session.defaultProjectPath` / `compatibility.rojoProjectPath`.
+- Native manifest fallback order is: `session.defaultProjectPath` → `compatibility.rojoProjectPath` → `default.project.json`.
+- If native manifest is not enabled (or no manifest mapping applies), server uses direct project path resolution (`native-direct`).
 
 ## 7.2 `roblox.readTree`
 
@@ -316,7 +321,35 @@ Idempotency rules:
 - `patchId` must be unique per `sessionId`.
 - Duplicate `patchId` returns same effective result without reapplying side effects.
 
-## 7.5 `roblox.closeSession`
+## 7.5 `roblox.importProgress`
+
+Purpose: Poll import progress summary for a session (fallback when push stream is unavailable).
+
+Input:
+
+```json
+{
+  "sessionId": "sess_abc123"
+}
+```
+
+Result:
+
+```json
+{
+  "sessionId": "sess_abc123",
+  "cursor": "46",
+  "changeBatches": 12
+}
+```
+
+Behavior:
+
+- Side-effect free read-only operation.
+- Returns latest known session cursor and accumulated change-batch count.
+- Returns `SESSION_NOT_FOUND` when `sessionId` does not exist.
+
+## 7.6 `roblox.closeSession`
 
 Purpose: Release resources and stop updates for the session.
 
@@ -427,15 +460,16 @@ For conflict handling, apply the same pattern:
 
 ## 10) Compatibility with Existing Rojo Flows
 
-Compatibility endpoints (adapter mode) should preserve:
+Compatibility endpoints (legacy adapter mode; enable with `MCP_ENABLE_LEGACY_ROJO_ROUTES=true`) should preserve:
 
-- `GET /api/rojo`
+- `POST /api/rojo`
 - `GET /api/read/{instanceId}`
 - `GET /api/subscribe/{sessionId}/{cursor}`
 
 Mapping requirement:
 
 - Responses must remain semantically equivalent to current Rojo output where practical.
+- Explicit `MCP_PROJECT_ADAPTER_MODE=rojo` is deprecation-gated and requires `MCP_ENABLE_ROJO_ADAPTER_MODE=true`.
 
 ## 11) Non-Functional Targets (v1)
 
@@ -447,7 +481,7 @@ Mapping requirement:
 ## 12) Implementation Checklist
 
 - [x] Implement lifecycle (`initialize`, `notifications/initialized`).
-- [x] Implement tool handlers (`openSession`, `readTree`, `subscribeChanges`, `applyPatch`, `closeSession`).
+- [x] Implement tool handlers (`openSession`, `readTree`, `subscribeChanges`, `applyPatch`, `importProgress`, `closeSession`).
 - [x] Add idempotency store for `patchId`.
 - [x] Add base cursor conflict checks and conflict detail payloads.
 - [x] Add initial Studio plugin integration path for connect/read/subscribe/apply/rollback.

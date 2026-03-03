@@ -33,12 +33,17 @@ If this passes, the server and protocol flow are functional on your machine.
 
 Release packaging automation is in place for server + plugin source + installable plugin artifacts, with strict validation flows available.
 
+Project config default (current):
+
+- Preferred session entry is `adrablox.project.json`.
+- Native-manifest mode resolves to compatibility project path (`default.project.json`) when present.
+
 1. Start server from VS Code task:
    - `Day-0: 2) Run Server (manual Studio session)`
 2. Install/load the Studio plugin from the local plugin source (dev workflow).
 3. In plugin UI, connect to:
    - `http://127.0.0.1:44877/mcp`
-4. Edit a mapped script in `src` from VS Code.
+4. Edit a mapped script under the project mapping (for baseline repo: `src`, `src/workspace`, `src/shared`, `src/client`) from VS Code.
 5. Confirm the change appears in Studio and no conflict is reported.
 
 ## Simplest Future UX (Target)

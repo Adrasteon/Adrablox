@@ -1,5 +1,5 @@
 param(
-    [string]$ProjectPath = "src",
+    [string]$ProjectPath = "adrablox.project.json",
     [string]$Url = "http://127.0.0.1:44877/mcp",
     [switch]$Pretty
 )

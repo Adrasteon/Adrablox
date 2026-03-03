@@ -59,7 +59,10 @@ export class WorkspaceTreeProvider implements vscode.TreeDataProvider<WorkspaceT
     };
 
     if (!element) {
-      const rootId = state.activeRootInstanceId ?? snapshot.instanceId;
+      const preferredRootId = state.activeRootInstanceId;
+      const rootId = preferredRootId && snapshot.instances[preferredRootId]
+        ? preferredRootId
+        : snapshot.instanceId;
       const rootItem = getItem(rootId);
       return rootItem ? [rootItem] : [];
     }

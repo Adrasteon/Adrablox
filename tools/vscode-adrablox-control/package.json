@@ -133,7 +133,7 @@
         },
         "adrablox.session.projectPath": {
           "type": "string",
-          "default": "src",
+          "default": "adrablox.project.json",
           "description": "Project path sent to roblox.openSession when using direct RPC transport."
         }
       }

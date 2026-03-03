@@ -201,7 +201,7 @@ function getTransportConfig(): { mode: 'rpc-first' | 'script-only'; enableFallba
   const config = vscode.workspace.getConfiguration('adrablox');
   const mode = config.get<'rpc-first' | 'script-only'>('transport.mode', 'rpc-first');
   const enableFallback = config.get<boolean>('transport.enableFallback', true);
-  const projectPath = config.get<string>('session.projectPath', 'src');
+  const projectPath = config.get<string>('session.projectPath', 'adrablox.project.json');
   return {
     mode,
     enableFallback,
@@ -344,15 +344,37 @@ export function registerPhase1Commands(context: vscode.ExtensionContext, deps: C
           return;
         }
 
+        const initialTree = await executeCoreAction(
+          'Read Tree (initial)',
+          'studio_action_scripts/actions/read_tree.ps1',
+          ['-SessionId', session.sessionId, '-InstanceId', session.rootInstanceId, '-Pretty'],
+          () => deps.mcpClient.readTree(session.sessionId, session.rootInstanceId),
+        );
+
+        const tree = initialTree.result.success
+          ? (initialTree.result.transportMode === 'rpc'
+            ? (initialTree.payload as WorkspaceTreeSnapshot | null)
+            : parseReadTreeResult(initialTree.result.stdout))
+          : null;
+
         deps.store.patch({
           serverStatus: 'healthy',
           activeSessionId: session.sessionId,
           activeRootInstanceId: session.rootInstanceId,
           activeTargetInstanceId: session.rootInstanceId,
-          workspaceTree: null,
+          workspaceTree: tree,
+          lastTreeCursor: tree?.cursor ?? null,
         });
         refreshAllViews(deps);
-        vscode.window.showInformationMessage(`Session opened: ${session.sessionId}`);
+
+        if (!initialTree.result.success || !tree) {
+          const hint = initialTree.remediationHint ? ` ${initialTree.remediationHint}` : '';
+          vscode.window.showWarningMessage(
+            `Session opened: ${session.sessionId}. Initial tree load failed.${hint}`,
+          );
+        } else {
+          vscode.window.showInformationMessage(`Session opened: ${session.sessionId}`);
+        }
       } catch (err) {
         vscode.window.showErrorMessage((err as Error).message);
       }

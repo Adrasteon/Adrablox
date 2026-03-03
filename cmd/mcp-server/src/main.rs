@@ -6,7 +6,6 @@ use axum::{
     Json, Router,
 };
 use mcp_core::{initialize_result, invalid_request, InitializeParams, JsonRpcRequest};
-use rojo_adapter::RojoAdapter;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Map, Value};
 use std::{
@@ -18,13 +17,15 @@ use std::{
 };
 use tokio::sync::broadcast;
 use tracing::info;
+mod adapters;
 mod config;
+use adapters::{select_project_adapter, ProjectAdapter};
 use config::Config;
 mod ws;
 
 #[derive(Clone)]
 struct AppState {
-    adapter: RojoAdapter,
+    adapter: Arc<dyn ProjectAdapter>,
     server_version: String,
     sessions: Arc<Mutex<HashMap<String, SessionState>>>,
     broadcaster: broadcast::Sender<serde_json::Value>,
@@ -129,9 +130,17 @@ async fn main() -> anyhow::Result<()> {
 
     // Load runtime configuration (env-driven). Defaults favor localhost development.
     let cfg = Config::from_env();
+    let (adapter, adapter_kind) = select_project_adapter(&cfg);
+    info!(
+        project_adapter_mode = %cfg.project_adapter_mode,
+        rojo_adapter_mode_enabled = %cfg.enable_rojo_adapter_mode,
+        selected_adapter = %adapter_kind,
+        legacy_rojo_routes = %cfg.enable_legacy_rojo_routes,
+        "project adapter selected"
+    );
 
     let state = Arc::new(AppState {
-        adapter: RojoAdapter::new(),
+        adapter,
         server_version: env!("CARGO_PKG_VERSION").to_string(),
         sessions: Arc::new(Mutex::new(HashMap::new())),
         broadcaster: bcast_tx,
@@ -139,21 +148,25 @@ async fn main() -> anyhow::Result<()> {
         config: cfg.clone(),
     });
 
-    let app = Router::new()
+    let mut app = Router::new()
         .route("/health", get(health))
         .route("/mcp", post(handle_mcp))
-        .route("/api/rojo", post(handle_rojo_open))
-        .route("/api/read/:instance_id", get(handle_rojo_read_by_instance))
-        .route(
-            "/api/read/:session_id/:instance_id",
-            get(handle_rojo_read_by_session_and_instance),
-        )
-        .route("/api/subscribe/:session_id", get(handle_rojo_subscribe))
-        .route(
-            "/api/subscribe/:session_id/:cursor",
-            get(handle_rojo_subscribe_with_cursor),
-        )
         .route("/mcp/replay", get(handle_mcp_replay));
+
+    if cfg.enable_legacy_rojo_routes {
+        app = app
+            .route("/api/rojo", post(handle_rojo_open))
+            .route("/api/read/:instance_id", get(handle_rojo_read_by_instance))
+            .route(
+                "/api/read/:session_id/:instance_id",
+                get(handle_rojo_read_by_session_and_instance),
+            )
+            .route("/api/subscribe/:session_id", get(handle_rojo_subscribe))
+            .route(
+                "/api/subscribe/:session_id/:cursor",
+                get(handle_rojo_subscribe_with_cursor),
+            );
+    }
     let app = ws::register_ws_routes(app, state.clone(), cfg.clone());
     let app = app.with_state(state.clone());
 
@@ -597,14 +610,16 @@ fn apply_snapshot_to_session(
 }
 
 fn open_session_for_project(state: &AppState, project_path: &str) -> Result<Value, String> {
+    let resolved = state.adapter.resolve_project_target(project_path)?;
+
     let mut result = state
         .adapter
-        .open_session(project_path)
+        .open_session(&resolved.adapter_project_path)
         .map_err(|err| err.to_string())?;
 
     let snapshot = state
         .adapter
-        .snapshot_project(project_path)
+        .snapshot_project(&resolved.adapter_project_path)
         .map_err(|err| err.to_string())?;
 
     let session_id = result
@@ -618,10 +633,31 @@ fn open_session_for_project(state: &AppState, project_path: &str) -> Result<Valu
     if let Some(map) = result.as_object_mut() {
         map.insert("sessionCapabilities".to_string(), session_capabilities_payload());
         map.insert("fileBackedInstanceIds".to_string(), json!(file_backed_ids));
+        map.insert(
+            "requestedProjectPath".to_string(),
+            json!(resolved.requested_path),
+        );
+        map.insert(
+            "resolvedProjectPath".to_string(),
+            json!(resolved.adapter_project_path),
+        );
+        map.insert(
+            "compatibilityMode".to_string(),
+            json!(resolved.compatibility_mode),
+        );
+        if let Some(manifest_path) = &resolved.native_manifest_path {
+            map.insert("nativeProjectManifestPath".to_string(), json!(manifest_path));
+        }
+        if let Some(project_name) = &resolved.project_name {
+            map.insert("projectName".to_string(), json!(project_name));
+        }
     }
 
     let mut sessions = state.sessions.lock().expect("session lock poisoned");
-    sessions.insert(session_id, make_session_from_snapshot(project_path, snapshot));
+    sessions.insert(
+        session_id,
+        make_session_from_snapshot(&resolved.adapter_project_path, snapshot),
+    );
 
     Ok(result)
 }
@@ -728,6 +764,83 @@ fn subscribe_result(session: &SessionState, requested_cursor: u64, session_id: &
         "sessionCapabilities": session_capabilities_payload(),
         "fileBackedInstanceIds": file_backed_ids
     })
+}
+
+fn resources_list_result(state: &AppState) -> Value {
+    let sessions = state.sessions.lock().expect("session lock poisoned");
+    let mut resources: Vec<Value> = vec![];
+
+    for (session_id, session) in sessions.iter() {
+        let root_uri = format!("roblox://session/{}/tree/{}", session_id, session.root_id);
+        resources.push(json!({
+            "uri": root_uri,
+            "name": format!("{} tree", session_id),
+            "description": "Tree snapshot resource rooted at session root",
+            "mimeType": "application/json"
+        }));
+
+        let status_uri = format!("roblox://session/{}/status", session_id);
+        resources.push(json!({
+            "uri": status_uri,
+            "name": format!("{} status", session_id),
+            "description": "Session status metadata",
+            "mimeType": "application/json"
+        }));
+    }
+
+    json!({ "resources": resources })
+}
+
+fn resource_read_payload(state: &AppState, uri: &str) -> Result<Value, String> {
+    let parts: Vec<&str> = uri.split('/').collect();
+    if parts.len() < 5 || parts[0] != "roblox:" || parts[2] != "session" {
+        return Err("unsupported resource uri".to_string());
+    }
+
+    let session_id = parts[3];
+    if session_id.is_empty() {
+        return Err("sessionId is required in resource uri".to_string());
+    }
+
+    let mut sessions = state.sessions.lock().expect("session lock poisoned");
+    let session = match sessions.get_mut(session_id) {
+        Some(value) => value,
+        None => return Err(SESSION_NOT_FOUND_CODE.to_string()),
+    };
+
+    refresh_session_from_source(state, session);
+
+    if parts.len() >= 6 && parts[4] == "tree" {
+        let instance_id = parts[5];
+        let result = read_tree_result(session, Some(instance_id), session_id)
+            .map_err(|_| "instance does not exist".to_string())?;
+        return Ok(json!({
+            "contents": [{
+                "uri": uri,
+                "mimeType": "application/json",
+                "text": result.to_string()
+            }]
+        }));
+    }
+
+    if parts.len() == 5 && parts[4] == "status" {
+        let status = json!({
+            "sessionId": session_id,
+            "rootInstanceId": session.root_id,
+            "cursor": session.cursor.to_string(),
+            "serverVersion": state.server_version,
+            "projectPath": session.project_path
+        });
+        return Ok(json!({
+            "contents": [{
+                "uri": uri,
+                "mimeType": "application/json",
+                "text": status.to_string()
+            }]
+        }));
+    }
+
+    Err("unsupported resource uri".to_string())
 }
 
 fn resolve_session_id(requested: Option<&str>, sessions: &HashMap<String, SessionState>) -> Option<String> {
@@ -893,6 +1006,51 @@ pub(crate) async fn handle_mcp_request(
                 })),
             )
         }
+        "resources/list" => (
+            StatusCode::OK,
+            Json(json!({
+                "jsonrpc": "2.0",
+                "id": id,
+                "result": resources_list_result(&state)
+            })),
+        ),
+        "resources/read" => {
+            let uri = request
+                .params
+                .get("uri")
+                .and_then(Value::as_str)
+                .or_else(|| {
+                    request
+                        .params
+                        .get("arguments")
+                        .and_then(|v| v.get("uri"))
+                        .and_then(Value::as_str)
+                })
+                .unwrap_or("");
+
+            if uri.is_empty() {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(json!(invalid_request(id, "uri is required"))),
+                );
+            }
+
+            match resource_read_payload(&state, uri) {
+                Ok(result) => (
+                    StatusCode::OK,
+                    Json(json!({
+                        "jsonrpc": "2.0",
+                        "id": id,
+                        "result": result
+                    })),
+                ),
+                Err(code) if code == SESSION_NOT_FOUND_CODE => session_not_found_rpc(id),
+                Err(message) => (
+                    StatusCode::BAD_REQUEST,
+                    Json(json!(invalid_request(id, message.as_str()))),
+                ),
+            }
+        }
         "tools/list" => {
             // Provide sanitized tool names that conform to the extension's
             // allowed pattern ([a-z0-9_-]) while mapping back to the
@@ -902,6 +1060,7 @@ pub(crate) async fn handle_mcp_request(
                 ("roblox.readTree", "Read a tree/subtree snapshot"),
                 ("roblox.subscribeChanges", "Subscribe to incremental changes"),
                 ("roblox.applyPatch", "Apply a mutation patch"),
+                ("roblox.importProgress", "Poll import progress for a session"),
                 ("roblox.closeSession", "Close session"),
                 ("roblox.exportSnapshot", "Export a session snapshot"),
                 ("roblox.importSnapshot", "Import a session snapshot"),
@@ -940,6 +1099,7 @@ pub(crate) async fn handle_mcp_request(
                 ("roblox.readTree", "Read a tree/subtree snapshot"),
                 ("roblox.subscribeChanges", "Subscribe to incremental changes"),
                 ("roblox.applyPatch", "Apply a mutation patch"),
+                ("roblox.importProgress", "Poll import progress for a session"),
                 ("roblox.closeSession", "Close session"),
                 ("roblox.exportSnapshot", "Export a session snapshot"),
                 ("roblox.importSnapshot", "Import a session snapshot"),
@@ -1483,7 +1643,7 @@ mod tests {
     fn test_app_state() -> AppState {
         let (tx, _rx) = broadcast::channel(16);
         AppState {
-            adapter: rojo_adapter::RojoAdapter::new(),
+            adapter: Arc::new(rojo_adapter::RojoAdapter::new()),
             server_version: "test".to_string(),
             sessions: Arc::new(Mutex::new(HashMap::new())),
             broadcaster: tx,
