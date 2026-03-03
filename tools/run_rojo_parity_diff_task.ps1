@@ -65,7 +65,7 @@ try {
     Remove-Item $mcpOut, $mcpErr, $rojoOut, $rojoErr -ErrorAction SilentlyContinue
 
     Write-Host "Starting MCP server..."
-    $mcpServer = Start-Process -FilePath $cargoExe -ArgumentList @('run','-p','mcp-server') -WorkingDirectory $workspace -PassThru -RedirectStandardOutput $mcpOut -RedirectStandardError $mcpErr
+    $mcpServer = Start-Process -FilePath $cargoExe -ArgumentList @('run','-p','mcp-server','--features','rojo-compat') -WorkingDirectory $workspace -PassThru -RedirectStandardOutput $mcpOut -RedirectStandardError $mcpErr
 
     Write-Host "Starting Rojo serve..."
     $rojoServer = Start-Process -FilePath $rojoExe -ArgumentList @('serve',$ProjectFile,'--address','127.0.0.1','--port','34872') -WorkingDirectory $workspace -PassThru -RedirectStandardOutput $rojoOut -RedirectStandardError $rojoErr

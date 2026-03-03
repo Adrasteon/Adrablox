@@ -92,6 +92,12 @@ jobs:
           $cargoExe = Join-Path $env:USERPROFILE '.cargo\bin\cargo.exe'
           & $cargoExe test
 
+      - name: Run mcp-server rojo-compat tests
+        shell: pwsh
+        run: |
+          $cargoExe = Join-Path $env:USERPROFILE '.cargo\bin\cargo.exe'
+          & $cargoExe test -p mcp-server --features rojo-compat
+
       - name: Run MCP smoke task
         shell: pwsh
         run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_smoke_task.ps1
@@ -342,6 +348,9 @@ jobs:
 
       - name: Run cargo tests
         run: cargo test
+
+      - name: Run mcp-server rojo-compat tests
+        run: cargo test -p mcp-server --features rojo-compat
 
       - name: Build rbx_write converter
         run: |

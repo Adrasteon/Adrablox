@@ -11,7 +11,7 @@ if (-not (Test-Path $cargoExe)) {
 Push-Location $workspace
 try {
     Write-Host "Starting MCP server..."
-    $server = Start-Process -FilePath $cargoExe -ArgumentList @('run','-p','mcp-server') -WorkingDirectory $workspace -PassThru
+    $server = Start-Process -FilePath $cargoExe -ArgumentList @('run','-p','mcp-server','--features','rojo-compat') -WorkingDirectory $workspace -PassThru
 
     $ready = $false
     for ($i = 0; $i -lt 90; $i++) {

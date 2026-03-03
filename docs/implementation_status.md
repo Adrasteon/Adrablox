@@ -31,6 +31,7 @@ Last updated: 2026-03-03
 - Adapter `auto` mode now defaults to native and only permits Rojo selection when the same Rojo adapter gate is enabled.
 - Rojo adapter selection/delegation is isolated in a dedicated compatibility boundary module (`cmd/mcp-server/src/compat_rojo.rs`) to simplify future removal.
 - Rojo compatibility now requires compile-time feature enablement (`mcp-server` cargo feature `rojo-compat`); default build excludes Rojo linkage.
+- CI/tooling now treats native-only as the default lane and runs Rojo compatibility in explicit `rojo-compat` invocations.
 - File-backed edit durability is enforced: mapped script `Source` writes persist to disk, with cursored updates and structured conflict handling.
 - Rojo compatibility API routes are available as opt-in legacy endpoints (`MCP_ENABLE_LEGACY_ROJO_ROUTES=true` for `/api/rojo`, `/api/read`, `/api/subscribe`).
 - Legacy Rojo compatibility API routes are also compile-time gated and only built when `mcp-server` is compiled with cargo feature `rojo-compat`.
