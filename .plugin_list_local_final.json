@@ -1,0 +1,57 @@
+﻿[
+    {
+        "FullName":  "C:\\Users\\marti\\AppData\\Local\\Roblox\\Plugins\\AdrabloxMCP_unpacked_backup",
+        "Attributes":  16,
+        "Length":  null
+    },
+    {
+        "FullName":  "C:\\Users\\marti\\AppData\\Local\\Roblox\\Plugins\\AdrabloxMCP.rbxm",
+        "Attributes":  32,
+        "Length":  533
+    },
+    {
+        "FullName":  "C:\\Users\\marti\\AppData\\Local\\Roblox\\Plugins\\AdrabloxMCP_unpacked_backup\\PluginMain",
+        "Attributes":  16,
+        "Length":  null
+    },
+    {
+        "FullName":  "C:\\Users\\marti\\AppData\\Local\\Roblox\\Plugins\\AdrabloxMCP_unpacked_backup\\ui",
+        "Attributes":  16,
+        "Length":  null
+    },
+    {
+        "FullName":  "C:\\Users\\marti\\AppData\\Local\\Roblox\\Plugins\\AdrabloxMCP_unpacked_backup\\PluginMain\\src",
+        "Attributes":  16,
+        "Length":  null
+    },
+    {
+        "FullName":  "C:\\Users\\marti\\AppData\\Local\\Roblox\\Plugins\\AdrabloxMCP_unpacked_backup\\PluginMain\\PluginMain.lua",
+        "Attributes":  32,
+        "Length":  122
+    },
+    {
+        "FullName":  "C:\\Users\\marti\\AppData\\Local\\Roblox\\Plugins\\AdrabloxMCP_unpacked_backup\\PluginMain\\src\\ConnectionManager.lua",
+        "Attributes":  32,
+        "Length":  6498
+    },
+    {
+        "FullName":  "C:\\Users\\marti\\AppData\\Local\\Roblox\\Plugins\\AdrabloxMCP_unpacked_backup\\PluginMain\\src\\init.lua",
+        "Attributes":  32,
+        "Length":  862
+    },
+    {
+        "FullName":  "C:\\Users\\marti\\AppData\\Local\\Roblox\\Plugins\\AdrabloxMCP_unpacked_backup\\PluginMain\\src\\PatchSerializer.lua",
+        "Attributes":  32,
+        "Length":  769
+    },
+    {
+        "FullName":  "C:\\Users\\marti\\AppData\\Local\\Roblox\\Plugins\\AdrabloxMCP_unpacked_backup\\PluginMain\\src\\SyncEngine.lua",
+        "Attributes":  32,
+        "Length":  20848
+    },
+    {
+        "FullName":  "C:\\Users\\marti\\AppData\\Local\\Roblox\\Plugins\\AdrabloxMCP_unpacked_backup\\ui\\Widget.lua",
+        "Attributes":  32,
+        "Length":  7660
+    }
+]

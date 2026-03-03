@@ -7,3 +7,9 @@ Thumbs.db
 *.rbxlx
 tools/parity_diff_report*.json
 tools/parity_diff_summary*.json
+snapshot.ui.json
+studio_action_scripts/out/snapshot*.json
+.vscode-devhost-userdata/
+dist/dev-2026-03-02-ff99220/
+tools/vscode-adrablox-control/node_modules/
+tools/vscode-adrablox-control/out/

@@ -1,30 +1,56 @@
 use axum::{
-    extract::{Path, Query, State},
-    extract::{WebSocketUpgrade, ws::{Message, WebSocket}},
+    extract::{Query, State},
     http::StatusCode,
     response::IntoResponse,
     routing::{get, post},
     Json, Router,
 };
+#[cfg(feature = "rojo-compat")]
+use axum::extract::Path;
 use mcp_core::{initialize_result, invalid_request, InitializeParams, JsonRpcRequest};
-use rojo_adapter::RojoAdapter;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Map, Value};
 use std::{
+    collections::VecDeque,
     collections::HashMap,
     fs,
     net::SocketAddr,
     sync::{Arc, Mutex},
 };
 use tokio::sync::broadcast;
-use tracing::info;
+use tracing::{info, warn};
+mod adapters;
+mod compat_rojo;
+mod config;
+mod project_snapshot;
+use adapters::{select_project_adapter, ProjectAdapter};
+use config::Config;
+use project_snapshot::ProjectSnapshot;
+mod ws;
 
 #[derive(Clone)]
 struct AppState {
-    adapter: RojoAdapter,
+    adapter: Arc<dyn ProjectAdapter>,
     server_version: String,
     sessions: Arc<Mutex<HashMap<String, SessionState>>>,
     broadcaster: broadcast::Sender<serde_json::Value>,
+    replay: Arc<Mutex<ReplayState>>,
+    config: Config,
+}
+
+#[derive(Debug, Clone)]
+struct ReplayState {
+    next_seq: u64,
+    events: VecDeque<Value>,
+}
+
+impl ReplayState {
+    fn new() -> Self {
+        Self {
+            next_seq: 0,
+            events: VecDeque::new(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -73,15 +99,23 @@ struct SessionState {
 }
 
 #[derive(Debug, Deserialize)]
+#[cfg(feature = "rojo-compat")]
 struct RojoOpenRequest {
     #[serde(rename = "projectPath")]
     project_path: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
+#[cfg(feature = "rojo-compat")]
 struct ReadQuery {
     #[serde(rename = "sessionId")]
     session_id: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ReplayQuery {
+    since: Option<String>,
+    limit: Option<usize>,
 }
 
 const SESSION_NOT_FOUND_CODE: &str = "SESSION_NOT_FOUND";
@@ -101,40 +135,81 @@ async fn main() -> anyhow::Result<()> {
 
     let (bcast_tx, _) = broadcast::channel(128);
 
+    // Load runtime configuration (env-driven). Defaults favor localhost development.
+    let cfg = Config::from_env();
+    let rojo_adapter_mode_effective = cfg!(feature = "rojo-compat") && cfg.enable_rojo_adapter_mode;
+    if cfg.enable_rojo_adapter_mode && !cfg!(feature = "rojo-compat") {
+        warn!(
+            "MCP_ENABLE_ROJO_ADAPTER_MODE is set, but this binary was built without rojo-compat; ignoring flag"
+        );
+    }
+    let (adapter, adapter_kind) = select_project_adapter(&cfg);
+    info!(
+        project_adapter_mode = %cfg.project_adapter_mode,
+        rojo_compat_compiled = %cfg!(feature = "rojo-compat"),
+        rojo_adapter_mode_requested = %cfg.enable_rojo_adapter_mode,
+        rojo_adapter_mode_effective = %rojo_adapter_mode_effective,
+        selected_adapter = %adapter_kind,
+        legacy_rojo_routes_compiled = %cfg!(feature = "rojo-compat"),
+        legacy_rojo_routes_enabled = %cfg.enable_legacy_rojo_routes,
+        "project adapter selected"
+    );
+
     let state = Arc::new(AppState {
-        adapter: RojoAdapter::new(),
+        adapter,
         server_version: env!("CARGO_PKG_VERSION").to_string(),
         sessions: Arc::new(Mutex::new(HashMap::new())),
         broadcaster: bcast_tx,
+        replay: Arc::new(Mutex::new(ReplayState::new())),
+        config: cfg.clone(),
     });
 
-    let app = Router::new()
+    let app = Router::<Arc<AppState>>::new()
         .route("/health", get(health))
         .route("/mcp", post(handle_mcp))
-        .route("/mcp-stream", get(handle_ws_upgrade))
-        .route("/api/rojo", post(handle_rojo_open))
-        .route("/api/read/:instance_id", get(handle_rojo_read_by_instance))
-        .route(
-            "/api/read/:session_id/:instance_id",
-            get(handle_rojo_read_by_session_and_instance),
-        )
-        .route("/api/subscribe/:session_id", get(handle_rojo_subscribe))
-        .route(
-            "/api/subscribe/:session_id/:cursor",
-            get(handle_rojo_subscribe_with_cursor),
-        )
-        .with_state(state);
+        .route("/mcp/replay", get(handle_mcp_replay));
+    let app = register_legacy_rojo_routes(app, &cfg);
+    let app = ws::register_ws_routes(app, state.clone(), cfg.clone());
+    let app = app.with_state(state.clone());
 
-    let addr: SocketAddr = "127.0.0.1:44877".parse()?;
+    let addr: SocketAddr = cfg.bind_addr.parse()?;
     info!(%addr, "mcp-server listening");
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await?;
+    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await?;
     Ok(())
 }
 
 async fn health() -> impl IntoResponse {
     Json(json!({"ok": true, "service": "mcp-server"}))
+}
+
+#[cfg(feature = "rojo-compat")]
+fn register_legacy_rojo_routes(
+    mut app: Router<Arc<AppState>>,
+    cfg: &Config,
+) -> Router<Arc<AppState>> {
+    if cfg.enable_legacy_rojo_routes {
+        app = app
+            .route("/api/rojo", post(handle_rojo_open))
+            .route("/api/read/:instance_id", get(handle_rojo_read_by_instance))
+            .route(
+                "/api/read/:session_id/:instance_id",
+                get(handle_rojo_read_by_session_and_instance),
+            )
+            .route("/api/subscribe/:session_id", get(handle_rojo_subscribe))
+            .route(
+                "/api/subscribe/:session_id/:cursor",
+                get(handle_rojo_subscribe_with_cursor),
+            );
+    }
+
+    app
+}
+
+#[cfg(not(feature = "rojo-compat"))]
+fn register_legacy_rojo_routes(app: Router<Arc<AppState>>, _cfg: &Config) -> Router<Arc<AppState>> {
+    app
 }
 
 fn tool_ok(id: Value, payload: Value) -> (StatusCode, Json<Value>) {
@@ -197,6 +272,7 @@ fn session_not_found_rpc(id: Value) -> (StatusCode, Json<Value>) {
     )
 }
 
+#[cfg(feature = "rojo-compat")]
 fn session_not_found_http() -> (StatusCode, Json<Value>) {
     (
         StatusCode::BAD_REQUEST,
@@ -260,7 +336,7 @@ fn make_default_session() -> SessionState {
     }
 }
 
-fn make_session_from_snapshot(project_path: &str, snapshot: rojo_adapter::ProjectSnapshot) -> SessionState {
+fn make_session_from_snapshot(project_path: &str, snapshot: ProjectSnapshot) -> SessionState {
     let instances = snapshot
         .instances
         .into_iter()
@@ -391,7 +467,7 @@ fn session_capabilities_payload() -> Value {
     })
 }
 
-fn validate_snapshot(snapshot: &rojo_adapter::ProjectSnapshot) -> Vec<String> {
+fn validate_snapshot(snapshot: &ProjectSnapshot) -> Vec<String> {
     let mut issues = Vec::new();
     if snapshot.instances.is_empty() {
         issues.push("snapshot has no instances".to_string());
@@ -407,7 +483,85 @@ fn validate_snapshot(snapshot: &rojo_adapter::ProjectSnapshot) -> Vec<String> {
     issues
 }
 
-fn apply_snapshot_to_session(session: &mut SessionState, snapshot: rojo_adapter::ProjectSnapshot, chunk_size: usize, broadcaster: Option<&broadcast::Sender<serde_json::Value>>) -> (u64, usize, usize, usize) {
+fn normalize_event_to_envelope(seq: u64, event: Value) -> Value {
+    let mut payload = match event {
+        Value::Object(map) => map,
+        other => {
+            let mut map = Map::new();
+            map.insert("data".to_string(), other);
+            map
+        }
+    };
+
+    let event_type = payload
+        .get("type")
+        .and_then(Value::as_str)
+        .unwrap_or("event")
+        .to_string();
+    let session_id = payload
+        .get("sessionId")
+        .and_then(Value::as_str)
+        .map(|s| s.to_string());
+
+    payload.remove("type");
+    payload.remove("sessionId");
+
+    let mut envelope = json!({
+        "seq": seq,
+        "type": event_type,
+        "payload": Value::Object(payload),
+    });
+
+    if let Some(session_id) = session_id {
+        envelope["sessionId"] = json!(session_id);
+    }
+
+    envelope
+}
+
+fn publish_event_with_replay(
+    broadcaster: &broadcast::Sender<Value>,
+    replay: Option<&Arc<Mutex<ReplayState>>>,
+    seq_retention: usize,
+    event: Value,
+) {
+    let outbound = if let Some(replay_state) = replay {
+        let mut replay_state = replay_state.lock().expect("replay lock poisoned");
+        replay_state.next_seq += 1;
+        let envelope = normalize_event_to_envelope(replay_state.next_seq, event);
+        replay_state.events.push_back(envelope.clone());
+        while replay_state.events.len() > seq_retention {
+            replay_state.events.pop_front();
+        }
+        envelope
+    } else {
+        event
+    };
+
+    let _ = broadcaster.send(outbound);
+}
+
+pub(crate) fn replay_events_since(state: &AppState, since: u64, limit: usize) -> (u64, Vec<Value>) {
+    let replay_state = state.replay.lock().expect("replay lock poisoned");
+    let latest_seq = replay_state.next_seq;
+    let events = replay_state
+        .events
+        .iter()
+        .filter(|event| event.get("seq").and_then(Value::as_u64).unwrap_or(0) > since)
+        .take(limit)
+        .cloned()
+        .collect::<Vec<_>>();
+    (latest_seq, events)
+}
+
+fn apply_snapshot_to_session(
+    session: &mut SessionState,
+    snapshot: ProjectSnapshot,
+    chunk_size: usize,
+    broadcaster: Option<&broadcast::Sender<serde_json::Value>>,
+    replay: Option<&Arc<Mutex<ReplayState>>>,
+    seq_retention: usize,
+) -> (u64, usize, usize, usize) {
     // Convert instances hashmap into a vector for deterministic chunking
     let entries: Vec<(String, InstanceNode)> = snapshot
         .instances
@@ -464,8 +618,7 @@ fn apply_snapshot_to_session(session: &mut SessionState, snapshot: rojo_adapter:
                 "appliedCursor": applied_cursor.to_string(),
                 "addedCount": added.len()
             });
-            // ignore send errors (no listeners)
-            let _ = tx.send(event);
+            publish_event_with_replay(tx, replay, seq_retention, event);
         }
 
         // merge added into session.instances
@@ -488,14 +641,16 @@ fn apply_snapshot_to_session(session: &mut SessionState, snapshot: rojo_adapter:
 }
 
 fn open_session_for_project(state: &AppState, project_path: &str) -> Result<Value, String> {
+    let resolved = state.adapter.resolve_project_target(project_path)?;
+
     let mut result = state
         .adapter
-        .open_session(project_path)
+        .open_session(&resolved.adapter_project_path)
         .map_err(|err| err.to_string())?;
 
     let snapshot = state
         .adapter
-        .snapshot_project(project_path)
+        .snapshot_project(&resolved.adapter_project_path)
         .map_err(|err| err.to_string())?;
 
     let session_id = result
@@ -509,10 +664,31 @@ fn open_session_for_project(state: &AppState, project_path: &str) -> Result<Valu
     if let Some(map) = result.as_object_mut() {
         map.insert("sessionCapabilities".to_string(), session_capabilities_payload());
         map.insert("fileBackedInstanceIds".to_string(), json!(file_backed_ids));
+        map.insert(
+            "requestedProjectPath".to_string(),
+            json!(resolved.requested_path),
+        );
+        map.insert(
+            "resolvedProjectPath".to_string(),
+            json!(resolved.adapter_project_path),
+        );
+        map.insert(
+            "compatibilityMode".to_string(),
+            json!(resolved.compatibility_mode),
+        );
+        if let Some(manifest_path) = &resolved.native_manifest_path {
+            map.insert("nativeProjectManifestPath".to_string(), json!(manifest_path));
+        }
+        if let Some(project_name) = &resolved.project_name {
+            map.insert("projectName".to_string(), json!(project_name));
+        }
     }
 
     let mut sessions = state.sessions.lock().expect("session lock poisoned");
-    sessions.insert(session_id, make_session_from_snapshot(project_path, snapshot));
+    sessions.insert(
+        session_id,
+        make_session_from_snapshot(&resolved.adapter_project_path, snapshot),
+    );
 
     Ok(result)
 }
@@ -621,6 +797,84 @@ fn subscribe_result(session: &SessionState, requested_cursor: u64, session_id: &
     })
 }
 
+fn resources_list_result(state: &AppState) -> Value {
+    let sessions = state.sessions.lock().expect("session lock poisoned");
+    let mut resources: Vec<Value> = vec![];
+
+    for (session_id, session) in sessions.iter() {
+        let root_uri = format!("roblox://session/{}/tree/{}", session_id, session.root_id);
+        resources.push(json!({
+            "uri": root_uri,
+            "name": format!("{} tree", session_id),
+            "description": "Tree snapshot resource rooted at session root",
+            "mimeType": "application/json"
+        }));
+
+        let status_uri = format!("roblox://session/{}/status", session_id);
+        resources.push(json!({
+            "uri": status_uri,
+            "name": format!("{} status", session_id),
+            "description": "Session status metadata",
+            "mimeType": "application/json"
+        }));
+    }
+
+    json!({ "resources": resources })
+}
+
+fn resource_read_payload(state: &AppState, uri: &str) -> Result<Value, String> {
+    let parts: Vec<&str> = uri.split('/').collect();
+    if parts.len() < 5 || parts[0] != "roblox:" || parts[2] != "session" {
+        return Err("unsupported resource uri".to_string());
+    }
+
+    let session_id = parts[3];
+    if session_id.is_empty() {
+        return Err("sessionId is required in resource uri".to_string());
+    }
+
+    let mut sessions = state.sessions.lock().expect("session lock poisoned");
+    let session = match sessions.get_mut(session_id) {
+        Some(value) => value,
+        None => return Err(SESSION_NOT_FOUND_CODE.to_string()),
+    };
+
+    refresh_session_from_source(state, session);
+
+    if parts.len() >= 6 && parts[4] == "tree" {
+        let instance_id = parts[5];
+        let result = read_tree_result(session, Some(instance_id), session_id)
+            .map_err(|_| "instance does not exist".to_string())?;
+        return Ok(json!({
+            "contents": [{
+                "uri": uri,
+                "mimeType": "application/json",
+                "text": result.to_string()
+            }]
+        }));
+    }
+
+    if parts.len() == 5 && parts[4] == "status" {
+        let status = json!({
+            "sessionId": session_id,
+            "rootInstanceId": session.root_id,
+            "cursor": session.cursor.to_string(),
+            "serverVersion": state.server_version,
+            "projectPath": session.project_path
+        });
+        return Ok(json!({
+            "contents": [{
+                "uri": uri,
+                "mimeType": "application/json",
+                "text": status.to_string()
+            }]
+        }));
+    }
+
+    Err("unsupported resource uri".to_string())
+}
+
+#[cfg(feature = "rojo-compat")]
 fn resolve_session_id(requested: Option<&str>, sessions: &HashMap<String, SessionState>) -> Option<String> {
     if let Some(session_id) = requested {
         return Some(session_id.to_string());
@@ -629,6 +883,7 @@ fn resolve_session_id(requested: Option<&str>, sessions: &HashMap<String, Sessio
     sessions.keys().next().cloned()
 }
 
+#[cfg(feature = "rojo-compat")]
 async fn handle_rojo_open(
     State(state): State<Arc<AppState>>,
     Json(body): Json<RojoOpenRequest>,
@@ -644,6 +899,7 @@ async fn handle_rojo_open(
     }
 }
 
+#[cfg(feature = "rojo-compat")]
 async fn handle_rojo_read_by_instance(
     State(state): State<Arc<AppState>>,
     Path(instance_id): Path<String>,
@@ -673,6 +929,7 @@ async fn handle_rojo_read_by_instance(
     }
 }
 
+#[cfg(feature = "rojo-compat")]
 async fn handle_rojo_read_by_session_and_instance(
     State(state): State<Arc<AppState>>,
     Path((session_id, instance_id)): Path<(String, String)>,
@@ -691,6 +948,7 @@ async fn handle_rojo_read_by_session_and_instance(
     }
 }
 
+#[cfg(feature = "rojo-compat")]
 async fn handle_rojo_subscribe(
     State(state): State<Arc<AppState>>,
     Path(session_id): Path<String>,
@@ -705,6 +963,7 @@ async fn handle_rojo_subscribe(
     (StatusCode::OK, Json(subscribe_result(session, 0, &session_id)))
 }
 
+#[cfg(feature = "rojo-compat")]
 async fn handle_rojo_subscribe_with_cursor(
     State(state): State<Arc<AppState>>,
     Path((session_id, cursor)): Path<(String, String)>,
@@ -723,10 +982,40 @@ async fn handle_rojo_subscribe_with_cursor(
     )
 }
 
+async fn handle_mcp_replay(
+    State(state): State<Arc<AppState>>,
+    Query(query): Query<ReplayQuery>,
+) -> impl IntoResponse {
+    let since = query
+        .since
+        .as_deref()
+        .and_then(|v| v.parse::<u64>().ok())
+        .unwrap_or(0);
+    let limit = query.limit.unwrap_or(100).clamp(1, 1_000);
+
+    let (latest_seq, events) = replay_events_since(&state, since, limit);
+    (
+        StatusCode::OK,
+        Json(json!({
+            "since": since,
+            "latestSeq": latest_seq,
+            "count": events.len(),
+            "events": events,
+        })),
+    )
+}
+
 async fn handle_mcp(
     State(state): State<Arc<AppState>>,
     Json(request): Json<JsonRpcRequest>,
 ) -> impl IntoResponse {
+    handle_mcp_request(state, request).await
+}
+
+pub(crate) async fn handle_mcp_request(
+    state: Arc<AppState>,
+    request: JsonRpcRequest,
+) -> (StatusCode, Json<Value>) {
     let id = request.id.clone().unwrap_or(json!(null));
 
     // Log incoming JSON-RPC requests for diagnostics (method, id, params)
@@ -754,6 +1043,51 @@ async fn handle_mcp(
                 })),
             )
         }
+        "resources/list" => (
+            StatusCode::OK,
+            Json(json!({
+                "jsonrpc": "2.0",
+                "id": id,
+                "result": resources_list_result(&state)
+            })),
+        ),
+        "resources/read" => {
+            let uri = request
+                .params
+                .get("uri")
+                .and_then(Value::as_str)
+                .or_else(|| {
+                    request
+                        .params
+                        .get("arguments")
+                        .and_then(|v| v.get("uri"))
+                        .and_then(Value::as_str)
+                })
+                .unwrap_or("");
+
+            if uri.is_empty() {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(json!(invalid_request(id, "uri is required"))),
+                );
+            }
+
+            match resource_read_payload(&state, uri) {
+                Ok(result) => (
+                    StatusCode::OK,
+                    Json(json!({
+                        "jsonrpc": "2.0",
+                        "id": id,
+                        "result": result
+                    })),
+                ),
+                Err(code) if code == SESSION_NOT_FOUND_CODE => session_not_found_rpc(id),
+                Err(message) => (
+                    StatusCode::BAD_REQUEST,
+                    Json(json!(invalid_request(id, message.as_str()))),
+                ),
+            }
+        }
         "tools/list" => {
             // Provide sanitized tool names that conform to the extension's
             // allowed pattern ([a-z0-9_-]) while mapping back to the
@@ -763,6 +1097,7 @@ async fn handle_mcp(
                 ("roblox.readTree", "Read a tree/subtree snapshot"),
                 ("roblox.subscribeChanges", "Subscribe to incremental changes"),
                 ("roblox.applyPatch", "Apply a mutation patch"),
+                ("roblox.importProgress", "Poll import progress for a session"),
                 ("roblox.closeSession", "Close session"),
                 ("roblox.exportSnapshot", "Export a session snapshot"),
                 ("roblox.importSnapshot", "Import a session snapshot"),
@@ -801,6 +1136,7 @@ async fn handle_mcp(
                 ("roblox.readTree", "Read a tree/subtree snapshot"),
                 ("roblox.subscribeChanges", "Subscribe to incremental changes"),
                 ("roblox.applyPatch", "Apply a mutation patch"),
+                ("roblox.importProgress", "Poll import progress for a session"),
                 ("roblox.closeSession", "Close session"),
                 ("roblox.exportSnapshot", "Export a session snapshot"),
                 ("roblox.importSnapshot", "Import a session snapshot"),
@@ -1163,9 +1499,9 @@ async fn handle_mcp(
                         }
 
                         json!({
-                            "rootId": session.root_id,
+                            "root_id": session.root_id,
                             "instances": instances_map,
-                            "filePaths": session.file_paths
+                            "file_paths": session.file_paths
                         })
                     };
 
@@ -1185,7 +1521,7 @@ async fn handle_mcp(
                     }
 
                     let snapshot_val = args.get("snapshot").cloned().unwrap_or(json!({}));
-                    let snapshot: Result<rojo_adapter::ProjectSnapshot, _> = serde_json::from_value(snapshot_val);
+                    let snapshot: Result<ProjectSnapshot, _> = serde_json::from_value(snapshot_val);
                     let snapshot = match snapshot {
                         Ok(s) => s,
                         Err(e) => {
@@ -1231,7 +1567,14 @@ async fn handle_mcp(
                         .unwrap_or(100);
 
                     let (applied_cursor, imported_count, file_backed, chunks) =
-                        apply_snapshot_to_session(&mut new_session, snapshot, chunk_size, Some(&state.broadcaster));
+                        apply_snapshot_to_session(
+                            &mut new_session,
+                            snapshot,
+                            chunk_size,
+                            Some(&state.broadcaster),
+                            Some(&state.replay),
+                            state.config.seq_retention,
+                        );
 
                     sessions.insert(session_id.to_string(), new_session);
 
@@ -1323,39 +1666,31 @@ async fn handle_mcp(
     }
 }
 
-async fn handle_ws_upgrade(
-    State(state): State<Arc<AppState>>,
-    ws: WebSocketUpgrade,
-) -> impl IntoResponse {
-    ws.on_upgrade(move |socket| ws_handler(socket, state))
-}
-
-async fn ws_handler(mut socket: WebSocket, state: Arc<AppState>) {
-    let mut rx = state.broadcaster.subscribe();
-
-    // Forward broadcast messages to the websocket client.
-    loop {
-        match rx.recv().await {
-            Ok(val) => {
-                if socket.send(Message::Text(val.to_string())).await.is_err() {
-                    // client disconnected
-                    break;
-                }
-            }
-            Err(broadcast::error::RecvError::Lagged(_)) => {
-                // skip lagged messages; continue
-                continue;
-            }
-            Err(broadcast::error::RecvError::Closed) => break,
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use super::{has_write_conflict, make_default_session, remove_subtree};
-    use rojo_adapter::ProjectSnapshot;
+    use crate::adapters::select_project_adapter;
+    use super::{
+        has_write_conflict, make_default_session, publish_event_with_replay, remove_subtree,
+        replay_events_since, AppState, Config, ReplayState,
+    };
+    use crate::project_snapshot::{AdapterNode, ProjectSnapshot};
     use serde_json::{json, Map};
+    use std::{collections::HashMap, sync::{Arc, Mutex}};
+    use tokio::sync::broadcast;
+
+    fn test_app_state() -> AppState {
+        let (tx, _rx) = broadcast::channel(16);
+        let config = Config::from_env();
+        let (adapter, _) = select_project_adapter(&config);
+        AppState {
+            adapter,
+            server_version: "test".to_string(),
+            sessions: Arc::new(Mutex::new(HashMap::new())),
+            broadcaster: tx,
+            replay: Arc::new(Mutex::new(ReplayState::new())),
+            config,
+        }
+    }
 
     #[test]
     fn make_session_from_snapshot_roundtrip() {
@@ -1365,7 +1700,7 @@ mod tests {
 
         instances.insert(
             "ref_root".to_string(),
-            rojo_adapter::AdapterNode {
+            AdapterNode {
                 id: "ref_root".to_string(),
                 parent: None,
                 name: "Game".to_string(),
@@ -1393,7 +1728,7 @@ mod tests {
         let mut instances = std::collections::HashMap::new();
         instances.insert(
             "ref_child".to_string(),
-            rojo_adapter::AdapterNode {
+            AdapterNode {
                 id: "ref_child".to_string(),
                 parent: Some("ref_root".to_string()),
                 name: "Child".to_string(),
@@ -1425,7 +1760,7 @@ mod tests {
             let id = format!("ref_{}", i);
             instances.insert(
                 id.clone(),
-                rojo_adapter::AdapterNode {
+                AdapterNode {
                     id: id.clone(),
                     parent: None,
                     name: format!("Node{}", i),
@@ -1443,7 +1778,8 @@ mod tests {
         };
 
         let mut session = make_default_session();
-        let (applied_cursor, total, _file_backed, chunks) = super::apply_snapshot_to_session(&mut session, snapshot, 100, None);
+        let (applied_cursor, total, _file_backed, chunks) =
+            super::apply_snapshot_to_session(&mut session, snapshot, 100, None, None, 10_000);
         assert_eq!(total, 250);
         assert_eq!(chunks, 3);
         assert!(applied_cursor >= 3);
@@ -1464,7 +1800,7 @@ mod tests {
             let id = format!("ref_{}", i);
             instances.insert(
                 id.clone(),
-                rojo_adapter::AdapterNode {
+                AdapterNode {
                     id: id.clone(),
                     parent: None,
                     name: format!("Node{}", i),
@@ -1485,7 +1821,7 @@ mod tests {
         let (tx, mut rx) = broadcast::channel(16);
 
         let (applied_cursor, total, _file_backed, chunks) =
-            super::apply_snapshot_to_session(&mut session, snapshot, 2, Some(&tx));
+            super::apply_snapshot_to_session(&mut session, snapshot, 2, Some(&tx), None, 10_000);
 
         assert_eq!(total, 5);
         assert_eq!(chunks, 3);
@@ -1558,5 +1894,30 @@ mod tests {
         assert!(has_write_conflict(Some(5), 4));
         assert!(!has_write_conflict(Some(5), 5));
         assert!(!has_write_conflict(None, 1));
+    }
+
+    #[test]
+    fn replay_sequence_and_retrieval() {
+        let state = test_app_state();
+
+        publish_event_with_replay(
+            &state.broadcaster,
+            Some(&state.replay),
+            state.config.seq_retention,
+            json!({"type": "importProgress", "sessionId": "sess-1", "chunk": 1}),
+        );
+        publish_event_with_replay(
+            &state.broadcaster,
+            Some(&state.replay),
+            state.config.seq_retention,
+            json!({"type": "importProgress", "sessionId": "sess-1", "chunk": 2}),
+        );
+
+        let (latest, events) = replay_events_since(&state, 0, 10);
+        assert_eq!(latest, 2);
+        assert_eq!(events.len(), 2);
+        assert_eq!(events[0].get("seq").and_then(|v| v.as_u64()), Some(1));
+        assert_eq!(events[1].get("seq").and_then(|v| v.as_u64()), Some(2));
+        assert_eq!(events[0].get("type").and_then(|v| v.as_str()), Some("importProgress"));
     }
 }

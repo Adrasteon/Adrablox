@@ -1,8 +1,10 @@
 param(
     [string]$OutputDir = "dist/release",
     [switch]$SkipServerBuild,
+    [switch]$IncludeRojoCompatServer,
     [string]$PluginVersion = "",
-    [switch]$RequireRojo
+    [switch]$RequireRojo,
+    [switch]$SkipRojo
 )
 
 $ErrorActionPreference = "Stop"
@@ -10,8 +12,35 @@ $ErrorActionPreference = "Stop"
 $workspace = Split-Path -Parent $PSScriptRoot
 $outputRoot = Join-Path $workspace $OutputDir
 $serverStaging = Join-Path $outputRoot "server"
+$serverRojoCompatStaging = Join-Path $outputRoot "server-rojo-compat"
 $pluginSource = Join-Path $workspace "plugin/mcp-studio"
 $pluginProject = Join-Path $workspace "plugin/mcp-studio.plugin.project.json"
+
+function Assert-ValidIntermediatePluginXml {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$FilePath
+    )
+
+    if (-not (Test-Path -LiteralPath $FilePath)) {
+        throw "Intermediate plugin XML not found: $FilePath"
+    }
+
+    $content = Get-Content -Raw -Encoding UTF8 -LiteralPath $FilePath
+
+    if ($content -match '<string\s+name="Source">') {
+        throw 'Intermediate plugin XML uses legacy <string name="Source"> serialization. Expected <ProtectedString name="Source">. File: ' + $FilePath
+    }
+
+    if ($content -match '<string\s+name="Name">__files</string>') {
+        throw 'Intermediate plugin XML contains stale __files folder layout. File: ' + $FilePath
+    }
+
+    if ($content -notmatch '<ProtectedString\s+name="Source">') {
+        throw 'Intermediate plugin XML contains no ProtectedString Source payloads; refusing to package. File: ' + $FilePath
+    }
+
+}
 
 if (-not (Test-Path $pluginSource)) {
     throw "Plugin source not found at $pluginSource"
@@ -22,6 +51,9 @@ if (Test-Path $outputRoot) {
 }
 
 New-Item -ItemType Directory -Path $serverStaging -Force | Out-Null
+if ($IncludeRojoCompatServer) {
+    New-Item -ItemType Directory -Path $serverRojoCompatStaging -Force | Out-Null
+}
 
 $isWindowsPlatform = ($env:OS -eq "Windows_NT")
 $isMacPlatform = (-not $isWindowsPlatform) -and ($PSVersionTable.OS -match "Darwin")
@@ -43,6 +75,9 @@ try {
         if ($LASTEXITCODE -ne 0) {
             throw "cargo build failed with exit code $LASTEXITCODE"
         }
+    }
+    elseif ($IncludeRojoCompatServer) {
+        throw "-IncludeRojoCompatServer requires server builds; do not combine with -SkipServerBuild."
     }
 
     $builtBinary = Join-Path $workspace "target/release/$binaryName"
@@ -75,6 +110,26 @@ Start-Process -FilePath 'cmd.exe' -ArgumentList "/k `"$here\\mcp-server.exe`"" -
     $serverArchive = Join-Path $outputRoot ("mcp-server-{0}.zip" -f $platformName)
     Compress-Archive -Path $serverBinaryOut -DestinationPath $serverArchive -Force
 
+    $serverRojoCompatArchive = $null
+    if ($IncludeRojoCompatServer) {
+        Write-Host "Building release server artifact (rojo-compat)..."
+        cargo build --release -p mcp-server --features rojo-compat
+        if ($LASTEXITCODE -ne 0) {
+            throw "cargo build --features rojo-compat failed with exit code $LASTEXITCODE"
+        }
+
+        $builtRojoCompatBinary = Join-Path $workspace "target/release/$binaryName"
+        if (-not (Test-Path $builtRojoCompatBinary)) {
+            throw "Built rojo-compat server binary not found at $builtRojoCompatBinary"
+        }
+
+        $serverRojoCompatBinaryOut = Join-Path $serverRojoCompatStaging $binaryName
+        Copy-Item -Path $builtRojoCompatBinary -Destination $serverRojoCompatBinaryOut -Force
+
+        $serverRojoCompatArchive = Join-Path $outputRoot ("mcp-server-{0}-rojo-compat.zip" -f $platformName)
+        Compress-Archive -Path $serverRojoCompatBinaryOut -DestinationPath $serverRojoCompatArchive -Force
+    }
+
     $pluginSourceArchive = Join-Path $outputRoot ("mcp-studio-plugin-source-{0}.zip" -f $safePluginVersion)
     Compress-Archive -Path (Join-Path $pluginSource "*") -DestinationPath $pluginSourceArchive -Force
 
@@ -85,7 +140,7 @@ Start-Process -FilePath 'cmd.exe' -ArgumentList "/k `"$here\\mcp-server.exe`"" -
         throw "Rojo CLI is required for this packaging run but was not found in PATH."
     }
 
-    if ($rojoCommand) {
+    if ($rojoCommand -and -not $SkipRojo) {
         if (-not (Test-Path $pluginProject)) {
             throw "Plugin project file not found at $pluginProject"
         }
@@ -101,7 +156,47 @@ Start-Process -FilePath 'cmd.exe' -ArgumentList "/k `"$here\\mcp-server.exe`"" -
         }
     }
     else {
-        Write-Host "Rojo CLI not found; skipping installable plugin artifact (.rbxm) generation."
+        Write-Host "Attempting to build installable plugin artifact (.rbxm) without Rojo..."
+
+        $rbxmxOut = Join-Path $outputRoot ("mcp-studio-{0}.rbxmx" -f $safePluginVersion)
+        $buildScript = Join-Path $workspace "tools/build_plugin.ps1"
+        if (-not (Test-Path $buildScript)) {
+            Write-Host "Build script not found at $buildScript; cannot produce .rbxmx"
+        }
+        else {
+            Write-Host "Generating intermediate .rbxmx via build_plugin.ps1 -> $rbxmxOut"
+            powershell -NoProfile -ExecutionPolicy Bypass -File $buildScript -PluginRoot $pluginSource -OutFile $rbxmxOut -PluginName "mcp-studio"
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "build_plugin.ps1 failed with exit code $LASTEXITCODE"
+            }
+            elseif (-not (Test-Path $rbxmxOut)) {
+                Write-Host ".rbxmx not found after build_plugin.ps1: $rbxmxOut"
+            }
+            else {
+                Assert-ValidIntermediatePluginXml -FilePath $rbxmxOut
+
+                $rbxWriteExe = Join-Path $workspace "tools/rbx_write/target/release/rbx_write"
+                if ($isWindowsPlatform) { $rbxWriteExe += ".exe" }
+                if (-not (Test-Path $rbxWriteExe)) {
+                    Write-Host "rbx_write converter not found at $rbxWriteExe; expected prebuilt tool."
+                }
+                else {
+                    $pluginInstallableArtifact = Join-Path $outputRoot ("mcp-studio-plugin-{0}.rbxm" -f $safePluginVersion)
+                    Write-Host "Converting $rbxmxOut -> $pluginInstallableArtifact using rbx_write"
+                    & $rbxWriteExe $rbxmxOut $pluginInstallableArtifact
+                    if ($LASTEXITCODE -ne 0) {
+                        Write-Host "rbx_write failed with exit code $LASTEXITCODE"
+                    }
+                    elseif (-not (Test-Path $pluginInstallableArtifact) -or ((Get-Item $pluginInstallableArtifact).Length -eq 0)) {
+                        Write-Host "Converted .rbxm not found or is zero bytes at $pluginInstallableArtifact"
+                    }
+                    else {
+                        $pluginInstallableAvailable = $true
+                        Write-Host ".rbxm built successfully: $pluginInstallableArtifact"
+                    }
+                }
+            }
+        }
     }
 
     $readmeSource = Join-Path $workspace "README.md"
@@ -118,6 +213,8 @@ Start-Process -FilePath 'cmd.exe' -ArgumentList "/k `"$here\\mcp-server.exe`"" -
         createdUtc = (Get-Date).ToUniversalTime().ToString("o")
         platform = $platformName
         serverArchive = [System.IO.Path]::GetFileName($serverArchive)
+        rojoCompatServerIncluded = $IncludeRojoCompatServer.IsPresent
+        serverArchiveRojoCompat = $(if ($IncludeRojoCompatServer -and $serverRojoCompatArchive) { [System.IO.Path]::GetFileName($serverRojoCompatArchive) } else { $null })
         pluginSourceArchive = [System.IO.Path]::GetFileName($pluginSourceArchive)
         pluginVersion = $PluginVersion
         pluginInstallableAvailable = $pluginInstallableAvailable
@@ -129,6 +226,9 @@ Start-Process -FilePath 'cmd.exe' -ArgumentList "/k `"$here\\mcp-server.exe`"" -
 
     Write-Host "Release artifacts created at: $outputRoot"
     Write-Host "- $([System.IO.Path]::GetFileName($serverArchive))"
+    if ($IncludeRojoCompatServer -and $serverRojoCompatArchive) {
+        Write-Host "- $([System.IO.Path]::GetFileName($serverRojoCompatArchive))"
+    }
     Write-Host "- $([System.IO.Path]::GetFileName($pluginSourceArchive))"
     if ($pluginInstallableAvailable) {
         Write-Host "- $([System.IO.Path]::GetFileName($pluginInstallableArtifact))"

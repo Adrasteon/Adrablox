@@ -1,0 +1,22 @@
+{
+  "$schema": "https://raw.githubusercontent.com/rojo-rbx/rojo/main/schema/project.schema.json",
+  "name": "mcp-studio-experimental",
+  "description": "Experimental Rojo project moved here. This repo uses tools/package_release_artifacts.ps1 as the canonical packager.",
+  "tree": {
+    "$className": "Plugin",
+    "AdrabloxMCP": {
+      "$path": "mcp-studio/packaging/PluginMain.server.lua",
+      "src": {
+        "$className": "Folder",
+        "init": { "$path": "mcp-studio/src/init.lua" },
+        "ConnectionManager": { "$path": "mcp-studio/src/ConnectionManager.lua" },
+        "SyncEngine": { "$path": "mcp-studio/src/SyncEngine.lua" },
+        "PatchSerializer": { "$path": "mcp-studio/src/PatchSerializer.lua" }
+      },
+      "ui": {
+        "$className": "Folder",
+        "Widget": { "$path": "mcp-studio/ui/Widget.lua" }
+      }
+    }
+  }
+}

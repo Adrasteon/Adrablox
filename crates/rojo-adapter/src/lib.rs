@@ -106,12 +106,54 @@ impl RojoAdapter {
         }))
     }
 
+    fn resolve_relative_candidate(&self, project_path: &str) -> Result<PathBuf> {
+        let cwd = std::env::current_dir()?;
+        let direct = cwd.join(project_path);
+        if direct.exists() {
+            return Ok(direct);
+        }
+
+        for ancestor in cwd.ancestors().skip(1) {
+            let joined = ancestor.join(project_path);
+            if joined.exists() {
+                return Ok(joined);
+            }
+        }
+
+        if let Some(repo_like_root) = cwd
+            .ancestors()
+            .find(|ancestor| ancestor.join("Cargo.toml").is_file() || ancestor.join(".git").exists())
+        {
+            return Ok(repo_like_root.join(project_path));
+        }
+
+        Ok(direct)
+    }
+
+    fn resolve_candidate_path(&self, project_path: &str) -> Result<PathBuf> {
+        let candidate = PathBuf::from(project_path);
+        if candidate.is_absolute() {
+            return Ok(candidate);
+        }
+
+        self.resolve_relative_candidate(project_path)
+    }
+
+    fn resolve_fallback_src_root(&self) -> Result<PathBuf> {
+        let cwd = std::env::current_dir()?;
+        for ancestor in cwd.ancestors() {
+            let src = ancestor.join("src");
+            if src.exists() && src.is_dir() {
+                return Ok(src);
+            }
+        }
+
+        Ok(cwd)
+    }
+
     pub fn resolve_source_root(&self, project_path: &str) -> Result<PathBuf> {
         let cwd = std::env::current_dir()?;
-        let mut candidate = PathBuf::from(project_path);
-        if !candidate.is_absolute() {
-            candidate = cwd.join(candidate);
-        }
+        let candidate = self.resolve_candidate_path(project_path)?;
 
         let source_root = if candidate.exists() {
             if candidate.is_dir() {
@@ -126,12 +168,7 @@ impl RojoAdapter {
                 }
             }
         } else if project_path.ends_with(".project.json") {
-            let fallback = cwd.join("src");
-            if fallback.exists() && fallback.is_dir() {
-                fallback
-            } else {
-                cwd
-            }
+            self.resolve_fallback_src_root()?
         } else {
             candidate
         };
@@ -241,11 +278,7 @@ impl RojoAdapter {
     }
 
     fn resolve_rojo_project_file(&self, project_path: &str) -> Result<Option<PathBuf>> {
-        let cwd = std::env::current_dir()?;
-        let mut candidate = PathBuf::from(project_path);
-        if !candidate.is_absolute() {
-            candidate = cwd.join(candidate);
-        }
+        let candidate = self.resolve_candidate_path(project_path)?;
 
         if candidate.is_file() && Project::is_project_file(&candidate) {
             return Ok(Some(candidate));

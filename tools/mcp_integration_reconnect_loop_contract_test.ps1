@@ -1,6 +1,6 @@
 param(
     [string]$Endpoint = "http://127.0.0.1:44877/mcp",
-    [string]$ProjectPath = "src",
+    [string]$ProjectPath = "adrablox.project.json",
     [int]$Iterations = 3
 )
 

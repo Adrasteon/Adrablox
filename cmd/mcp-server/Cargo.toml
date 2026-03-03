@@ -4,11 +4,15 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[features]
+default = []
+rojo-compat = ["dep:rojo-adapter"]
+
 [dependencies]
 anyhow = "1"
 axum = { version = "0.7", features = ["ws"] }
 mcp-core = { path = "../../crates/mcp-core" }
-rojo-adapter = { path = "../../crates/rojo-adapter" }
+rojo-adapter = { path = "../../crates/rojo-adapter", optional = true }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "net"] }

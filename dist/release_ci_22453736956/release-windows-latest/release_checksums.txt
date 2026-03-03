@@ -1,4 +1,0 @@
-45c2f0d2f0e98d7f387c944bd2222e3cf0ed79a8c1d9b4fd821ec0b7ac88cd1d  mcp-server-windows.zip
-10623fe7d0b07b20dbeaa3b339c20e7acae7de1e5ec3c259157afb9b542deaaf  mcp-studio-plugin-source-0.1.0-689cf31.zip
-1c2b2b366497e1871800523c13a7e277b4b81b809d293073616adefafd9e7015  release_manifest.json
-0c3e8f5d6816b337616a8842dd82fd3c8101faa04ad4e35ee2798228b60150e1  mcp-studio-plugin-0.1.0-689cf31.rbxm

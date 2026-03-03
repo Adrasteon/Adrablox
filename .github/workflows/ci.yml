@@ -30,6 +30,11 @@ on:
         required: false
         default: false
         type: boolean
+      run_ws_transport_suite:
+        description: "Run optional WS transport replay + stream compatibility tasks (Windows)"
+        required: false
+        default: false
+        type: boolean
       integration_reliability_iterations:
         description: "Reconnect-loop iterations for optional reliability suite (conflict/mixed use smaller derived counts)"
         required: false
@@ -70,11 +75,28 @@ jobs:
       - name: Cache Rust build artifacts
         uses: Swatinem/rust-cache@v2
 
+      - name: Build rbx_write converter
+        shell: pwsh
+        run: |
+          Push-Location tools\rbx_write
+          cargo build --release
+          Pop-Location
+
+      - name: Validate plugin packaging (no Rojo)
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/package_release_artifacts.ps1 -SkipRojo -OutputDir dist/ci-no-rojo
+
       - name: Run cargo tests
         shell: pwsh
         run: |
           $cargoExe = Join-Path $env:USERPROFILE '.cargo\bin\cargo.exe'
           & $cargoExe test
+
+      - name: Run mcp-server rojo-compat tests
+        shell: pwsh
+        run: |
+          $cargoExe = Join-Path $env:USERPROFILE '.cargo\bin\cargo.exe'
+          & $cargoExe test -p mcp-server --features rojo-compat
 
       - name: Run MCP smoke task
         shell: pwsh
@@ -132,6 +154,26 @@ jobs:
           $conflictIterations = [Math]::Max(1, [int]([Math]::Floor($reconnectIterations / 2)))
           $mixedIterations = [Math]::Max(1, [int]([Math]::Floor($reconnectIterations / 2)))
           powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_mcp_integration_reliability_suite_task.ps1 -ReconnectIterations $reconnectIterations -ConflictIterations $conflictIterations -MixedIterations $mixedIterations
+
+      - name: Run WS replay task (optional)
+        if: github.event_name == 'workflow_dispatch' && inputs.run_ws_transport_suite == true
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_ws_replay_task.ps1
+
+      - name: Run stream client compatibility task (optional)
+        if: github.event_name == 'workflow_dispatch' && inputs.run_ws_transport_suite == true
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/run_stream_client_compat_task.ps1
+
+      - name: Upload WS transport reports artifact (optional)
+        if: github.event_name == 'workflow_dispatch' && inputs.run_ws_transport_suite == true
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-transport-reports
+          path: |
+            tools/ws_replay_report.json
+            tools/stream_client_compat_report.json
+          if-no-files-found: error
 
       - name: Upload integration reliability report (optional)
         if: github.event_name == 'workflow_dispatch' && inputs.run_integration_reliability_suite == true
@@ -217,25 +259,7 @@ jobs:
           path: tools/spec_readiness_report.json
           if-no-files-found: error
 
-      - name: Install Rojo for release-candidate evidence pack (optional)
-        if: github.event_name == 'workflow_dispatch' && inputs.run_release_candidate_evidence_pack == true
-        shell: pwsh
-        run: |
-          winget install --id Rojo.Rojo --exact --accept-package-agreements --accept-source-agreements
-          $rojoCommand = Get-Command rojo -ErrorAction SilentlyContinue
-          if (-not $rojoCommand) {
-            $rojoExe = Get-ChildItem (Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages') -Recurse -Filter rojo.exe -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($rojoExe) {
-              $rojoDir = Split-Path -Parent $rojoExe.FullName
-              Add-Content -Path $env:GITHUB_PATH -Value $rojoDir
-              $env:Path = "$rojoDir;$env:Path"
-              $rojoCommand = Get-Command rojo -ErrorAction SilentlyContinue
-            }
-          }
-          if (-not $rojoCommand) {
-            throw "Rojo installation succeeded but rojo.exe could not be resolved on PATH."
-          }
-          & $rojoCommand.Source --version
+      # Rojo installation removed: packaging uses tools/package_release_artifacts.ps1
 
       - name: Run release-candidate evidence pack (optional)
         if: github.event_name == 'workflow_dispatch' && inputs.run_release_candidate_evidence_pack == true
@@ -324,6 +348,14 @@ jobs:
 
       - name: Run cargo tests
         run: cargo test
+
+      - name: Run mcp-server rojo-compat tests
+        run: cargo test -p mcp-server --features rojo-compat
+
+      - name: Build rbx_write converter
+        run: |
+          cd tools/rbx_write
+          cargo build --release
 
       - name: Make protocol task executable
         run: chmod +x tools/run_mcp_protocol_task.sh

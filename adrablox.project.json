@@ -1,0 +1,9 @@
+{
+  "name": "Adrablox Workspace",
+  "session": {
+    "defaultProjectPath": "default.project.json"
+  },
+  "compatibility": {
+    "rojoProjectPath": "default.project.json"
+  }
+}

@@ -1,0 +1,16 @@
+﻿{
+    "status":  "PASS",
+    "generatedAtUtc":  "2026-03-02T15:11:02.1107563Z",
+    "file":  "plugin/mcp-studio/src/ConnectionManager.lua",
+    "checks":  {
+                   "usesCreateWebStreamClient":  true,
+                   "supportsWebSocketClientType":  true,
+                   "supportsRawStreamClientType":  true,
+                   "hasWsThenRawThenHttpFallback":  true,
+                   "replaySendGuardedToWs":  true,
+                   "enforcesStreamClientCap":  true
+               },
+    "failedChecks":  [
+
+                     ]
+}

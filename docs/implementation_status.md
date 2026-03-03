@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last updated: 2026-02-26
+Last updated: 2026-03-03
 
 ## External Stakeholder Summary
 
@@ -23,9 +23,19 @@ Last updated: 2026-02-26
 
 ## Ready
 
-- Core lifecycle and tool surface are implemented and working (`openSession`, `readTree`, `subscribeChanges`, `applyPatch`, `closeSession`).
+- Core lifecycle and tool surface are implemented and working (`openSession`, `readTree`, `subscribeChanges`, `applyPatch`, `importProgress`, `exportSnapshot`, `importSnapshot`, `closeSession`).
+- Resource methods are implemented (`resources/list`, `resources/read`) for MCP clients that browse/read resources.
+- Native project-manifest migration entrypoint is available (`adrablox.project.json`) with native resolver mode (`native-manifest`).
+- Explicit Rojo adapter mode selection is now deprecation-gated (`MCP_ENABLE_ROJO_ADAPTER_MODE=true` required for `MCP_PROJECT_ADAPTER_MODE=rojo`).
+- `MCP_ENABLE_ROJO_ADAPTER_MODE` is only effective in binaries built with `rojo-compat`; otherwise the flag is ignored and adapter selection remains native.
+- Adapter `auto` mode now defaults to native and only permits Rojo selection when the same Rojo adapter gate is enabled.
+- Rojo adapter selection/delegation is isolated in a dedicated compatibility boundary module (`cmd/mcp-server/src/compat_rojo.rs`) to simplify future removal.
+- Rojo compatibility now requires compile-time feature enablement (`mcp-server` cargo feature `rojo-compat`); default build excludes Rojo linkage.
+- CI/tooling now treats native-only as the default lane and runs Rojo compatibility in explicit `rojo-compat` invocations.
+- Release packaging now produces native server artifacts by default, with optional `rojo-compat` server artifact generation via workflow dispatch input.
 - File-backed edit durability is enforced: mapped script `Source` writes persist to disk, with cursored updates and structured conflict handling.
-- Rojo compatibility API routes are available (`/api/rojo`, `/api/read`, `/api/subscribe`).
+- Rojo compatibility API routes are available as opt-in legacy endpoints (`MCP_ENABLE_LEGACY_ROJO_ROUTES=true` for `/api/rojo`, `/api/read`, `/api/subscribe`).
+- Legacy Rojo compatibility API routes are also compile-time gated and only built when `mcp-server` is compiled with cargo feature `rojo-compat`.
 - Validation baseline exists and has recent green runs across Rust tests, smoke flow, policy contract flow, and protocol contract flow.
 - CI is configured to run contract checks across Windows and protocol checks across Linux/macOS.
 - Integration reliability baseline is in CI (`integration roundtrip` + `integration reconnect-loop`) with a manual higher-iteration soak runner.
@@ -119,6 +129,9 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - `roblox.readTree`
   - `roblox.subscribeChanges`
   - `roblox.applyPatch`
+  - `roblox.importProgress`
+  - `roblox.exportSnapshot`
+  - `roblox.importSnapshot`
   - `roblox.closeSession`
 
 - State and mutation behavior
@@ -217,10 +230,16 @@ The project has moved from planning/scaffolding into a working MVP implementatio
   - Optional targeted strict manual parity mode: set `workflow_dispatch` input `strict_rojo_parity_categories` to comma-separated category names to execute only selected fixture categories and fail when those categories have non-zero diffs.
   - Optional focused parity edge-semantics gate: set `workflow_dispatch` input `run_rojo_edge_semantics=true` to execute targeted category checks with parity cursor monotonicity assertions.
   - Optional manual integration reliability gate: set `workflow_dispatch` input `run_integration_reliability_suite=true` (with optional `integration_reliability_iterations`) to run aggregated reliability evidence and upload `integration-reliability-report-it<iterations>` artifact.
+  - Optional manual WS transport gate: set `workflow_dispatch` input `run_ws_transport_suite=true` to run replay + stream compatibility tasks and upload `ws-transport-reports` artifact.
+  - Dedicated WS integration workflow: `.github/workflows/ws_integration.yml` now runs WS replay + stream compatibility checks and gates optional parity execution behind successful WS transport checks.
   - Optional manual release-candidate evidence gate: set `workflow_dispatch` input `run_release_candidate_evidence_pack=true` to run one-command reliability/parity/readiness evidence and upload input-aware artifacts (`release-candidate-evidence-it<iterations>-dist-on|off`).
   - Optional manual release-candidate distribution mode: set `workflow_dispatch` input `release_candidate_include_distribution_evidence=true` (alongside the evidence gate) to include distribution packaging/validation evidence prior to readiness evaluation.
   - Optional manual release-candidate strict mode: `release_candidate_fail_if_not_pass=true` (default) enforces PASS-only evidence runs by failing the workflow unless `specComplete=PASS`.
   - Optional manual readiness/evidence runs now print a normalized spec-readiness summary line and include a job-summary table in GitHub Actions for faster gate inspection; readiness artifact naming is standardized as `spec-readiness-report-standalone|with-pack`.
+  - WS replay task runner: `tools/run_ws_replay_task.ps1` (starts server, runs reconnect/replay contract + WS CLI replay/auth smoke, emits `tools/ws_replay_report.json`).
+  - Stream compatibility task runner: `tools/run_stream_client_compat_task.ps1` (validates plugin WebStream WS/RawStream fallback invariants, emits `tools/stream_client_compat_report.json`).
+  - Plugin ScriptEditorService hook integration: `plugin/mcp-studio/src/SyncEngine.lua` now wires `TextDocumentDidChange` into existing Source patch flow for observed script instances.
+  - WS transport migration guide: `docs/ws_transport_migration_guide.md`.
   - Manual parity runs generate `tools/parity_diff_summary.json` from `tools/parity_diff_report*.json` (including fixture metadata and category breakdown), print `Parity summary: fixtures=<n> totalDiffs=<n> categoryDiffs=<category:diffs|...>` in CI logs, and upload both as workflow artifact `rojo-parity-reports` for inspection/download.
   - Manual release packaging workflow: `.github/workflows/release-packaging.yml` (`workflow_dispatch` only; no scheduled/nightly run) now runs packaged Day-0 validation prior to artifact upload.
   - Manual release packaging workflow additionally generates and verifies release checksums prior to artifact upload.

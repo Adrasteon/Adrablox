@@ -1,0 +1,25 @@
+<roblox version="4">
+  <Item class="DataModel" referent="0">
+    <Properties>
+      <string name="Name">McpParityFixture</string>
+    </Properties>
+    <Item class="ServerScriptService" referent="1">
+      <Properties>
+        <string name="Name">ServerScriptService</string>
+      </Properties>
+      <Item class="ModuleScript" referent="2">
+        <Properties>
+          <string name="Name">App.module</string>
+          <string name="Source"><![CDATA[local App = {}
+
+function App.greet(name)
+    return "Hello, " .. tostring(name)
+end
+
+return App
+]]></string>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+</roblox>

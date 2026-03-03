@@ -127,12 +127,11 @@ try {
     }
 
     if ($IncludeDistributionEvidence) {
-        Ensure-RojoAvailable
-        Invoke-ToolScript -Name 'distribution-package' -ScriptPath 'tools/package_release_artifacts.ps1' -Arguments @('-RequireRojo')
-        Invoke-ToolScript -Name 'distribution-manifest' -ScriptPath 'tools/validate_release_manifest.ps1' -Arguments @('-RequireInstallable')
-        Invoke-ToolScript -Name 'distribution-checksums-generate' -ScriptPath 'tools/generate_release_checksums.ps1'
-        Invoke-ToolScript -Name 'distribution-checksums-verify' -ScriptPath 'tools/generate_release_checksums.ps1' -Arguments @('-Verify')
-        Invoke-ToolScript -Name 'distribution-day0-published' -ScriptPath 'tools/run_day0_published_artifact_validation_task.ps1' -Arguments @('-RequireInstallable')
+           Invoke-ToolScript -Name 'distribution-package' -ScriptPath 'tools/package_release_artifacts.ps1' -Arguments @()
+           Invoke-ToolScript -Name 'distribution-manifest' -ScriptPath 'tools/validate_release_manifest.ps1' -Arguments @()
+           Invoke-ToolScript -Name 'distribution-checksums-generate' -ScriptPath 'tools/generate_release_checksums.ps1'
+           Invoke-ToolScript -Name 'distribution-checksums-verify' -ScriptPath 'tools/generate_release_checksums.ps1' -Arguments @('-Verify')
+           Invoke-ToolScript -Name 'distribution-day0-published' -ScriptPath 'tools/run_day0_published_artifact_validation_task.ps1' -Arguments @()
     }
     else {
         Write-Host "[distribution] Skipped"

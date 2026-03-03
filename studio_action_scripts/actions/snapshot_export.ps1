@@ -8,12 +8,18 @@ param(
 $repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $nodeCli = Join-Path $repoRoot "studio_action_scripts\cli\index.js"
 if (Test-Path $nodeCli) {
-    $args = @('snapshot-export', $SessionId, $OutFile)
-    node $nodeCli @args
+    $cliArgs = @('snapshot-export', $SessionId, $OutFile)
+    node $nodeCli @cliArgs
     exit $LASTEXITCODE
 }
 
-$params = "{\"name\":\"roblox.exportSnapshot\",\"arguments\":{\"sessionId\":\"$SessionId\"}}"
+# Build params object and convert to JSON to avoid quoting/escaping issues
+$paramsObj = @{ name = 'roblox.exportSnapshot'; arguments = @{ sessionId = $SessionId } }
+$params = $paramsObj | ConvertTo-Json -Depth 6
 
 if (!(Test-Path (Split-Path $OutFile))) { New-Item -ItemType Directory -Path (Split-Path $OutFile) -Force | Out-Null }
-& "$PSScriptRoot\..\bin\send_mcp_rpc.ps1" -Method "tools/call" -Params $params -Url $Url @($Pretty ? '-Pretty' : @()) | Out-File -Encoding utf8 -FilePath $OutFile
+
+$flags = @()
+if ($Pretty) { $flags += '-Pretty' }
+
+& "$PSScriptRoot\..\bin\send_mcp_rpc.ps1" -Method "tools/call" -Params $params -Url $Url @flags | Out-File -Encoding utf8 -FilePath $OutFile

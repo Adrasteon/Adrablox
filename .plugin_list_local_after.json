@@ -1,0 +1,47 @@
+﻿[
+    {
+        "FullName":  "C:\\Users\\marti\\AppData\\Local\\Roblox\\Plugins\\AdrabloxMCP\\PluginMain",
+        "Attributes":  16,
+        "Length":  null
+    },
+    {
+        "FullName":  "C:\\Users\\marti\\AppData\\Local\\Roblox\\Plugins\\AdrabloxMCP\\ui",
+        "Attributes":  16,
+        "Length":  null
+    },
+    {
+        "FullName":  "C:\\Users\\marti\\AppData\\Local\\Roblox\\Plugins\\AdrabloxMCP\\PluginMain\\src",
+        "Attributes":  16,
+        "Length":  null
+    },
+    {
+        "FullName":  "C:\\Users\\marti\\AppData\\Local\\Roblox\\Plugins\\AdrabloxMCP\\PluginMain\\PluginMain.lua",
+        "Attributes":  32,
+        "Length":  122
+    },
+    {
+        "FullName":  "C:\\Users\\marti\\AppData\\Local\\Roblox\\Plugins\\AdrabloxMCP\\PluginMain\\src\\ConnectionManager.lua",
+        "Attributes":  32,
+        "Length":  6498
+    },
+    {
+        "FullName":  "C:\\Users\\marti\\AppData\\Local\\Roblox\\Plugins\\AdrabloxMCP\\PluginMain\\src\\init.lua",
+        "Attributes":  32,
+        "Length":  862
+    },
+    {
+        "FullName":  "C:\\Users\\marti\\AppData\\Local\\Roblox\\Plugins\\AdrabloxMCP\\PluginMain\\src\\PatchSerializer.lua",
+        "Attributes":  32,
+        "Length":  769
+    },
+    {
+        "FullName":  "C:\\Users\\marti\\AppData\\Local\\Roblox\\Plugins\\AdrabloxMCP\\PluginMain\\src\\SyncEngine.lua",
+        "Attributes":  32,
+        "Length":  20848
+    },
+    {
+        "FullName":  "C:\\Users\\marti\\AppData\\Local\\Roblox\\Plugins\\AdrabloxMCP\\ui\\Widget.lua",
+        "Attributes":  32,
+        "Length":  7660
+    }
+]

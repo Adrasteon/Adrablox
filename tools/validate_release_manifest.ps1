@@ -47,11 +47,17 @@ Assert-NonEmptyString -FieldName "commit" -Value $manifest.commit
 
 $platform = [string]$manifest.platform
 $serverArchive = [string]$manifest.serverArchive
+$rojoCompatServerIncluded = [bool]$manifest.rojoCompatServerIncluded
+$serverArchiveRojoCompat = if ($null -ne $manifest.serverArchiveRojoCompat) { [string]$manifest.serverArchiveRojoCompat } else { "" }
 $pluginSourceArchive = [string]$manifest.pluginSourceArchive
 $pluginInstallableArtifact = if ($null -ne $manifest.pluginInstallableArtifact) { [string]$manifest.pluginInstallableArtifact } else { "" }
 
 Assert-Matches -FieldName "platform" -Value $platform -Pattern '^(windows|linux|macos)$'
 Assert-Matches -FieldName "serverArchive" -Value $serverArchive -Pattern '^mcp-server-(windows|linux|macos)\.zip$'
+if ($rojoCompatServerIncluded) {
+    Assert-NonEmptyString -FieldName "serverArchiveRojoCompat" -Value $serverArchiveRojoCompat
+    Assert-Matches -FieldName "serverArchiveRojoCompat" -Value $serverArchiveRojoCompat -Pattern '^mcp-server-(windows|linux|macos)-rojo-compat\.zip$'
+}
 Assert-Matches -FieldName "pluginSourceArchive" -Value $pluginSourceArchive -Pattern '^mcp-studio-plugin-source-[A-Za-z0-9._-]+\.zip$'
 
 $serverArchivePath = Join-Path $outputRoot $serverArchive
@@ -59,6 +65,12 @@ $pluginSourceArchivePath = Join-Path $outputRoot $pluginSourceArchive
 
 if (-not (Test-Path $serverArchivePath)) {
     throw "Server archive missing: $serverArchivePath"
+}
+if ($rojoCompatServerIncluded) {
+    $serverArchiveRojoCompatPath = Join-Path $outputRoot $serverArchiveRojoCompat
+    if (-not (Test-Path $serverArchiveRojoCompatPath)) {
+        throw "Rojo-compat server archive missing: $serverArchiveRojoCompatPath"
+    }
 }
 if (-not (Test-Path $pluginSourceArchivePath)) {
     throw "Plugin source archive missing: $pluginSourceArchivePath"
@@ -81,6 +93,10 @@ elseif ($RequireInstallable) {
 Write-Host "Release manifest validation succeeded."
 Write-Host "- platform=$platform"
 Write-Host "- serverArchive=$serverArchive"
+Write-Host "- rojoCompatServerIncluded=$rojoCompatServerIncluded"
+if ($rojoCompatServerIncluded) {
+    Write-Host "- serverArchiveRojoCompat=$serverArchiveRojoCompat"
+}
 Write-Host "- pluginSourceArchive=$pluginSourceArchive"
 Write-Host "- pluginInstallableAvailable=$installableAvailable"
 if ($installableAvailable) {
