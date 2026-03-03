@@ -10,6 +10,7 @@ use std::{
 
 use crate::config::Config;
 use crate::compat_rojo::maybe_select_rojo_adapter;
+use crate::project_snapshot::{AdapterNode, ProjectSnapshot};
 
 #[derive(Debug, Deserialize, Default)]
 struct AdrabloxManifestCompatibility {
@@ -44,7 +45,7 @@ pub struct ResolvedProjectTarget {
 pub trait ProjectAdapter: Send + Sync {
     fn resolve_project_target(&self, requested_path: &str) -> Result<ResolvedProjectTarget, String>;
     fn open_session(&self, project_path: &str) -> AnyResult<Value>;
-    fn snapshot_project(&self, project_path: &str) -> AnyResult<rojo_adapter::ProjectSnapshot>;
+    fn snapshot_project(&self, project_path: &str) -> AnyResult<ProjectSnapshot>;
 }
 
 struct NativeManifestAdapter {
@@ -141,7 +142,7 @@ impl NativeManifestAdapter {
         Ok(source_root)
     }
 
-    fn snapshot_project_native(&self, project_path: &str) -> AnyResult<rojo_adapter::ProjectSnapshot> {
+    fn snapshot_project_native(&self, project_path: &str) -> AnyResult<ProjectSnapshot> {
         let project_file = Self::resolve_project_file(project_path)?;
         let project_dir = project_file
             .parent()
@@ -155,13 +156,13 @@ impl NativeManifestAdapter {
             .ok_or_else(|| anyhow::anyhow!("project file missing tree object"))?;
 
         let root_id = "ref_root".to_string();
-        let mut instances: HashMap<String, rojo_adapter::AdapterNode> = HashMap::new();
+        let mut instances: HashMap<String, AdapterNode> = HashMap::new();
         let mut file_paths: HashMap<String, String> = HashMap::new();
         let mut bindings: Vec<NativePathBinding> = vec![];
 
         instances.insert(
             root_id.clone(),
-            rojo_adapter::AdapterNode {
+            AdapterNode {
                 id: root_id.clone(),
                 parent: None,
                 name: "Game".to_string(),
@@ -188,7 +189,7 @@ impl NativeManifestAdapter {
             )?;
         }
 
-        Ok(rojo_adapter::ProjectSnapshot {
+        Ok(ProjectSnapshot {
             root_id,
             instances,
             file_paths,
@@ -238,15 +239,15 @@ impl NativeManifestAdapter {
     fn snapshot_project_from_source_root(
         &self,
         project_path: &str,
-    ) -> AnyResult<rojo_adapter::ProjectSnapshot> {
+    ) -> AnyResult<ProjectSnapshot> {
         let source_root = self.resolve_source_root(project_path)?;
         let root_id = "ref_root".to_string();
         let server_script_service_id = "ref_server_script_service".to_string();
 
-        let mut instances: HashMap<String, rojo_adapter::AdapterNode> = HashMap::new();
+        let mut instances: HashMap<String, AdapterNode> = HashMap::new();
         instances.insert(
             root_id.clone(),
-            rojo_adapter::AdapterNode {
+            AdapterNode {
                 id: root_id.clone(),
                 parent: None,
                 name: "Game".to_string(),
@@ -258,7 +259,7 @@ impl NativeManifestAdapter {
 
         instances.insert(
             server_script_service_id.clone(),
-            rojo_adapter::AdapterNode {
+            AdapterNode {
                 id: server_script_service_id.clone(),
                 parent: Some(root_id.clone()),
                 name: "ServerScriptService".to_string(),
@@ -276,7 +277,7 @@ impl NativeManifestAdapter {
             &source_root,
         )?;
 
-        Ok(rojo_adapter::ProjectSnapshot {
+        Ok(ProjectSnapshot {
             root_id,
             instances,
             file_paths,
@@ -344,7 +345,7 @@ impl ProjectAdapter for NativeManifestAdapter {
         self.open_session_native(project_path)
     }
 
-    fn snapshot_project(&self, project_path: &str) -> AnyResult<rojo_adapter::ProjectSnapshot> {
+    fn snapshot_project(&self, project_path: &str) -> AnyResult<ProjectSnapshot> {
         if project_path.ends_with(".project.json") {
             return self.snapshot_project_native(project_path);
         }
@@ -357,7 +358,7 @@ fn collect_tree_bindings(
     tree_node: &serde_json::Map<String, serde_json::Value>,
     parent_id: &str,
     project_dir: &Path,
-    instances: &mut HashMap<String, rojo_adapter::AdapterNode>,
+    instances: &mut HashMap<String, AdapterNode>,
     bindings: &mut Vec<NativePathBinding>,
 ) {
     for (name, raw_child) in tree_node {
@@ -383,7 +384,7 @@ fn collect_tree_bindings(
         if !instances.contains_key(&child_id) {
             instances.insert(
                 child_id.clone(),
-                rojo_adapter::AdapterNode {
+                AdapterNode {
                     id: child_id.clone(),
                     parent: Some(parent_id.to_string()),
                     name: name.to_string(),
@@ -445,7 +446,7 @@ fn common_ancestor_path(paths: &[PathBuf]) -> Option<PathBuf> {
 }
 
 fn add_files_from_source_root(
-    instances: &mut HashMap<String, rojo_adapter::AdapterNode>,
+    instances: &mut HashMap<String, AdapterNode>,
     file_paths: &mut HashMap<String, String>,
     mapping_root_id: &str,
     source_root: &Path,
@@ -458,7 +459,7 @@ fn add_files_from_source_root(
 }
 
 fn walk_source_tree(
-    instances: &mut HashMap<String, rojo_adapter::AdapterNode>,
+    instances: &mut HashMap<String, AdapterNode>,
     file_paths: &mut HashMap<String, String>,
     mapping_root_id: &str,
     source_root: &Path,
@@ -497,7 +498,7 @@ fn walk_source_tree(
 
         instances.insert(
             file_id.clone(),
-            rojo_adapter::AdapterNode {
+            AdapterNode {
                 id: file_id.clone(),
                 parent: Some(parent_id.clone()),
                 name,
@@ -546,7 +547,7 @@ fn classify_file(path: &Path) -> (String, String) {
 }
 
 fn ensure_folder_chain(
-    instances: &mut HashMap<String, rojo_adapter::AdapterNode>,
+    instances: &mut HashMap<String, AdapterNode>,
     root_parent_id: &str,
     relative_parent: Option<&Path>,
 ) -> String {
@@ -571,7 +572,7 @@ fn ensure_folder_chain(
         if !instances.contains_key(&folder_id) {
             instances.insert(
                 folder_id.clone(),
-                rojo_adapter::AdapterNode {
+                AdapterNode {
                     id: folder_id.clone(),
                     parent: Some(parent_id.clone()),
                     name,
@@ -589,7 +590,7 @@ fn ensure_folder_chain(
     parent_id
 }
 
-fn append_child(instances: &mut HashMap<String, rojo_adapter::AdapterNode>, parent_id: &str, child_id: &str) {
+fn append_child(instances: &mut HashMap<String, AdapterNode>, parent_id: &str, child_id: &str) {
     if let Some(parent) = instances.get_mut(parent_id) {
         if !parent.children.iter().any(|existing| existing == child_id) {
             parent.children.push(child_id.to_string());
@@ -678,6 +679,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "rojo-compat")]
     fn select_adapter_explicit_rojo_mode() {
         let mut cfg = base_config();
         cfg.project_adapter_mode = "rojo".to_string();
@@ -720,6 +722,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "rojo-compat")]
     fn select_adapter_auto_mode_falls_back_to_rojo_when_disabled() {
         let mut cfg = base_config();
         cfg.project_adapter_mode = "auto".to_string();

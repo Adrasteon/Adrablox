@@ -77,6 +77,7 @@ Native manifest migration:
 - Explicit `rojo` mode is deprecated-gated and requires `MCP_ENABLE_ROJO_ADAPTER_MODE=true`; otherwise it falls back to `native`.
 - `auto` mode picks `native` by default; it only selects `rojo` when `MCP_ENABLE_ROJO_ADAPTER_MODE=true` and native manifest mode is disabled.
 - Legacy compatibility HTTP routes are opt-in via `MCP_ENABLE_LEGACY_ROJO_ROUTES=true` (default is disabled).
+- Rojo compatibility is now compile-time gated behind cargo feature `rojo-compat` (default build is native-only; enable via `cargo run -p mcp-server --features rojo-compat`).
 - `openSession` resolves through native manifest mapping defined by `session.defaultProjectPath` / `compatibility.rojoProjectPath`.
 - Native manifest fallback order is: `session.defaultProjectPath` → `compatibility.rojoProjectPath` → `default.project.json`.
 

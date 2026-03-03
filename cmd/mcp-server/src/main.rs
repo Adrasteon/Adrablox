@@ -20,8 +20,10 @@ use tracing::info;
 mod adapters;
 mod compat_rojo;
 mod config;
+mod project_snapshot;
 use adapters::{select_project_adapter, ProjectAdapter};
 use config::Config;
+use project_snapshot::ProjectSnapshot;
 mod ws;
 
 #[derive(Clone)]
@@ -306,7 +308,7 @@ fn make_default_session() -> SessionState {
     }
 }
 
-fn make_session_from_snapshot(project_path: &str, snapshot: rojo_adapter::ProjectSnapshot) -> SessionState {
+fn make_session_from_snapshot(project_path: &str, snapshot: ProjectSnapshot) -> SessionState {
     let instances = snapshot
         .instances
         .into_iter()
@@ -437,7 +439,7 @@ fn session_capabilities_payload() -> Value {
     })
 }
 
-fn validate_snapshot(snapshot: &rojo_adapter::ProjectSnapshot) -> Vec<String> {
+fn validate_snapshot(snapshot: &ProjectSnapshot) -> Vec<String> {
     let mut issues = Vec::new();
     if snapshot.instances.is_empty() {
         issues.push("snapshot has no instances".to_string());
@@ -526,7 +528,7 @@ pub(crate) fn replay_events_since(state: &AppState, since: u64, limit: usize) ->
 
 fn apply_snapshot_to_session(
     session: &mut SessionState,
-    snapshot: rojo_adapter::ProjectSnapshot,
+    snapshot: ProjectSnapshot,
     chunk_size: usize,
     broadcaster: Option<&broadcast::Sender<serde_json::Value>>,
     replay: Option<&Arc<Mutex<ReplayState>>>,
@@ -1485,7 +1487,7 @@ pub(crate) async fn handle_mcp_request(
                     }
 
                     let snapshot_val = args.get("snapshot").cloned().unwrap_or(json!({}));
-                    let snapshot: Result<rojo_adapter::ProjectSnapshot, _> = serde_json::from_value(snapshot_val);
+                    let snapshot: Result<ProjectSnapshot, _> = serde_json::from_value(snapshot_val);
                     let snapshot = match snapshot {
                         Ok(s) => s,
                         Err(e) => {
@@ -1637,7 +1639,7 @@ mod tests {
         has_write_conflict, make_default_session, publish_event_with_replay, remove_subtree,
         replay_events_since, AppState, Config, ReplayState,
     };
-    use rojo_adapter::ProjectSnapshot;
+    use crate::project_snapshot::{AdapterNode, ProjectSnapshot};
     use serde_json::{json, Map};
     use std::{collections::HashMap, sync::{Arc, Mutex}};
     use tokio::sync::broadcast;
@@ -1664,7 +1666,7 @@ mod tests {
 
         instances.insert(
             "ref_root".to_string(),
-            rojo_adapter::AdapterNode {
+            AdapterNode {
                 id: "ref_root".to_string(),
                 parent: None,
                 name: "Game".to_string(),
@@ -1692,7 +1694,7 @@ mod tests {
         let mut instances = std::collections::HashMap::new();
         instances.insert(
             "ref_child".to_string(),
-            rojo_adapter::AdapterNode {
+            AdapterNode {
                 id: "ref_child".to_string(),
                 parent: Some("ref_root".to_string()),
                 name: "Child".to_string(),
@@ -1724,7 +1726,7 @@ mod tests {
             let id = format!("ref_{}", i);
             instances.insert(
                 id.clone(),
-                rojo_adapter::AdapterNode {
+                AdapterNode {
                     id: id.clone(),
                     parent: None,
                     name: format!("Node{}", i),
@@ -1764,7 +1766,7 @@ mod tests {
             let id = format!("ref_{}", i);
             instances.insert(
                 id.clone(),
-                rojo_adapter::AdapterNode {
+                AdapterNode {
                     id: id.clone(),
                     parent: None,
                     name: format!("Node{}", i),
